@@ -202,6 +202,9 @@ Generated: [日時]
 
 Safe to shutdown.
 
+> [!IMPORTANT]
+> **Final Action**: Please manually delete this chat session history to keep the environment pristine for the next run.
+
 ---
 
 ## checkin vs checkout
