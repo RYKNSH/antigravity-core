@@ -1,0 +1,18 @@
+{
+    "title": "SoloProStudio Social Knowledge & LP Ecosystem",
+    "summary": "Personal Mediaブランド 'SoloProStudio' の発信戦略とナレッジエコシステム。Tauri開発における技術的葛藤（Audio Saga）の物語化、SNS投稿の抽象化フレームワーク、および AI を活用した技術ブログ執筆ワークフローを定義。2026-02-06には、『Itoi-Style Narrative Upgrade』を完遂。ペルソナの一人称を「ぼく」へ、文体を語りかけ調に、構成を5ブロック構造（問いかけ、体験、洞察、解決、普遍化）へと刷新しました。さらに第8のナラティブ「判断を減らす話（自律提案）」を追加し、技術ブログにおける『参考例優先のガードレール』を標準化しました。",
+    "references": [
+        {
+            "type": "file",
+            "value": "artifacts/social_knowledge_framework.md"
+        },
+        {
+            "type": "file",
+            "value": "artifacts/social_knowledge/articles/08_reduce_decisions.md"
+        },
+        {
+            "type": "conversation_id",
+            "value": "6dda58b2-082e-43a8-8964-52cd0fa896a8"
+        }
+    ]
+}

@@ -1,0 +1,26 @@
+{
+    "title": "Antigravity Portable Dev Ecosystem",
+    "summary": "First Principlesに基づく開発手法とSSDを活用したポータブル運用標準、および自律エージェントの運用プロトコル（Immortal Agent Architecture）を統合した開発エコシステム。2026-02-07には、『Lightweight Operation & Performance Diagnostics』に加え、自律操作用SDK（Notion/Drive）の配備と、venv破損時の救済策としての『Pattern: Targeted UV Install』を標準化し、高負荷・移動環境下での開発継続性を保証します。",
+    "references": [
+        {
+            "type": "artifact",
+            "value": "artifacts/architecture/integrated_workflow_architecture.md"
+        },
+        {
+            "type": "conversation_id",
+            "value": "6dda58b2-082e-43a8-8964-52cd0fa896a8"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_project_archiving_20260207"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_auth_scripts_20260207"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_runtime_recovery_20260207"
+        }
+    ]
+}

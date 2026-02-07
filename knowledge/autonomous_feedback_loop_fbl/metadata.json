@@ -1,0 +1,42 @@
+{
+    "title": "Autonomous High-Fidelity Feedback Loop (FBL) & 120% Quality Standard",
+    "summary": "This Knowledge Item defines the 'Autonomous Feedback Loop' (FBL), a mission-critical workflow designed to achieve 120% quality. 2026-02-06 updates introduced Phase 44-47 (Coordinate/Freshness/Resilience audits), Phase 48 (Multi-Persona Simulated Team Review), Phase 49 (Post-Export Binary Integrity Audit), and Phase 50-55 (Diagnostic Render Guard, Persistence Sync, Input Completeness, Volatile State Preservation, and Batch Fidelity Flush), leveraging rigorous artifact assertions to verify cross-resolution consistency and legacy data resilience.",
+    "references": [
+        {
+            "type": "url",
+            "value": "https://code.claude.com/docs/ja/agent-teams"
+        },
+        {
+            "type": "conversation_id",
+            "value": "b06da400-10d5-437c-916e-6247292561b5"
+        },
+        {
+            "type": "conversation_id",
+            "value": "fddfd76b-2aff-46b9-b79c-05770ffddd32"
+        },
+        {
+            "type": "conversation_id",
+            "value": "1186b02c-c8fa-49bf-ba17-806a5cf22f2a"
+        },
+        {
+            "type": "conversation_id",
+            "value": "841c5a1d-a972-4e1d-a986-9bfef08caff2"
+        },
+        {
+            "type": "conversation_id",
+            "value": "60cc3d73-6feb-421e-a1b7-f0a3dd7565f8"
+        },
+        {
+            "type": "conversation_id",
+            "value": "telop_rendering_debug_20260206"
+        },
+        {
+            "type": "conversation_id",
+            "value": "1633a61b-5efa-45b7-a815-42655b7b0abc"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_bulk_export_optimization_20260206"
+        }
+    ]
+}

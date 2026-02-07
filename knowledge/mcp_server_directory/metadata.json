@@ -1,0 +1,18 @@
+{
+    "title": "Model Context Protocol (MCP) Server Directory & Configuration",
+    "summary": "Model Context Protocol (MCP) サーバーの包括的なディレクトリと、Cursor、VS Code、Claude Desktop などの主要クライアント向けの詳細な設定ガイドです。パッケージの導入（Supabase, Notion, Google Drive）だけでなく、公式リファレンス実装（@modelcontextprotocol/server-gdrive）の認証フロー（GCP OAuth JSON）や、設定を有効化するための環境変数の適用といった運用上の重要な手順を含んでいます。",
+    "references": [
+        {
+            "type": "conversation_id",
+            "value": "b7fc8b72-8760-46e3-9144-41ca6df6baa6"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_project_archiving_20260207"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_auth_scripts_20260207"
+        }
+    ]
+}

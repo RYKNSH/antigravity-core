@@ -1,0 +1,22 @@
+{
+    "title": "Developer Behavioral Patterns & Audit",
+    "summary": "Antigravityエコシステムにおける主導開発者（Ryotaro）の行動パターン、強み、弱みの分析を管理。内発的動機、システム思考、メタ認知といった長所と、「止まれない」傾向、スコープ拡散、仕組み依存といった短所の監査結果を含む。エージェントとの協調による健康管理と品質維持のための指針として機能する。",
+    "references": [
+        {
+            "type": "conversation_id",
+            "value": "6dc00231-93db-47ef-8b16-ea91b3b3dc86"
+        },
+        {
+            "type": "file",
+            "value": "artifacts/audits/2026_02_06_ryotaro_behavioral_audit.md"
+        },
+        {
+            "type": "file",
+            "value": "artifacts/archetypes/metacognitive_patterns.md"
+        },
+        {
+            "type": "file",
+            "value": "artifacts/risk_management/scope_and_energy_management.md"
+        }
+    ]
+}

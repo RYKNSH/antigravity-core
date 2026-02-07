@@ -1,0 +1,166 @@
+{
+    "title": "Discord Buddy Ecosystem: Comprehensive Platform & Product Knowledge",
+    "summary": "This Knowledge Item is the consolidated source of truth for the Discord Buddy ecosystem. It encompasses the core platform architecture, philosophy (120% Vision Loop), and specialized products. Jan 2026 evolutions include standardized Bot Bootstrap Patterns, the Server Synchronizer Engine, high-fidelity verification patterns (Face-pass Mock Sessions), and the formalized /fbl (Feedback Loop) autonomous workflow for 120% quality.",
+    "references": [
+        {
+            "type": "conversation_id",
+            "value": "2d70a033-2ebc-484a-aef1-5a443a8bfc0c"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-dbed3744-78e5-4eb0-b42f-119ab67aaf39"
+        },
+        {
+            "type": "conversation_id",
+            "value": "91ab9da4-c68e-4903-8889-bc8c49e2954a"
+        },
+        {
+            "type": "conversation_id",
+            "value": "9126415e-6ee9-4dbe-8cbd-8686945c96e4"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-ee413e35-8003-4001-b27d-490592d3a9dd"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-180d0061-e279-43e9-a199-db6aef57a6b5"
+        },
+        {
+            "type": "conversation_id",
+            "value": "8ae4b713-6fd3-40f2-847c-7e25963445eb"
+        },
+        {
+            "type": "conversation_id",
+            "value": "f9c19795-d7ee-4586-8d60-3f3a048d2bd3"
+        },
+        {
+            "type": "conversation_id",
+            "value": "1e88f3d2-6286-47eb-a75a-820af66d8bc9"
+        },
+        {
+            "type": "conversation_id",
+            "value": "eddf3a7c-8690-4db5-aa1c-975f551c3792"
+        },
+        {
+            "type": "conversation_id",
+            "value": "52078336-439a-4385-a3fc-4c0d1e643386"
+        },
+        {
+            "type": "conversation_id",
+            "value": "dcd86551-7f9a-4530-9755-90141f1773f3"
+        },
+        {
+            "type": "conversation_id",
+            "value": "a93c35f2-6754-40cf-a3c2-92568581117a"
+        },
+        {
+            "type": "conversation_id",
+            "value": "1769265533614"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-c17d92aa-bae9-4aa9-87dd-e72d1286dcb9"
+        },
+        {
+            "type": "conversation_id",
+            "value": "6e64c270-4cb1-401c-bcf3-f6184bc42dd2"
+        },
+        {
+            "type": "conversation_id",
+            "value": "451eac1c-9897-4a81-8d0a-1e8e1f9771da"
+        },
+        {
+            "type": "conversation_id",
+            "value": "5dd7b32f-fdad-45a1-8398-0664c0b5d281"
+        },
+        {
+            "type": "conversation_id",
+            "value": "4891858e-ff10-4b49-bfb6-6a8aa5451971"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-9afa0a63-5f0c-4215-a659-ad06855de6a9"
+        },
+        {
+            "type": "conversation_id",
+            "value": "181211e1-f215-43b2-a0ad-d1a051a38028"
+        },
+        {
+            "type": "conversation_id",
+            "value": "638360c4-4b37-4324-a315-310e50c6f3f2"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-dc9e763c-0297-4549-aa2c-7bd217c19b00"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-f59919b8-26df-48d4-a3a1-c346a8e370c2"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-be1ad289-84d0-427b-80e5-f27cb0064c44"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-ca7cd32a-4af9-4894-b033-c89465411d78"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-382a88f7-ad3b-4eb8-bbbe-645b9975be4b"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-c8b6047c-e926-4275-bbc0-de0f0796a642"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-ca39535b-8042-4217-910a-3cc40f50bb22"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-342b0b33-ddb1-4277-9749-93e49067351d"
+        },
+        {
+            "type": "conversation_id",
+            "value": "bot-d5082ca7-8cfe-41c4-abb9-15fb8ec9992e"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/01_アプリ開発/discord-buddy/"
+        },
+        {
+            "type": "conversation_id",
+            "value": "3aee3694-3c47-497d-8ad2-2ef67d60f6d9"
+        },
+        {
+            "type": "conversation_id",
+            "value": "745895d4-e2dd-4dd7-a34d-336989169e23"
+        },
+        {
+            "type": "conversation_id",
+            "value": "02337ea9-68aa-4600-9cc4-444f5178e38d"
+        },
+        {
+            "type": "conversation_id",
+            "value": "579bfa24-e3b8-4258-a85d-177829898c53"
+        },
+        {
+            "type": "file",
+            "value": "artifacts/philosophy/daily_creator_cycle.md"
+        },
+        {
+            "type": "conversation_id",
+            "value": "a8c71335-66dd-4f92-bbc8-158b58b514b9"
+        },
+        {
+            "type": "conversation_id",
+            "value": "b0a25d8e-b5ec-46f3-a451-8e39a9b9a9bb"
+        },
+        {
+            "type": "conversation_id",
+            "value": "9ba495fb-156f-4cb6-8188-d88a75370fb9"
+        }
+    ]
+}

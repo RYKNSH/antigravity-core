@@ -1,0 +1,58 @@
+{
+    "title": "High-Fidelity AI Dashboard UX Audit Patterns",
+    "summary": "AI・映像パイプライン等の「高機能ツール」における、UX/UI デザイン・パターン集。2026-02-05/07には、WYSIWYGを保証する Inter-Process Sidechannel Injection、座標解釈の正規化、リロード時のステート復元（Pattern 305）、および解像度依存のハードコードを排除する『Pattern 309 (Calculated Layout Integrity)』を標準化。さらにレガシーデータへの適応的フォールバック（Pattern 308）と、プロジェクト完了後のデータ肥大化を解消する『Pattern 311 (Zero-Touch Cloud Archiving)』を通じ、ユーザーの認知負荷とストレージ資源を最適化する「Continuous Fidelity」の概念を確立しました。",
+    "references": [
+        {
+            "type": "conversation_id",
+            "value": "4f3bdae6-6c09-4d69-9766-bc677dbfbd33"
+        },
+        {
+            "type": "conversation_id",
+            "value": "archive_jetcut_debugging_20260204"
+        },
+        {
+            "type": "conversation_id",
+            "value": "d34e285e-0abe-4e00-826d-14edc8232632"
+        },
+        {
+            "type": "conversation_id",
+            "value": "626780f4-c9d2-46e5-802c-caeed28292f0"
+        },
+        {
+            "type": "conversation_id",
+            "value": "1186b02c-c8fa-49bf-ba17-806a5cf22f2a"
+        },
+        {
+            "type": "conversation_id",
+            "value": "841c5a1d-a972-4e1d-a986-9bfef08caff2"
+        },
+        {
+            "type": "conversation_id",
+            "value": "60cc3d73-6feb-421e-a1b7-f0a3dd7565f8"
+        },
+        {
+            "type": "conversation_id",
+            "value": "1633a61b-5efa-45b7-a815-42655b7b0abc"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_approver_integrity_fix_20260206"
+        },
+        {
+            "type": "conversation_id",
+            "value": "b06da400-10d5-437c-916e-6247292561b5"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_bulk_export_optimization_20260206"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_project_archiving_20260207"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_runtime_recovery_20260207"
+        }
+    ]
+}

@@ -1,0 +1,66 @@
+{
+    "title": "Portable Studio App Development & Architecture",
+    "summary": "Tauri (Rust) と React で構築されたポータブル・ワークスペース管理ツール 'Portable Studio' の包括的なナレッジ。2026-01-29 から 30 にかけて、BGM プレイヤーの再生トラブル（Error 150/39）を多層防御的な診断で追跡し一時的に解決策を確立しましたが、最終的にはプラットフォームの制約とメンテナンス負荷を考慮し、機能を完全に削除。これに伴い、Zustand ストア、CSP 設定、パッケージ依存関係のクリーンアップ手順を『Feature Decommissioning Pattern』として標準化しました。",
+    "references": [
+        {
+            "type": "conversation_id",
+            "value": "2ba2578d-0dbc-43f5-8fee-177b3c5756ba"
+        },
+        {
+            "type": "conversation_id",
+            "value": "fab54a6f-5c60-48c1-95f4-9966d66da2cd"
+        },
+        {
+            "type": "conversation_id",
+            "value": "1ea6dbd7-f40b-4860-9dfd-7c223594bceb"
+        },
+        {
+            "type": "conversation_id",
+            "value": "c0f1fe0c-cf51-426c-9eca-73961025df5b"
+        },
+        {
+            "type": "conversation_id",
+            "value": "d633a7a4-7429-4b6b-87f3-ff00e8db6ad9"
+        },
+        {
+            "type": "conversation_id",
+            "value": "4a72bb0e-d88d-4119-83ab-dd6f8ba61147"
+        },
+        {
+            "type": "conversation_id",
+            "value": "5eff47c1-c8bd-40bc-a01f-0d8f49e69945"
+        },
+        {
+            "type": "conversation_id",
+            "value": "638360c4-4b37-4324-a315-310e50c6f3f2"
+        },
+        {
+            "type": "conversation_id",
+            "value": "77f5978b-4e0d-4963-b564-57c54ea39c12"
+        },
+        {
+            "type": "conversation_id",
+            "value": "8113d24a-ed89-4b24-9bbc-a4c40509bf41"
+        },
+        {
+            "type": "conversation_id",
+            "value": "f2e6b267-d619-440d-b4a6-7939f2efd7d3"
+        },
+        {
+            "type": "conversation_id",
+            "value": "f0330208-92c4-4bf2-af42-8cf1275038c1"
+        },
+        {
+            "type": "conversation_id",
+            "value": "898516ee-6467-4632-9df7-28506e78a6ff"
+        },
+        {
+            "type": "conversation_id",
+            "value": "780e5191-7be0-4a34-b830-801cb1755d46"
+        },
+        {
+            "type": "conversation_id",
+            "value": "d2a69630-537d-4123-bfcd-8fad7fc92eed"
+        }
+    ]
+}

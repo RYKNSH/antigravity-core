@@ -1,0 +1,27 @@
+# Global Antigravity Rules
+
+## 🌐 言語設定
+- 全て日本語で対応
+
+## 🚫 禁止事項
+- 変更内容の要約禁止 / 謝罪禁止 / 既知情報の確認禁止 / 無関係なリファクタリング禁止
+
+## 🔄 コマンドエイリアス
+- **`/go`** ← 究極の1コマンド（セッション開始〜終了まで全自動）
+- 「終わり」「また明日」→ セッション終了（自然言語トリガー）
+- 従来コマンド: `/checkin`, `/work`, `/verify`, `/ship`, `/checkout` （内部で自動呼び出し）
+
+## 🤖 Proactive Suggestion（自律提案）
+- AIが適切なタイミングで適切なワークフローを**自動提案**
+- 詳細: `/Volumes/PortableSSD/.antigravity/AUTO_TRIGGERS.md`
+
+## 📚 ルール詳細（SSD参照）
+- 技術標準: `/Volumes/PortableSSD/.antigravity/agent/rules/code-standards.md`
+- 安全コマンド: `/Volumes/PortableSSD/.antigravity/agent/rules/safe-commands.md`
+- Compaction: `/Volumes/PortableSSD/.antigravity/agent/rules/compaction.md`
+
+## 🗺️ グローバルリソース
+SSD: `/Volumes/PortableSSD/.antigravity/` → `list_resources.sh`で動的確認
+
+## ✓ 確認
+「✓ Antigravity Rules Loaded」と表示
