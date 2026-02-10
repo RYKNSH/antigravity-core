@@ -23,8 +23,8 @@
 
 ## 🗺️ グローバルリソース (SSD: /Volumes/PortableSSD/.antigravity/)
 
-### ワークフロー (40件) → `agent/workflows/`
-`/bug-fix` `/build` `/checkin` `/checkout` `/checkpoint_to_blog` `/cleanup-48h` `/clone-environment` `/db-migrate` `/debate` `/deploy` `/dev` `/evolve` `/fbl` `/go` `/learn_from_blog` `/lightweight` `/new-feature` `/project-init` `/publish` `/refactor` `/ship` `/spec` `/test` `/verification-loop` `/verify` `/work` 
+### ワークフロー (41件) → `agent/workflows/`
+`/bug-fix` `/build` `/checkin` `/checkout` `/checkpoint_to_blog` `/cleanup-48h` `/clone-environment` `/db-migrate` `/debate` `/deploy` `/dev` `/error-sweep` `/evolve` `/fbl` `/go` `/learn_from_blog` `/lightweight` `/new-feature` `/project-init` `/publish` `/refactor` `/ship` `/spec` `/test` `/verification-loop` `/verify` `/work` 
 
 ### スキル (12件) → `agent/skills/`
 `architecture` `autonomous-execution` `bottleneck-hunter` `code-review` `discord-best-practices` `docker-autonomous-ops` `first-principles` `homebrew-autonomous-ops` `llm-api-best-practices` `mcp-best-practices` `persona-orchestration` `workspace-config-audit` 

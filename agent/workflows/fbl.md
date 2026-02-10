@@ -18,7 +18,7 @@ FBLは実装後に自動で品質を検証し、問題があれば自己修正�
 ```
 /verify Phase 2 → /fbl（Phase 0スキップ）→ Phase 1-7
 /fbl 直接呼出し → Phase 0-7 全実行
-/fbl deep → Phase 0-7 + /debate quick
+/fbl deep → Phase 0-7 + Phase 5.5: /error-sweep + /debate quick
 ```
 
 > [!IMPORTANT]
@@ -122,8 +122,19 @@ pnpm lint && pnpm typecheck && pnpm test
 
 ---
 
+### Phase 5.5: Error Sweep 🔬
+**担当**: Static Analyzer + Contract Verifier
+**目的**: テストでは捕捉できないコードレベルの不整合を検出
+
+> `/fbl deep` 実行時にのみ発動。`/fbl quick` では省略。
+
+`/error-sweep` を自動実行。
+critical 発見時は Phase 6 で Self-Repair 対象に含める。
+
+---
+
 ### Phase 6: Self-Repair Loop 🔄
-**目的**: 問題を発見したら即座に修正
+**目的**: 問題を発見したら即座に修正（Error Sweep の critical を含む）
 
 ```
 発見 → 分析 → 修正 → 再検証

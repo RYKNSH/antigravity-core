@@ -1,5 +1,5 @@
 ---
-description: 実装後の検証を一括実行（test/fbl/debate統合）
+description: 実装後の検証を一括実行（test/fbl/error-sweep/debate統合）
 ---
 
 # /verify - 統合検証ワークフロー
@@ -11,10 +11,10 @@ description: 実装後の検証を一括実行（test/fbl/debate統合）
 ```
 /work → /new-feature|/bug-fix|/refactor → /verify
 /vision-os Phase 4完了後 → /verify
-/verify → /test + /fbl + /debate quick
+/verify → /test + /fbl + /error-sweep + /debate quick
 /verify 成功後 → /ship
 ```
-テスト、FBL（フィードバックループ）、クイックレビューを連鎖実行。
+テスト、FBL（フィードバックループ）、エラースイープ、クイックレビューを連鎖実行。
 
 ---
 
@@ -54,6 +54,17 @@ pnpm lint && pnpm typecheck
 
 ---
 
+### Phase 2.5: Error Sweep
+
+`/error-sweep` によるコードレベルの徹底チェック:
+
+- 通常時: `/error-sweep quick`（Phase 0 + 1 + 6 のみ）
+- `--deep` 指定時: `/error-sweep`（全Phase実行）
+
+critical = 0 でなければ Phase 3 に進まない。
+
+---
+
 ### Phase 3: クイックレビュー
 
 `/debate quick` 相当の簡易レビュー:
@@ -75,6 +86,7 @@ pnpm lint && pnpm typecheck
 | テスト | ✅ 全パス (12/12) |
 | Lint | ✅ エラーなし |
 | Typecheck | ✅ エラーなし |
+| Error Sweep | ✅ CLEAN (critical: 0, warning: 1) |
 | クイックレビュー | ✅ 問題なし |
 
 **判定**: 🚀 ship 可能です
@@ -86,8 +98,8 @@ pnpm lint && pnpm typecheck
 
 | オプション | 効果 |
 |-----------|------|
-| `--quick` | テストのみ（高速） |
-| `--deep` | 全検証 + `/debate deep` |
+| `--quick` | テストのみ（高速）— Phase 2.5 Error Sweep **スキップ** |
+| `--deep` | 全検証 + `/error-sweep` フル + `/debate deep` |
 | `--fix` | Lint エラーを自動修正 |
 
 ---

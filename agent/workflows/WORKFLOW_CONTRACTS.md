@@ -106,6 +106,14 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | **完了条件** | Phase 7 完了 or Self-Repair ループ上限(3回)到達 |
 | **エラー時** | 3回修正失敗→強制停止+ユーザー報告。タイムアウト(30分)→強制停止 |
 
+### `/error-sweep`
+| 項目 | 定義 |
+|------|------|
+| **入力** | 変更ファイルリスト(自動検出), `quick`/`full`(任意), `--changed-only`(任意) |
+| **出力** | Sweep Report(severity別), 修正リスト, Verdict, `.sweep_patterns.md` 更新(Self-Repair 2回以上時) |
+| **完了条件** | critical = 0（CLEAN or CONDITIONAL PASS）+ Phase 7 学習記録完了(該当時) |
+| **エラー時** | Self-Repair 5回失敗→`/debug-deep` 自動エスカレーション。タイムアウト(45分)→強制停止+レポート出力 |
+
 ---
 
 ## 開発サイクル層
@@ -225,6 +233,7 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 |------|------|
 | エラー上限到達（fbl 3回, debate 3回Block） | → `/debug-deep` 自動発動（First Principles突破） |
 | タイムアウト（fbl 30分） | → `/debug-deep` 自動発動（アプローチ転換） |
+| `/error-sweep` Self-Repair 5回失敗 | → `/debug-deep` 自動エスカレーション |
 | `/debug-deep` がさらに3回失敗 | → **真のPAUSE**（エスカレーション） |
 
 ### セッション終了の扱い

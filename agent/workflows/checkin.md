@@ -230,6 +230,23 @@ fi
 
 ---
 
+## Phase 2.8: 学習データ読み込み（自動）
+
+プロジェクトルートに以下のファイルが存在すれば自動読み込み:
+
+- **`.sweep_patterns.md`** — `/error-sweep` Phase 7 で蓄積された検出原則
+- **`.debug_learnings.md`** — `/debug-deep` Step 6 で蓄積されたデバッグ知見
+
+```bash
+for f in .sweep_patterns.md .debug_learnings.md; do
+  [ -f "$f" ] && echo "📚 学習データ読み込み: $f" && cat "$f" || true
+done
+```
+
+> これらは `/error-sweep` Phase 0 (Step 0-0) でも参照されるが、`/checkin` 時に先に読み込むことでセッション全体のコンテキストに含まれる。
+
+---
+
 ## Phase 3: 完了
 
 16. GEMINI.mdリソース一覧を動的更新
