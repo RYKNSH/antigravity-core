@@ -20,7 +20,7 @@ description: セッション開始時に不要データを削除し、環境を�
 - `implicit/` - キャッシュ全削除
 - Chrome/Adobe/Notion/npmキャッシュ
 
-// turbo-all
+
 
 ## Phase 1: クリーンアップ
 
@@ -29,11 +29,13 @@ description: セッション開始時に不要データを削除し、環境を�
 /Volumes/PortableSSD/.antigravity/agent/scripts/update_usage_tracker.sh checkin
 ```
 
+// turbo
 1. SSD構造確認（コンテキスト把握高速化）
 ```bash
 echo "=== SSD Structure ===" && ls /Volumes/PortableSSD/.antigravity/ 2>/dev/null || echo "SSD not connected"
 ```
 
+// turbo
 2. 現在のストレージ確認
 ```bash
 df -h / | tail -1
@@ -79,27 +81,123 @@ mkdir -p .agent/{skills,workflows}
 ```
 
 8. グローバルワークフローの同期（SSD → ワークスペース）
-SSDから最新のワークフローをコピー:
+SSDから最新のワークフローを同期（ローカルの方が新しいファイルは保護）:
 ```bash
-cp /Volumes/PortableSSD/.antigravity/agent/workflows/*.md .agent/workflows/ 2>/dev/null && echo "workflows synced" || echo "SSD not connected, skipping workflow sync"
+rsync -a --update /Volumes/PortableSSD/.antigravity/agent/workflows/*.md .agent/workflows/ 2>/dev/null && echo "workflows synced (--update: local customizations preserved)" || echo "SSD not connected, skipping workflow sync"
 ```
 
 9. グローバルスキルの同期・アップデート（SSD → ワークスペース）
-SSDから最新のスキルをコピー（first-principles等のアップデートを反映）:
+SSDから最新のスキルを同期（ローカルの方が新しいファイルは保護）:
 ```bash
-cp -R /Volumes/PortableSSD/.antigravity/agent/skills/* .agent/skills/ 2>/dev/null && echo "skills synced/updated" || echo "SSD not connected, skipping skill sync"
+rsync -a --update /Volumes/PortableSSD/.antigravity/agent/skills/ .agent/skills/ 2>/dev/null && echo "skills synced/updated (--update: local customizations preserved)" || echo "SSD not connected, skipping skill sync"
+```
+
+10. MCP設定の同期（SSD → ホスト）
+SSDからマスターMCP設定をコピーし、チルダパスを展開、gdrive クレデンシャルをローカルにコピー:
+```bash
+# MCP設定コピー + チルダ展開
+cp /Volumes/PortableSSD/.antigravity/mcp_config.json ~/.gemini/antigravity/mcp_config.json 2>/dev/null && \
+  sed -i '' "s|~/|$HOME/|g" ~/.gemini/antigravity/mcp_config.json && \
+  echo "mcp_config synced" || echo "SSD not connected, skipping MCP config sync"
+# gdrive クレデンシャルをローカルにコピー
+mkdir -p ~/.secrets/antigravity/gdrive && \
+  cp /Volumes/PortableSSD/.antigravity/credentials/credentials.json ~/.secrets/antigravity/gdrive/gcp-oauth.keys.json 2>/dev/null && \
+  cp /Volumes/PortableSSD/.antigravity/credentials/.gdrive-server-credentials.json ~/.secrets/antigravity/gdrive/.gdrive-server-credentials.json 2>/dev/null && \
+  echo "gdrive credentials synced" || echo "gdrive credentials not found, skipping"
+# mcp-server-gdrive 確認（グローバルインストールはユーザー確認が必要）
+if ! command -v mcp-server-gdrive >/dev/null 2>&1; then
+  echo "⚠️  mcp-server-gdrive が未インストールです。必要な場合は手動で: npm install -g @modelcontextprotocol/server-gdrive"
+fi
+```
+
+---
+
+## Phase 2.5: プロジェクト環境復元 (Lazy Install)
+
+前回の `/checkout` で削除された `node_modules` / `.venv` 等を、**作業対象プロジェクトのみ**復元する。
+
+11. SSD上のプロジェクト一覧を表示
+
+```bash
+SSD="/Volumes/PortableSSD"
+if [ ! -d "$SSD" ]; then
+  echo "⏭️  SSD not connected, skipping project restore"
+else
+  echo "=== SSD Projects ==="
+  echo ""
+  echo "📦 Node.js projects (package.json detected):"
+  find "$SSD/01_アプリ開発" -maxdepth 2 -name "package.json" -not -path "*/node_modules/*" 2>/dev/null | while read pkg; do
+    DIR=$(dirname "$pkg")
+    NAME=$(basename "$DIR")
+    HAS_NM="❌"
+    [ -d "$DIR/node_modules" ] && HAS_NM="✅"
+    echo "  $HAS_NM $NAME ($DIR)"
+  done
+  echo ""
+  echo "🐍 Python projects (pyproject.toml detected):"
+  find "$SSD/01_アプリ開発" -maxdepth 2 -name "pyproject.toml" -not -path "*/.venv/*" 2>/dev/null | while read pyp; do
+    DIR=$(dirname "$pyp")
+    NAME=$(basename "$DIR")
+    HAS_VENV="❌"
+    [ -d "$DIR/.venv" ] && HAS_VENV="✅"
+    echo "  $HAS_VENV $NAME ($DIR)"
+  done
+fi
+```
+
+12. ユーザーに作業対象プロジェクトを確認
+
+**「今回どのプロジェクトで作業しますか？」** とユーザーに質問する。
+回答パターン:
+- プロジェクト名を指定 → そのプロジェクトのみ復元
+- `all` → 全プロジェクト復元（時間に余裕がある場合）
+- `skip` or 空 → 復元をスキップ（後で手動実行）
+
+13. 指定プロジェクトの環境構築
+
+ユーザーが指定したプロジェクトに対して以下を実行:
+
+**Node.js プロジェクトの場合:**
+```bash
+# 対象ディレクトリに cd して実行
+cd "$PROJECT_DIR"
+if [ -f "pnpm-lock.yaml" ]; then
+  pnpm install && echo "✅ pnpm install complete: $(basename $PROJECT_DIR)"
+elif [ -f "package-lock.json" ]; then
+  npm install && echo "✅ npm install complete: $(basename $PROJECT_DIR)"
+elif [ -f "yarn.lock" ]; then
+  yarn install && echo "✅ yarn install complete: $(basename $PROJECT_DIR)"
+else
+  pnpm install && echo "✅ pnpm install complete: $(basename $PROJECT_DIR)"
+fi
+```
+
+**Python プロジェクトの場合:**
+```bash
+cd "$PROJECT_DIR"
+if [ -f "pyproject.toml" ]; then
+  if command -v uv >/dev/null; then
+    uv venv .venv --allow-existing --python 3.11 && source .venv/bin/activate && uv pip install -r requirements.txt && echo "✅ uv pip install complete: $(basename $PROJECT_DIR)"
+  else
+    # Fallback to python3.11 if available, else python3 (with warning)
+    PY_BIN="python3"
+    if command -v python3.11 >/dev/null; then PY_BIN="python3.11"; fi
+    $PY_BIN -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && echo "✅ pip install complete: $(basename $PROJECT_DIR)"
+  fi
+fi
 ```
 
 ---
 
 ## Phase 3: 完了
 
-10. GEMINI.mdリソース一覧を動的更新
+14. GEMINI.mdリソース一覧を動的更新
 ```bash
 /Volumes/PortableSSD/.antigravity/agent/scripts/list_resources.sh --update-gemini
 ```
 
-11. 最終確認
+// turbo
+15. 最終確認
 ```bash
 df -h / | tail -1 && echo "---" && sysctl vm.swapusage && echo "---"
 ls .agent/workflows/ 2>/dev/null | head -5
@@ -111,8 +209,10 @@ echo "---Check-in complete!"
 - 一時データ削除済み
 - ワークフロー最新化済み
 - スキル最新化済み（first-principles等のアップデート反映）
+- プロジェクト環境復元済み（指定プロジェクトのみ）
 
 ## 注意
 
 > このワークフローは**全ての一時データを削除**します。
 > 引き継ぎたいconversationがある場合は事前にKI化してください。
+

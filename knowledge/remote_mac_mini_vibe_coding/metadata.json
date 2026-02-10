@@ -1,0 +1,37 @@
+{
+    "title": "Remote Mac Mini Vibe Coding",
+    "description": "Comprehensive guide and scripts for setting up a headless Mac Mini for remote operation via iPad (Jump Desktop + Tailscale + BetterDisplay). Includes Voice & Touch workflow.",
+    "created_at": "2026-02-09T14:00:00+09:00",
+    "updated_at": "2026-02-09T14:45:00+09:00",
+    "tags": [
+        "remote-desktop",
+        "ipad",
+        "mac-mini",
+        "vibe-coding",
+        "jump-desktop",
+        "tailscale",
+        "betterdisplay",
+        "voice-input",
+        "social-knowledge"
+    ],
+    "artifacts": [
+        "walkthrough_remote_vibe_coding.md",
+        "implementation_plan.md",
+        "debate_findings.md",
+        "setup_remote_dev.sh",
+        "blog_itoi_style.md",
+        "blog_draft.md"
+    ],
+    "social_knowledge": [
+        {
+            "notion_url": "https://www.notion.so/LAN-30265ff13b15818dba96ffac41236cee",
+            "blog_title": "見えないLANケーブルと、魔法の指。（Narrative Ver.）",
+            "blog_file": "blog_itoi_style.md"
+        },
+        {
+            "notion_url": "https://www.notion.so/MacBook-iPad-30265ff13b1581f4aec1c2d022bd3c22",
+            "blog_title": "MacBookを捨てよ、街に出よう。（Concept Ver.）",
+            "blog_file": "blog_draft.md"
+        }
+    ]
+}

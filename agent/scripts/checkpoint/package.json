@@ -1,0 +1,18 @@
+{
+    "name": "checkpoint-tool",
+    "version": "1.0.0",
+    "description": "SSD-Native Checkpoint Tool for Safe AI Coding",
+    "main": "checkpoint-core.js",
+    "type": "module",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+        "chalk": "^5.3.0",
+        "execa": "^8.0.1",
+        "inquirer": "^9.2.12",
+        "strip-ansi": "^7.1.0"
+    },
+    "author": "Antigravity",
+    "license": "ISC"
+}

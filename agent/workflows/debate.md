@@ -1,243 +1,137 @@
 ---
-description: 強制的にMulti-Persona Debateを実行し、提案を複数ペルソナで批評・精錬する
+description: 強制的にMulti-Persona Debateを実行し、提案を複数ペルソナで批評・精錬する（完全自律版）
 ---
 
-# /debate - 強制ディベート・ワークフロー
+# /debate - Autonomous Debate & Critique Workflow
 
-単一視点で出した回答やプランに対し、**複数の専門家ペルソナによる批評セッション**を強制的に実行するコマンド。AI が「自信過剰」や「盲点」を持っている可能性がある場面で、意図的に反論・検証を行わせる。
-
----
-
-## 1. トリガー
-
-ユーザーが以下のいずれかを発言した場合に発動：
-- `/debate`
-- 「ディベートして」
-- 「他の視点からも見て」
-- 「本当にこれでいい？」
+**Concept**: AI自身が「司会者 (Moderator)」となり、複数の専門家ペルソナを召喚して議論を戦わせる。ユーザーの介入を待たず、納得いく結論が出るまで**自律的に議論ループを回し続ける**。
 
 ---
 
-## 2. ディベート・プロセス
+## 1. Trigger & Modes
 
-### Step 1: 現状の提案を明確化
-```markdown
-## 📝 現在の提案（Solo Version）
-[現時点での回答/プランを簡潔に要約]
-```
+ユーザーが以下のコマンドを入力した場合に発動：
 
-### Step 2: HR Director によるチーム編成
-タスクの5軸分析を行い、適切なペルソナを召集：
-
-| 軸 | 分析項目 |
-|----|----------|
-| **Target** | 誰のため？（技術者 / 非技術者） |
-| **Risk** | 失敗の影響度（高→Security/Skeptic必須） |
-| **Emotion** | 共感や物語性が必要か |
-| **Action** | 具体的な行動喚起が目的か |
-| **Domain** | 専門領域の特定 |
-
-**最低3名 + Skeptic は常に参加**
-
-### Step 3: Sequential Critique（順次批評）
-各ペルソナが自分の専門視点から提案の「盲点」を指摘：
-
-```markdown
-## 🎭 ディベート・セッション
-
-### 🏛️ The Architect
-> [長期スケーラビリティ、境界設計の視点から批評]
-> **Blind Spot**: ...
-
-### 🔒 Security Specialist  
-> [権限リスク、シークレット、データプライバシーの視点から批評]
-> **Blind Spot**: ...
-
-### 🤔 The Skeptic（必須）
-> [本当に必要か？より単純な方法はないか？を問う]
-> **Challenge**: ...
-
-### [追加ペルソナ]
-> [ドメイン固有の視点から批評]
-> **Blind Spot**: ...
-```
-
-### Step 4: Synthesis（統合）
-全ての批評を踏まえて、最終案を作成：
-
-```markdown
-## ✨ Debate Version（精錬後の提案）
-
-### 採用した改善点
-- [ ] [Architectの指摘] → [対応内容]
-- [ ] [Securityの指摘] → [対応内容]
-- [ ] [Skepticの指摘] → [対応内容]
-
-### 却下した指摘と理由
-- [指摘内容] → [却下理由]
-
-### 最終提案
-[統合された最終回答/プラン]
-```
+| Command | Description | Loop Condition |
+|---------|-------------|----------------|
+| `/debate` | 標準ディベート（3〜5名） | 1ラウンド + 統合まで自動実行 |
+| `/debate deep` | 深掘り版（5名以上） | **最低3ラウンド** + 疑問が尽きるまで継続 |
+| `/debate team` | チームレビュー（合意形成） | **全員が `Apply` または `Compromise` するまで継続** |
+| `/debate quick` | クイック版（Skeptic + 1名） | 1ラウンドのみ |
 
 ---
 
-## 3. 貢献度トラッキング
-
-ディベート終了後、各ペルソナの貢献度を評価：
-
-| アクション | スコア |
-|-----------|--------|
-| 指摘が最終稿に採用 | +2 |
-| 比喩・具体例が採用 | +3 |
-| 大幅な構成変更への寄与 | +5 |
-| ユーザーの明示的称賛 | +10 |
-| 指摘がスルー（黙殺） | -1 |
-| ユーザーによる拒絶 | -20 (即解雇) |
-
-### Team Review Mode 追加スコア
-
-| アクション | スコア |
-|-----------|--------|
-| 🔴 Critical finding 発見 | +5 |
-| 🟡 Warning finding 発見 | +2 |
-| 他ペルソナの finding を補強 | +3 |
-| 統合レポートへの貢献 | +2 |
-
----
-
-## 4. ショートカット・バリエーション
-
-| コマンド | 動作 |
-|---------|------|
-| `/debate` | 標準ディベート（3〜5名） |
-| `/debate quick` | クイック版（Skeptic + 1名のみ） |
-| `/debate deep` | 深掘り版（5名以上 + 複数ラウンド） |
-| `/debate security` | セキュリティ重視編成 |
-| `/debate ux` | UX/ユーザー体験重視編成 |
-| `/debate team` | **チームレビューモード（Agent Teams風）** |
-
----
-
-## 5. Team Review Mode（Agent Teams風）
-
-Claude Code Agent Teamsの「チーム協業」パターンをAntigravityで再現。
-**核心: ペルソナ間の相互反論と合意形成ループ**
-
-### 概要
-複数ペルソナが**議論を交わし**、互いの意見に反論・補強しながら合意に収束する。
-
----
-
-### プロセス
-
-#### Phase 1: チーム編成
-HR Directorがレビュー対象に応じて3人のレビューチームを編成:
-
-| チーム構成例 | 用途 |
-|-------------|------|
-| Security + Performance + Test | PRレビュー |
-| Architect + Skeptic + UX | 設計レビュー |
-| DevOps + Security + Architect | インフラ変更 |
-
----
-
-#### Phase 2: 初期レビュー（Round 0）
-各ペルソナが独立して初期findings を提出:
-
-```markdown
-### 👤 [ペルソナA] 初期見解
-**主張**: [この設計は○○が問題]
-**根拠**: [理由1, 理由2]
-**提案**: [改善案]
-```
-
----
-
-#### Phase 3: 相互反論ラウンド（Round 1〜N）
+## 2. The Autonomous Loop (Moderator Role)
 
 > [!IMPORTANT]
-> **これがAgent Teamsの核心**
-> 各ペルソナが他のペルソナの発言に対して反論/同意/補強する
+> **Zero User Burden**:
+> AI (Moderator) は、議論の各ステップでユーザーに入力を求めてはいけない。
+> 以下のプロセスを**一息に、完全に自律して**実行せよ。
+
+### Step 0: Preparation (Knowledge Injection)
+議論を開始する前に、トピックに関連する知識を `knowledge/` から検索し、コンテキストに注入する。
+- **Search**: `grep_search` 等で関連キーワードを検索
+- **Load**: 関連する `SKILL.md` やナレッジファイルを読み込む
+
+### Step 1: Team Assembly (HR Director)
+タスクの5軸分析 (Target, Risk, Emotion, Action, Domain) に基づき、最適なペルソナを `persona-orchestration` スキルから召喚（または生成）する。
+
+**Output Example**:
+```markdown
+## 👥 Debate Team Assembled
+- **Moderator**: AI System (Facilitator)
+- **Skeptic** (Core): 批判的視点担当
+- **Architect** (Regular): 構造・スケーラビリティ担当
+- **Security** (Regular): 安全性担当
+- **[New] Quantum Physicist** (Ad-hoc): 専門領域担当
+```
+
+---
+
+### Step 2: Debate Rounds (The Loop)
+
+**Moderator** は以下のループを回す。
+
+#### Round N Start
+各ペルソナが、**前のラウンドの結論**または**初期提案**に対して批評を行う。
+
+- **Rule 1 (Criticism)**: 褒めるな。弱点、リスク、代替案を探せ。
+- **Rule 2 (Evidence)**: 「なんとなく」は禁止。数値、事例、理論（検索したナレッジ）を根拠にせよ。
+- **Rule 3 (Interaction)**: 他のペルソナの意見に「同意」「反論」「補強」を行え。
+
+**Output Format**:
+```markdown
+### 🔄 Round 1: Initial Critique
+**🏛️ Architect**: ...
+**🔒 Security**: ... (Architectの意見に反論) ...
+**🤔 Skeptic**: ... (根本を問う) ...
+```
+
+#### Round N Review (Moderator Decision)
+Moderator は議論の状況を評価し、次を決定する。
+
+- **Continue**: 議論が発散している、重大なリスクが残っている、合意に至っていない。
+  → **Action**: 「論点Xについて深掘りします」と宣言し、Round N+1 へ進む。
+- **Conclude**: 全員の懸念が出尽くし、解決策が見えた。
+  → **Action**: Step 3 (Synthesis) へ進む。
+
+> [!NOTE]
+> `/debate deep` の場合、**最低3ラウンド**はどんなに良い案でも「あえてアラ探し」をして継続すること。
+> `/debate team` の場合、**全員の合意 (Consensus)** が取れるまで終わらせないこと。
+
+---
+
+### Step 3: Synthesis (Final Report)
+
+全ラウンドの議論を踏まえ、**Moderator** が最終的な結論をまとめる。
 
 ```markdown
-## 🔄 議論ラウンド 1
+# 🏁 Final Debate Report
 
-### 🏛️ Architect → Security への反論
-> Securityは「レート制限必須」と言うが、
-> 内部APIでは過剰。コストとのトレードオフを考慮すべき。
-> **反論**: 内部ネットワークでも横展開攻撃のリスクがある
+## 💎 Refined Proposal (The Output)
+[議論を経て磨き上げられた最終回答/プラン]
 
-### 🔒 Security → Architect への応答
-> Architectの懸念は理解する。しかし...
-> **譲歩**: 内部APIは緩いレート制限（1000req/min）で妥協可能
-> **堅持**: 外部APIは厳格なレート制限を維持
+## 🛡️ Addressed Concerns
+- [解決済み] セキュリティ懸念 → JWT導入で解決 (by Security)
+- [解決済み] パフォーマンス → キャッシュ戦略で合意 (by Architect)
 
-### 🤔 Skeptic → 両者への問いかけ
-> そもそもレート制限をアプリ層で実装する必要があるのか？
-> **代替案**: API Gatewayに委譲すれば両者の懸念が解消では？
-```
+## ⚠️ Remaining Risks (Minor)
+- [未解決] 外部APIのレート制限 (低確率だがリスクあり)
 
-**ラウンド継続条件**: 意見の対立が残っている間、最大3ラウンドまで継続
-
----
-
-#### Phase 4: 合意形成
-
-```markdown
-## ✅ チーム合意
-
-### 合意に達した点
-| 論点 | 合意内容 | 合意形成者 |
-|------|----------|------------|
-| レート制限 | 外部APIのみ厳格に、内部は緩く | Security + Architect |
-| 実装方式 | API Gateway委譲 | Skeptic提案、全員賛成 |
-
-### 残留する懸念（少数意見として記録）
-| 懸念 | 提起者 | 多数決結果 |
-|------|--------|------------|
-| Gateway障害時のフォールバック | Security | 次回検討に持ち越し |
-
-### 最終推奨案
-[全員が合意した最終提案]
+## 📊 Persona Contribution
+| Persona | Impact | Status |
+|---------|--------|--------|
+| Skeptic | High | Core維持 |
+| ...     | ...    | ...    |
 ```
 
 ---
 
-### 議論の進め方ルール
+## 3. Specific Mode Instructions
 
-| ルール | 説明 |
-|--------|------|
-| **必ず反論する** | 賛成だけでなく、弱点を探す |
-| **根拠を示す** | 「〜だから」を必ず含める |
-| **譲歩を認める** | 反論が正しければ意見を変える |
-| **合意を目指す** | 勝ち負けではなく最適解を探す |
+### `/debate deep` (The Five Whys)
+- **Objective**: 表面的な解決策を許さない。
+- **Action**: Skeptic は回答に対して「なぜ？」を繰り返す義務がある。
+- **Loop**: 見かけ上の解決策が出ても、Moderator は「まだ深い要因がある」と仮定して次ラウンドを強制する。
 
----
-
-### 出力ファイル
-- **DEBATE_FINDINGS.md**: 全ラウンドの議論と最終合意を記録
-
----
-
-## 5. 使用例
-
-```
-User: このAPIの設計でいこうと思うんだけど
-Agent: [API設計を提示]
-User: /debate
-Agent: [ディベート・セッション開始]
-       → Architect: 認証の粒度が粗すぎる
-       → Security: レート制限がない
-       → Skeptic: そもそもREST APIで良いのか？GraphQLは？
-       → [統合] Debate Version を提示
-```
+### `/debate team` (Consensus Protocol)
+- **Objective**: 全員が納得する合意形成。
+- **Protocol**:
+  1. 各ペルソナは `Approve` / `Request Changes` / `Block` の投票権を持つ。
+  2. `Block` が1つでもある場合、議論は終わらない。
+  3. `Request Changes` がある場合、修正案を出して次ラウンドへ。
+  4. 妥協が必要な場合は `Compromise` を明示する。
 
 ---
 
-> [!TIP]
-> **いつ使うべきか**
-> - 重要な設計決定の前
-> - 「なんとなく不安」がある時
-> - 過去に見落としがあった類似タスクの時
-> - ユーザー自身の確証バイアスを打破したい時
+## 4. Execution Prompt (For Agent)
+
+このワークフローを実行する際、エージェントは以下のマインドセットを持つこと：
+
+1. **あなたは Moderator である**。ユーザーではない。
+2. **止まるな**。ユーザーに「次へ行きますか？」と聞くな。自分で判断して進め。
+3. **厳しくあれ**。なれ合いの議論は無価値だ。バチバチにやり合わせろ。
+4. **知識を使え**。`grep_search` や `read_file` を駆使し、議論の質をファクトベースで高めろ。
+
+**Start Command**:
+(もしユーザー入力が `/debate` 系なら、即座に Step 0 から開始せよ)

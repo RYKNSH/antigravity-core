@@ -130,20 +130,31 @@ async function main() {
 
     // 2. Prepare Payload
     const bodyContent = lines.slice(startIndex).join('\n');
-    const blocks = bodyContent.split('\n\n').filter(p => p.trim() !== '').map(paragraph => ({
-      object: 'block',
-      type: 'paragraph',
-      paragraph: {
-        rich_text: [
-          {
-            type: 'text',
-            text: {
-              content: paragraph.trim()
+    const rawBlocks = bodyContent.split('\n\n').filter(p => p.trim() !== '');
+    
+    const blocks = rawBlocks.map(paragraph => {
+        // Check for code block
+        const codeMatch = paragraph.match(/^```(\w*)\n([\s\S]*)\n```$/);
+        if (codeMatch) {
+            return {
+                object: 'block',
+                type: 'code',
+                code: {
+                    language: codeMatch[1] || 'plain text',
+                    rich_text: [{ type: 'text', text: { content: codeMatch[2] } }]
+                }
+            };
+        }
+        
+        // Default to paragraph
+        return {
+            object: 'block',
+            type: 'paragraph',
+            paragraph: {
+                rich_text: [{ type: 'text', text: { content: paragraph.trim() } }]
             }
-          }
-        ]
-      }
-    }));
+        };
+    });
 
     const properties = {};
     properties[TITLE_KEY] = {
