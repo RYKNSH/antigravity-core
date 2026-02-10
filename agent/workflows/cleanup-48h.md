@@ -5,6 +5,19 @@ description: 48時間経過したキャッシュを自動削除するクリー�
 
 48時間以上経過したキャッシュとデータを削除するワークフロー。
 
+## Cross-Reference
+
+```
+/checkin Phase 1 = 基本クリーンアップ（毎セッション）
+/cleanup-48h = ディープクリーンアップ（定期実行）
+/lightweight = メモリ軽量化（オンデマンド）
+```
+
+> [!NOTE]
+> `/checkin` は毎セッションで軽いクリーンアップを行う。
+> `/cleanup-48h` はそれより深いレベル（Adobe/Notion/Chrome）のキャッシュを対象とし、
+> 空き容量が少ない時や、`/checkin` で空き容量警告が出た時に呼び出される。
+
 ## 対象
 
 - Antigravity browser_recordings (48h+)

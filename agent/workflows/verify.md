@@ -5,6 +5,15 @@ description: 実装後の検証を一括実行（test/fbl/debate統合）
 # /verify - 統合検証ワークフロー
 
 実装作業（`/work`）完了後に実行する検証フェーズ。
+
+## Cross-Reference
+
+```
+/work → /new-feature|/bug-fix|/refactor → /verify
+/vision-os Phase 4完了後 → /verify
+/verify → /test + /fbl + /debate quick
+/verify 成功後 → /ship
+```
 テスト、FBL（フィードバックループ）、クイックレビューを連鎖実行。
 
 ---

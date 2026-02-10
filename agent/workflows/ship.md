@@ -7,6 +7,18 @@ description: リリース準備を一括実行（deploy/db-migrate統合）
 検証完了（`/verify`）後に実行するリリースフェーズ。
 DBマイグレーション、最終テスト、デプロイを連鎖実行。
 
+## Cross-Reference
+
+```
+/verify → /ship → /build + /db-migrate + /deploy
+/go Phase 3 → /ship（任意）
+/new-feature, /bug-fix → /verify → /ship
+```
+
+> [!NOTE]
+> `/deploy` は `/ship` の内部 Phase 4 として実行される。
+> リリース時は常に `/ship` を使うこと。
+
 ---
 
 ## 使用方法

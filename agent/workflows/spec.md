@@ -6,6 +6,13 @@ description: 新機能の仕様策定をインタビュー形式で行う
 Claude Code公式推奨の「Claudeにインタビューさせる」パターンを実装。
 要件の抜け漏れを防ぎ、高品質なSPEC.mdを生成する。
 
+## Cross-Reference
+
+```
+/work "新機能" → /spec → /debate quick (QA) → /new-feature
+/vision-os の代替としても使用可能
+```
+
 ---
 
 ## 使用方法
@@ -103,3 +110,14 @@ Claude Code公式推奨の「Claudeにインタビューさせる」パターン
 > [!WARNING]
 > インタビューは完全に完了するまで続ける。
 > 中途半端な仕様書は後のバグの温床になる。
+
+---
+
+### Phase 3: Spec Review (自動)
+
+SPEC.md 生成後、`/debate quick` を自動実行して仕様の抜け漏れを検出:
+
+- **Skeptic**: 「この仕様で本当に問題が解決するのか？」
+- **Architect**: 「スケーラビリティは考慮されているか？」
+
+問題があれば SPEC.md を修正してから次のワークフロー（`/new-feature` 等）へ進む。

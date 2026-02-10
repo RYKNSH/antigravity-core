@@ -5,6 +5,18 @@ description: セッション終了時にデータを整理し、自己評価・�
 
 作業終了時に実行。クリーンアップ＋**自己評価フィードバックループ**。
 
+## Cross-Reference
+
+```
+/go → ... → /checkout（自動呼び出し）
+  ├─ Phase 0: Social Knowledge 自動判定 → /checkpoint_to_blog
+  ├─ Phase 0.5: Git Save & PR
+  ├─ Phase 1-1.5: クリーンアップ
+  ├─ Phase 2: 自己評価 + Vision OS 乖離チェック
+  ├─ Phase 3: 改善実装
+  └─ Phase 4: NEXT_SESSION.md 生成 → SSDログ保存
+```
+
 ## 実行タイミング
 
 - 1日の作業終了時
@@ -13,12 +25,50 @@ description: セッション終了時にデータを整理し、自己評価・�
 
 ---
 
-## Phase 0: Social Knowledge (Optional)
+## Phase 0: Social Knowledge (インテリジェント判定)
 
-1. ユーザーに確認: 「今回の作業を『Social Knowledge』としてブログ記事 (Notion) にしますか？ (y/N)」
-2. Yesの場合:
-   - `/Volumes/PortableSSD/.antigravity/agent/workflows/checkpoint_to_blog.md` のステップを実行（または `/checkpoint_to_blog` を呼び出し）。
-   - 技術的な成果を社会的価値に変換し、Notionへ保存する。
+ユーザーに「記事にしますか？」と聞く前に、**まず自動で「記事にする価値」をスコアリング**する。
+
+### Step 1: 自動スコアリング
+
+// turbo
+```bash
+# セッションの「記事価値」を数値化
+echo "=== Social Knowledge Score ==="
+SCORE=0
+
+# 1. git diff 行数（変更量）
+DIFF_LINES=$(git diff --stat HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | tail -1 | grep -oE '[0-9]+ insertion|[0-9]+ deletion' | grep -oE '[0-9]+' | paste -sd+ - | bc 2>/dev/null || echo 0)
+echo "  変更行数: $DIFF_LINES"
+[ "$DIFF_LINES" -gt 100 ] 2>/dev/null && SCORE=$((SCORE + 3))
+[ "$DIFF_LINES" -gt 300 ] 2>/dev/null && SCORE=$((SCORE + 2))
+
+# 2. 新規ファイル数
+NEW_FILES=$(git diff --name-status HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | grep '^A' | wc -l | tr -d ' ')
+echo "  新規ファイル: $NEW_FILES"
+[ "$NEW_FILES" -gt 3 ] 2>/dev/null && SCORE=$((SCORE + 3))
+
+# 3. コミット数
+COMMIT_COUNT=$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ')
+echo "  コミット数: $COMMIT_COUNT"
+[ "$COMMIT_COUNT" -gt 5 ] 2>/dev/null && SCORE=$((SCORE + 2))
+
+echo ""
+echo "  🎯 Social Knowledge Score: $SCORE / 10"
+if [ "$SCORE" -ge 5 ]; then
+  echo "  ✅ 記事にする価値があります！"
+else
+  echo "  ℹ️  軽微な変更。Daily Log が適切かも。"
+fi
+```
+
+### Step 2: ユーザー確認
+
+- **スコア ≥ 5**: 「今回の作業を Evergreen Article として Notion に保存しますか？」と提案
+- **スコア 1-4**: 「Daily Log として Discord に投稿しますか？」と提案
+- **スコア 0**: スキップ
+
+Yesの場合: `/checkpoint_to_blog` を実行。
 
 ---
 
@@ -282,6 +332,11 @@ echo "=== SSD After ===" && df -h /Volumes/PortableSSD | tail -1
 
 5. **品質** (1-5): 出力物の品質は高かったか？ベストプラクティスに従っていたか？
 
+6. **ビジョン乖離** (Vision OSセッションのみ): `/vision-os` で作成した `VISION.md` と最終成果物の乖離度を評価。
+   - 乖離度 Low: ビジョン通りの実装
+   - 乖離度 Mid: 意図的なピボット（理由を記録）
+   - 乖離度 High: 問題あり（次回セッションで修正必要）
+
 ### 評価フォーマット
 
 ```markdown
@@ -294,6 +349,7 @@ echo "=== SSD After ===" && df -h /Volumes/PortableSSD | tail -1
 | コミュニケーション | X/5 | [具体的な問題] |
 | 自律性 | X/5 | [具体的な問題] |
 | 品質 | X/5 | [具体的な問題] |
+| ビジョン乖離 | Low/Mid/High | (Vision OSセッションのみ) |
 | **総合** | XX/25 | |
 
 ### 最大の課題
@@ -351,6 +407,20 @@ Generated: [日時]
 
 **出力先**: プロジェクトルートに `NEXT_SESSION.md` を生成
 
+### SSD ブレインログ保存
+
+NEXT_SESSION.md を SSD にも保存し、セッション間の知識持続性を担保：
+
+```bash
+LOG_DIR="/Volumes/PortableSSD/.antigravity/brain_log"
+mkdir -p "$LOG_DIR" 2>/dev/null
+DATE=$(date +%Y-%m-%d_%H%M)
+cp NEXT_SESSION.md "$LOG_DIR/session_${DATE}.md" 2>/dev/null && echo "✅ SSDブレインログ保存: $LOG_DIR/session_${DATE}.md" || echo "⚠️ SSD未接続、ローカルのみ保存"
+```
+
+> [!TIP]
+> 次回の `/checkin` Phase 2.7 で `NEXT_SESSION.md` と SSD ブレインログが自動読み込まれる。
+
 ---
 
 ## Phase 5: 完了
@@ -360,6 +430,7 @@ Generated: [日時]
 - 自己評価完了
 - **改善提案の実装完了 (Kaizen Implemented)**
 - **NEXT_SESSION.md 生成済み**
+- **`.session_state` 削除済み（コンテキストは NEXT_SESSION.md に引き継ぎ）**
 
 Safe to shutdown.
 

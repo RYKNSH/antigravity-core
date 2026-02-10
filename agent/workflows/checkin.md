@@ -3,7 +3,19 @@ description: セッション開始時に不要データを削除し、環境を�
 ---
 # Check-in (セッション開始)
 
-作業開始時に実行。クリーンアップ＋環境の最新化。
+作業開始時に実行。クリーンアップ＋環境の最新化＋前回セッション引き継ぎ。
+
+> [!NOTE]
+> **エージェント向け**: `.session_state` が存在する場合、前回のCompaction前コンテキストを復元可能。
+> ルーティング判断は [`WORKFLOW_ROUTER.md`](file:///Volumes/PortableSSD/.antigravity/agent/workflows/WORKFLOW_ROUTER.md)、契約は [`WORKFLOW_CONTRACTS.md`](file:///Volumes/PortableSSD/.antigravity/agent/workflows/WORKFLOW_CONTRACTS.md) を参照。
+
+## Cross-Reference
+
+```
+/go → /checkin（自動呼び出し）→ /work or /vision-os
+                                    ↑
+              NEXT_SESSION.md を自動読み込み
+```
 
 ## 保持するもの
 
@@ -38,7 +50,7 @@ echo "=== SSD Structure ===" && ls /Volumes/PortableSSD/.antigravity/ 2>/dev/nul
 // turbo
 2. 現在のストレージ確認
 ```bash
-df -h / | tail -1
+df -h . | tail -1
 ```
 
 
@@ -189,17 +201,46 @@ fi
 
 ---
 
+## Phase 2.7: 前回セッション引き継ぎ（自動）
+
+前回の `/checkout` で生成された `NEXT_SESSION.md` を自動的に読み込み、コンテキストを復元する。
+
+14. NEXT_SESSION.md の検索と読み込み
+
+```bash
+# プロジェクトルートを検索
+NEXT_SESSION=$(find . /Volumes/PortableSSD/STUDIO -maxdepth 3 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
+if [ -n "$NEXT_SESSION" ]; then
+  echo "📋 前回セッション引き継ぎ発見: $NEXT_SESSION"
+  cat "$NEXT_SESSION"
+else
+  echo "ℹ️  NEXT_SESSION.md なし（新規セッション）"
+fi
+```
+
+15. 引き継ぎ内容の表示
+
+**NEXT_SESSION.md が見つかった場合:**
+- 未完了タスクを一覧表示
+- 「続きから作業しますか？ 新しいタスクを始めますか？」と確認
+- SSD ブレインログ (`/Volumes/PortableSSD/.antigravity/brain_log/`) にも最新ログがあれば参照
+
+**見つからなかった場合:**
+- スキップして Phase 3 へ
+
+---
+
 ## Phase 3: 完了
 
-14. GEMINI.mdリソース一覧を動的更新
+16. GEMINI.mdリソース一覧を動的更新
 ```bash
 /Volumes/PortableSSD/.antigravity/agent/scripts/list_resources.sh --update-gemini
 ```
 
 // turbo
-15. 最終確認
+17. 最終確認
 ```bash
-df -h / | tail -1 && echo "---" && sysctl vm.swapusage && echo "---"
+df -h . | tail -1 && echo "---"
 ls .agent/workflows/ 2>/dev/null | head -5
 ls .agent/skills/ 2>/dev/null | head -5
 echo "---Check-in complete!"
@@ -210,6 +251,14 @@ echo "---Check-in complete!"
 - ワークフロー最新化済み
 - スキル最新化済み（first-principles等のアップデート反映）
 - プロジェクト環境復元済み（指定プロジェクトのみ）
+- 前回セッション引き継ぎ済み（NEXT_SESSION.md）
+
+## Vision OS モード対応
+
+`/go --vision "ビジョン"` 経由で呼ばれた場合:
+- チェックイン完了後、`/vision-os` へ自動分岐
+- ビジョンテキストをコンテキストとして `/vision-os` に渡す
+- 通常の `/work` フローはスキップ
 
 ## 注意
 

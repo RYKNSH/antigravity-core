@@ -6,6 +6,17 @@ description: Generates a "Social Knowledge" blog post from recent work and uploa
 
 > **ビジョン**: 「働いた証」を「価値ある資産」に変える
 
+## Cross-Reference
+
+```
+/checkout Phase 0 → Social Knowledge Score ≥ 5 → /checkpoint_to_blog
+/vision-os Phase 6 → 自動判定 → /checkpoint_to_blog
+直接呼び出し → /checkpoint_to_blog
+記事生成後 → /publish（配信実行）
+          │
+          └─ QA: /debate deep --preset=social-knowledge
+```
+
 ---
 
 ## ⚠️ 必須：最初にやること
@@ -61,10 +72,17 @@ node /Volumes/PortableSSD/.antigravity/agent/scripts/auth_notion.js
 - **Framework Name**: この手法に名前をつけるなら？
 
 ### 2.5 Quality Assurance (Deep Debate)
-記事執筆前、またはドラフト作成後に必ず `/debate deep` を実行し、以下の観点で品質を検証する：
-- **Universal Value**: 個人的な体験が普遍的な知恵に昇華されているか？
-- **Physical Metaphor**: 物理的・数学的なメタファーで本質を突いているか？
-- **Narrative Arc**: 読者の感情を動かす構成になっているか？
+記事執筆前、またはドラフト作成後に必ず `/debate deep --preset=social-knowledge` を実行。
+
+プリセットにより以下のチームが自動編成される:
+- **Skeptic**: 批判的視点（「本当に価値があるのか？」）
+- **Empathy Coach**: 読者目線（「非エンジニアにも伝わるか？」）
+- **Storyteller**: 物語力（「感情を動かす構成か？」）
+
+検証3軸:
+- [ ] **Universal Value**: 個人的な体験が普遍的な知恵に昇華されているか？
+- [ ] **Physical Metaphor**: 物理的・数学的なメタファーで本質を突いているか？
+- [ ] **Narrative Arc**: 読者の感情を動かす構成になっているか？
 
 ### 3. Content Generation
 テンプレートに従って記事を生成:
@@ -108,4 +126,13 @@ git push
 - **段落**: 段落の間には必ず2行以上の空白
 - **禁忌**: 記号、テーブル、コマンド、リスト（純粋な散文で構成）
 - **クロージング**: 「One-Man Orchestra」への接続、余韻を残すフレーズ
+
+---
+
+## Daily Log 自動提案
+
+`/checkout` Phase 0 で Social Knowledge Score が 1-4 の場合、Evergreen Article ではなく Daily Log を提案。
+
+簡潔な活動報告を作成し、Discord に投稿して完了。
+Evergreen Article への昇格は次回以降で判断。
 

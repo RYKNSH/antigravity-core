@@ -1,0 +1,17 @@
+# macOS resource forks
+._*
+.DS_Store
+
+# Logs
+logs/
+
+# Queue (runtime state, not source)
+queue/running/
+queue/completed/
+queue/blocked/
+
+# Node modules
+node_modules/
+
+# Environment secrets
+.env

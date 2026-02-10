@@ -16,8 +16,16 @@ description: 強制的にMulti-Persona Debateを実行し、提案を複数ペ�
 |---------|-------------|----------------|
 | `/debate` | 標準ディベート（3〜5名） | 1ラウンド + 統合まで自動実行 |
 | `/debate deep` | 深掘り版（5名以上） | **最低3ラウンド** + 疑問が尽きるまで継続 |
-| `/debate team` | チームレビュー（合意形成） | **全員が `Apply` または `Compromise` するまで継続** |
+| `/debate team` | チームレビュー（合意形成） | **全員が `Approve` または `Compromise` するまで継続** |
 | `/debate quick` | クイック版（Skeptic + 1名） | 1ラウンドのみ |
+
+### Presets（チームプリセット）
+
+| Preset | 用途 | 自動編成チーム |
+|--------|------|----------------|
+| `--preset=titan` | `/vision-os` のビジョン議論 | Jensen + Steve + Elon + Skeptic |
+| `--preset=social-knowledge` | `/checkpoint_to_blog` のQA | Skeptic + Empathy Coach + Storyteller |
+| (なし) | 通常 | `persona-orchestration` で動的アサイン |
 
 ---
 
@@ -107,6 +115,20 @@ Moderator は議論の状況を評価し、次を決定する。
 
 ---
 
+### Step 4: Post-Debate Actions（自動連携）
+
+ディベート完了後、呼び出し元に応じて自動アクションを実行：
+
+| 呼び出し元 | 自動アクション |
+|-----------|---------------|
+| `/vision-os` Phase 2 | `VISION.md` をディベート結果で更新 |
+| `/vision-os` Phase 5 | 合否を返し、`Block` なら修正ループへ |
+| `/checkpoint_to_blog` QA | 品質スコアを返す（Pass/Fail） |
+| `/verify` Phase 3 | 検証結果サマリーに統合 |
+| 直接呼び出し | Final Report のみ出力 |
+
+---
+
 ## 3. Specific Mode Instructions
 
 ### `/debate deep` (The Five Whys)
@@ -124,7 +146,29 @@ Moderator は議論の状況を評価し、次を決定する。
 
 ---
 
-## 4. Execution Prompt (For Agent)
+## 4. Preset Details
+
+### `--preset=titan` (Vision OS 専用)
+
+Jensen/Steve/Elon の3巨頭 + Skeptic の固定チーム。
+Vision OS のPhase 2（ビジョン精錬）とPhase 5（品質ゲート）で使用。
+
+- **Jensen**: Moderator としてアラインメントを管理。`node agent/scripts/jensen_ceo.js` の指示に従う。
+- **Steve**: 品質への執着。`node agent/scripts/steve_job.js` の指示に従い、「これはクソだ」と言える唯一のペルソナ。
+- **Elon**: First Principles。`node agent/scripts/elon_musk.js` の指示に従い、不要な部分を削る。
+- **Skeptic**: `persona-orchestration` から召喚。根本を問う。
+
+### `--preset=social-knowledge` (記事QA専用)
+
+`/checkpoint_to_blog` の品質保証で使用。以下の3軸で検証：
+
+- [ ] **Universal Value**: 個人的な体験が普遍的な知恵に昇華されているか？
+- [ ] **Physical Metaphor**: 物理的・数学的なメタファーで本質を突いているか？
+- [ ] **Narrative Arc**: 読者の感情を動かす構成になっているか？
+
+---
+
+## 5. Execution Prompt (For Agent)
 
 このワークフローを実行する際、エージェントは以下のマインドセットを持つこと：
 
@@ -132,6 +176,19 @@ Moderator は議論の状況を評価し、次を決定する。
 2. **止まるな**。ユーザーに「次へ行きますか？」と聞くな。自分で判断して進め。
 3. **厳しくあれ**。なれ合いの議論は無価値だ。バチバチにやり合わせろ。
 4. **知識を使え**。`grep_search` や `read_file` を駆使し、議論の質をファクトベースで高めろ。
+5. **プリセットを守れ**。`--preset` 指定がある場合、動的チーム編成をスキップし、指定されたチームで即座に開始。
 
 **Start Command**:
 (もしユーザー入力が `/debate` 系なら、即座に Step 0 から開始せよ)
+
+---
+
+## 6. Cross-Reference（ワークフロー連携図）
+
+| 呼び出し元 | 使用モード | 用途 |
+|-----------|-----------|------|
+| `/vision-os` Phase 2 | `/debate deep --preset=titan` | ビジョン精錬 |
+| `/vision-os` Phase 5 | `/debate team --preset=titan` | 品質ゲート |
+| `/checkpoint_to_blog` Step 2.5 | `/debate deep --preset=social-knowledge` | 記事QA |
+| `/verify` Phase 3 | `/debate quick` | クイックレビュー |
+| `/work` (レビュー判定) | `/debate` | 標準ディベート |

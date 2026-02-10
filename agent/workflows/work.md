@@ -4,6 +4,13 @@ description: タスクを自然言語で指定し、適切なワークフロー�
 
 # /work - メタワークフロー
 
+## Cross-Reference
+
+```
+/go Phase 2 → /work → /new-feature|/bug-fix|/refactor|/spec → /verify
+/checkin → /work → /checkout
+```
+
 > [!TIP]
 > **目標: 3コマンド → 1コマンド**
 > `/checkin` → `/work "タスク"` → `/checkout`

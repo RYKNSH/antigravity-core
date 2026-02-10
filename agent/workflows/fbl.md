@@ -13,6 +13,18 @@ description: FBL (Feedback Loop) - ユーザー体験を極限まで高める自
 FBLは実装後に自動で品質を検証し、問題があれば自己修正するフィードバックループ。
 ユーザーに確認を求める前に、可能な限り高品質な状態に仕上げる。
 
+## Cross-Reference
+
+```
+/verify Phase 2 → /fbl（Phase 0スキップ）→ Phase 1-7
+/fbl 直接呼出し → Phase 0-7 全実行
+/fbl deep → Phase 0-7 + /debate quick
+```
+
+> [!IMPORTANT]
+> `/verify` 経由で呼ばれた場合、Phase 0（lint/typecheck/test）は `/verify` Phase 1 で既に実行済みのためスキップする。
+> 重複実行を防止し、検証速度を向上させる。
+
 ---
 
 ## バリエーション

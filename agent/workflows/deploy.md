@@ -9,6 +9,17 @@ description: 本番環境へのデプロイワークフロー
 - main/master ブランチにマージ済みであること
 - 環境変数が正しく設定されていること
 
+## Cross-Reference
+
+```
+/verify → /ship Phase 4 → /deploy（内部実装）
+/new-feature Step 9 → /deploy（参照）→ 実際は /ship 経由を推奨
+```
+
+> [!NOTE]
+> `/deploy` はデプロイの実行手順。通常は `/ship` 経由で呼び出される。
+> 直接 `/deploy` を使うのは緊急デプロイ時のみ。
+
 ---
 
 ## デプロイ前チェックリスト

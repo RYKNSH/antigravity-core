@@ -6,6 +6,16 @@ description: 記事配信（学習・昇格・予約）の統合ワークフロ�
 
 概要: Notion上の記事配送状況を確認し、下書きの昇格、スケジューリング、および必要に応じた学習ループを一括管理する統合コマンド。
 
+## Cross-Reference
+
+```
+/checkpoint_to_blog = コンテンツ生成（作業→記事変換）
+/publish = 配信実行（昇格・予約・配信）
+/learn_from_blog = フィードバック（正解データから学習）
+
+典型フロー: /checkout → /checkpoint_to_blog → /publish → /learn_from_blog
+```
+
 ## 手順
 
 1.  **ドラフト記事の確認と昇格 (Promote Drafts)**

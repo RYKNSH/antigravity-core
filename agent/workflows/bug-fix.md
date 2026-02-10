@@ -4,6 +4,13 @@ description: バグ修正の際の標準ワークフロー
 
 # バグ修正ワークフロー
 
+## Cross-Reference
+
+```
+/work "バグ修正" → /bug-fix → /verify --quick → /ship
+/go → /work → /bug-fix → /verify
+```
+
 > [!IMPORTANT]
 > Claude Code 公式推奨: **探索 → 計画 → 実装 → コミット** の順序を厳守
 
@@ -162,3 +169,13 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
 **出力**: 学びがあれば `docs/DECISIONS.md` または `docs/PRINCIPLES.md` に追記
+
+---
+
+### 11. 統合検証（自動）
+
+修正完了後、`/verify --quick` を自動実行。
+直接呼び出し時も `/work` 経由時も同じ品質保証を担保。
+
+- テスト全パス → `/ship` 可能
+- テスト失敗 → Step 5 に戻って修正

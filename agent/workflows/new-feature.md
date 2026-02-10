@@ -4,6 +4,13 @@ description: 新機能を開発する際の標準ワークフロー
 
 # 新機能開発ワークフロー
 
+## Cross-Reference
+
+```
+/work "新機能" → /spec → /new-feature → /verify → /ship
+/go → /work → /new-feature → /verify
+```
+
 > [!IMPORTANT]
 > Claude Code 公式推奨: **探索 → 計画 → 実装 → コミット** の順序を厳守
 
@@ -149,3 +156,13 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
 **出力**: ボトルネックがあれば `docs/BOTTLENECK.md` に記録
+
+---
+
+### 11. 統合検証（自動）
+
+実装完了後、`/verify --quick` を自動実行。
+直接呼び出し時も `/work` 経由時も同じ品質保証を担保。
+
+- テスト全パス → `/ship` 可能
+- テスト失敗 → Step 6 に戻って修正

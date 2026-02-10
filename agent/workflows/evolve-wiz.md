@@ -7,6 +7,14 @@ description: 未知のスキルを自律的に・リサーチ・獲得し、実�
 **Concept**: 未知の技術領域に対し、「学習 -> 破壊的検証 -> 実装 -> 監査」のプロセスを回す。
 **Philosophy**: "Failure-Driven Evolution" - 実際にエラーを起こさせ、その対策を実装することで堅牢性を担保する。
 
+## Cross-Reference
+
+```
+/vision-os Phase 4 → /evolve-wiz → /debate team (監査)
+/go --vision → /vision-os → /evolve-wiz
+直接呼出し → /evolve-wiz → /debate team
+```
+
 ---
 
 ## 1. Trigger
@@ -45,8 +53,9 @@ description: 未知のスキルを自律的に・リサーチ・獲得し、実�
 1.  **Plan**: 検証済みスキル（および対策済みのアンチパターン）を使って本番コードを実装。
 
 ### Phase 4: Review Board (Audit)
-1.  **Execute**: `node agent/scripts/review_board.js <file_path> <lint_command>`
-2.  **Debate**: `/debate team` をエミュレートして監査。
+1.  **Execute**: `/debate team` を実行（独自実装ではなく、統合ディベートシステムを使用）。
+2.  **Team**: タスクに応じたペルソナが自動編成される。
+    -   Vision OS 経由の場合: `--preset=titan` が適用される。
 3.  **Fix**: 指摘事項を修正。
 
 ---

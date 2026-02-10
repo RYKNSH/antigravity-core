@@ -8,13 +8,18 @@ description: セッション開始から作業まで全自動化する究極の�
 > **これが唯一の必須コマンド**
 > セッション開始 → 作業 → 終了まで、このコマンドだけで完結
 
+> [!NOTE]
+> **エージェント向け**: ルーティング判断は [`WORKFLOW_ROUTER.md`](file:///Volumes/PortableSSD/.antigravity/agent/workflows/WORKFLOW_ROUTER.md)、入出力契約は [`WORKFLOW_CONTRACTS.md`](file:///Volumes/PortableSSD/.antigravity/agent/workflows/WORKFLOW_CONTRACTS.md) を参照。
+> セッション内状態は `.session_state` で永続化する（Phase開始/遷移/完了時に更新）。
+
 ---
 
 ## 使用方法
 
 ```
-/go                    # セッション開始のみ
-/go "タスク"           # セッション開始 + タスク指定
+/go                          # セッション開始のみ
+/go "タスク"                  # セッション開始 + タスク指定
+/go --vision "ビジョン"       # セッション開始 + ビジョン駆動開発
 ```
 
 ---
@@ -39,7 +44,9 @@ Ready!
 
 ---
 
-### Phase 2: 作業モード（自然言語）
+### Phase 2: 作業モード
+
+#### A. 通常モード（自然言語）
 
 タスクが指定された場合、または自然言語でタスクを受け取った場合:
 
@@ -52,6 +59,21 @@ Ready!
 
 [🔵 検証中] テスト実行中...
 [🟢 作業中] ✅ 検証完了、問題なし
+```
+
+#### B. ビジョンモード (`--vision`)
+
+`/go --vision "ビジョン"` で起動した場合:
+
+```markdown
+[🟣 ビジョン駆動] User: 完全自律AI駆動型開発環境
+
+→ /vision-os を内部呼び出し
+→ Jensen Interview → Steve Vision → Elon Blueprint
+→ 実装 → Quality Gate → Knowledge Capture
+
+[🔵 ディベート中] Titanチームが議論中...
+[🟣 ビジョン駆動] ✅ ビジョン実現完了
 ```
 
 **作業中は一切のコマンド不要**
@@ -105,8 +127,9 @@ Ready!
 | フェーズ | 内部ワークフロー |
 |----------|-----------------|
 | 開始時 | `/checkin`, `/dev` |
-| 作業中 | `/work`, `/verify` |
-| 終了時 | `/ship`（任意）, `/checkout` |
+| 作業中（通常） | `/work`, `/verify` |
+| 作業中（ビジョン） | `/vision-os`, `/debate --preset=titan`, `/verify` |
+| 終了時 | `/ship`（任意）, `/checkout`, `/checkpoint_to_blog`（自動判定） |
 
 **ユーザーはこれらを意識する必要なし**
 
@@ -120,6 +143,7 @@ Ready!
 /go --manual     # 従来の個別コマンドモード
 /go --no-dev     # 開発サーバー起動をスキップ
 /go --skip-check # 環境チェックをスキップ
+/go --vision     # ビジョン駆動モード（/vision-osを内部呼び出し）
 ```
 
 ---
@@ -137,3 +161,4 @@ Ready!
 
 > [!NOTE]
 > **/go = セッションの始まりと終わり、そしてその間のすべて**
+> **`--vision` でビジョンから始めれば、3巨頭が全てを導く**

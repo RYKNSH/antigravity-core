@@ -6,6 +6,16 @@ description: Notionで手動修正された記事から「正解データ」を�
 
 ユーザーがNotion上で手直しした「完成形の記事」を取り込み、AIの執筆スキル（人格・トーン・構成）をその正解データに合わせてチューニングする。
 
+## Cross-Reference
+
+```
+/checkpoint_to_blog = コンテンツ生成（作業→記事）
+/publish = 配信実行（昇格・予約）
+/learn_from_blog = フィードバック（人間の修正から学習）
+
+典型フロー: /checkpoint_to_blog → /publish → ユーザーが手直し → /learn_from_blog
+```
+
 ## 手順
 
 1. **対象の特定**
