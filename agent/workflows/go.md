@@ -9,7 +9,7 @@ description: セッション開始から作業まで全自動化する究極の�
 > セッション開始 → 作業 → 終了まで、このコマンドだけで完結
 
 > [!NOTE]
-> **エージェント向け**: ルーティング判断は [`WORKFLOW_ROUTER.md`](file:///Volumes/PortableSSD/.antigravity/agent/workflows/WORKFLOW_ROUTER.md)、入出力契約は [`WORKFLOW_CONTRACTS.md`](file:///Volumes/PortableSSD/.antigravity/agent/workflows/WORKFLOW_CONTRACTS.md) を参照。
+> **エージェント向け**: ルーティング判断は [`WORKFLOW_ROUTER.md`](file://WORKFLOW_ROUTER.md)、入出力契約は [`WORKFLOW_CONTRACTS.md`](file://WORKFLOW_CONTRACTS.md) を参照。
 > セッション内状態は `.session_state` で永続化する（Phase開始/遷移/完了時に更新）。
 
 ---
@@ -34,7 +34,7 @@ description: セッション開始から作業まで全自動化する究極の�
 0. **セッション状態の初期化/復元**
 ```bash
 # 前回のstateが残っていれば読み込み（Compaction復元用）
-STATE_SCRIPT="/Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js"
+STATE_SCRIPT="$ANTIGRAVITY_DIR/agent/scripts/session_state.js"
 EXISTING=$(node "$STATE_SCRIPT" read 2>/dev/null)
 if [ "$EXISTING" != "null" ] && [ -n "$EXISTING" ]; then
   echo "📋 前回セッション状態を復元:"
@@ -64,7 +64,7 @@ Ready!
 // turbo
 **Phase遷移時にsession stateを更新:**
 ```bash
-node /Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js set-workflow '/work' 'phase2_active'
+node $ANTIGRAVITY_DIR/agent/scripts/session_state.js set-workflow '/work' 'phase2_active'
 ```
 
 #### A. 通常モード（自然言語）

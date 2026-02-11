@@ -22,27 +22,27 @@ description: 記事配信（学習・昇格・予約）の統合ワークフロ�
     -   Notion上で「Draft」状態の記事を検索し、配信待ち（Ready）へ昇格させる。
     -   ※ 実行前に確認が入るようにスクリプト側で制御（現在は一括処理だが、将来的には対話モードを検討）
     ```bash
-    node /Volumes/PortableSSD/.antigravity/agent/scripts/promote_drafts.js
+    node $ANTIGRAVITY_DIR/agent/scripts/promote_drafts.js
     ```
 
 2.  **予約スケジュールの最適化 (Smart Scheduling)**
     -   「Ready」状態の記事に対し、直近のゴールデンタイム（08, 12, 18, 22時）を割り当てる。
     -   **Zero Overlap**: 既に予約が入っている日時を認識し、重複を避けて末尾に追加する。
     ```bash
-    node /Volumes/PortableSSD/.antigravity/agent/scripts/schedule_posts.js
+    node $ANTIGRAVITY_DIR/agent/scripts/schedule_posts.js
     ```
 
 3.  **配信の自動化 (GAS Deployment)**
     -   配信処理はクラウド（Google Apps Script）が担当する。
     -   以下のコードをGASプロジェクトにコピペし、トリガー（1時間毎）を設定済みか確認する。
-    -   Code: `/Volumes/PortableSSD/.antigravity/agent/scripts/gas_publisher.js`
+    -   Code: `$ANTIGRAVITY_DIR/agent/scripts/gas_publisher.js`
     ```bash
-    cat /Volumes/PortableSSD/.antigravity/agent/scripts/gas_publisher.js | pbcopy
+    cat $ANTIGRAVITY_DIR/agent/scripts/gas_publisher.js | pbcopy
     ```
 
 5.  **社会知学習 (Optional Learning Loop)**
     -   もし手動で修正した「正解記事」がある場合、以下のコマンドで学習を行う。
-    -   `node /Volumes/PortableSSD/.antigravity/agent/scripts/fetch_notion_page.js <URL>`
+    -   `node $ANTIGRAVITY_DIR/agent/scripts/fetch_notion_page.js <URL>`
     -   ※これは `/learn_from_blog` ワークフローとして独立しても良い。
 
 ---

@@ -7,7 +7,7 @@ description: セッション開始時に不要データを削除し、環境を�
 
 > [!NOTE]
 > **エージェント向け**: `.session_state` が存在する場合、前回のCompaction前コンテキストを復元可能。
-> ルーティング判断は [`WORKFLOW_ROUTER.md`](file:///Volumes/PortableSSD/.antigravity/agent/workflows/WORKFLOW_ROUTER.md)、契約は [`WORKFLOW_CONTRACTS.md`](file:///Volumes/PortableSSD/.antigravity/agent/workflows/WORKFLOW_CONTRACTS.md) を参照。
+> ルーティング判断は [`WORKFLOW_ROUTER.md`](file://WORKFLOW_ROUTER.md)、契約は [`WORKFLOW_CONTRACTS.md`](file://WORKFLOW_CONTRACTS.md) を参照。
 
 ## Cross-Reference
 
@@ -39,7 +39,7 @@ description: セッション開始時に不要データを削除し、環境を�
 GitHub から最新の Antigravity core を pull（他環境からの変更を取得）:
 
 ```bash
-ANTIGRAVITY_DIR="/Volumes/PortableSSD/.antigravity"
+ANTIGRAVITY_DIR="$ANTIGRAVITY_DIR"
 [ ! -d "$ANTIGRAVITY_DIR" ] && ANTIGRAVITY_DIR="$HOME/.antigravity"
 if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   cd "$ANTIGRAVITY_DIR"
@@ -53,13 +53,13 @@ fi
 
 0. USAGE_TRACKER更新（自動トラッキング）
 ```bash
-/Volumes/PortableSSD/.antigravity/agent/scripts/update_usage_tracker.sh checkin
+$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh checkin
 ```
 
 // turbo
 1. SSD構造確認（コンテキスト把握高速化）
 ```bash
-echo "=== SSD Structure ===" && ls /Volumes/PortableSSD/.antigravity/ 2>/dev/null || echo "SSD not connected"
+echo "=== SSD Structure ===" && ls $ANTIGRAVITY_DIR/ 2>/dev/null || echo "SSD not connected"
 ```
 
 // turbo
@@ -110,26 +110,26 @@ mkdir -p .agent/{skills,workflows}
 8. グローバルワークフローの同期（SSD → ワークスペース）
 SSDから最新のワークフローを同期（ローカルの方が新しいファイルは保護）:
 ```bash
-rsync -a --update /Volumes/PortableSSD/.antigravity/agent/workflows/*.md .agent/workflows/ 2>/dev/null && echo "workflows synced (--update: local customizations preserved)" || echo "SSD not connected, skipping workflow sync"
+rsync -a --update $ANTIGRAVITY_DIR/agent/workflows/*.md .agent/workflows/ 2>/dev/null && echo "workflows synced (--update: local customizations preserved)" || echo "SSD not connected, skipping workflow sync"
 ```
 
 9. グローバルスキルの同期・アップデート（SSD → ワークスペース）
 SSDから最新のスキルを同期（ローカルの方が新しいファイルは保護）:
 ```bash
-rsync -a --update /Volumes/PortableSSD/.antigravity/agent/skills/ .agent/skills/ 2>/dev/null && echo "skills synced/updated (--update: local customizations preserved)" || echo "SSD not connected, skipping skill sync"
+rsync -a --update $ANTIGRAVITY_DIR/agent/skills/ .agent/skills/ 2>/dev/null && echo "skills synced/updated (--update: local customizations preserved)" || echo "SSD not connected, skipping skill sync"
 ```
 
 10. MCP設定の同期（SSD → ホスト）
 SSDからマスターMCP設定をコピーし、チルダパスを展開、gdrive クレデンシャルをローカルにコピー:
 ```bash
 # MCP設定コピー + チルダ展開
-cp /Volumes/PortableSSD/.antigravity/mcp_config.json ~/.gemini/antigravity/mcp_config.json 2>/dev/null && \
+cp $ANTIGRAVITY_DIR/mcp_config.json ~/.gemini/antigravity/mcp_config.json 2>/dev/null && \
   sed -i '' "s|~/|$HOME/|g" ~/.gemini/antigravity/mcp_config.json && \
   echo "mcp_config synced" || echo "SSD not connected, skipping MCP config sync"
 # gdrive クレデンシャルをローカルにコピー
 mkdir -p ~/.secrets/antigravity/gdrive && \
-  cp /Volumes/PortableSSD/.antigravity/credentials/credentials.json ~/.secrets/antigravity/gdrive/gcp-oauth.keys.json 2>/dev/null && \
-  cp /Volumes/PortableSSD/.antigravity/credentials/.gdrive-server-credentials.json ~/.secrets/antigravity/gdrive/.gdrive-server-credentials.json 2>/dev/null && \
+  cp $ANTIGRAVITY_DIR/credentials/credentials.json ~/.secrets/antigravity/gdrive/gcp-oauth.keys.json 2>/dev/null && \
+  cp $ANTIGRAVITY_DIR/credentials/.gdrive-server-credentials.json ~/.secrets/antigravity/gdrive/.gdrive-server-credentials.json 2>/dev/null && \
   echo "gdrive credentials synced" || echo "gdrive credentials not found, skipping"
 # mcp-server-gdrive 確認（グローバルインストールはユーザー確認が必要）
 if ! command -v mcp-server-gdrive >/dev/null 2>&1; then
@@ -140,7 +140,7 @@ fi
 10.5 GEMINI.md マスター同期（SSD → ホスト）
 SSDマスターから `~/.gemini/GEMINI.md` を同期し、Proactive Triggers等のグローバルルールを反映:
 ```bash
-GEMINI_MASTER="/Volumes/PortableSSD/.antigravity/agent/rules/GEMINI.md.master"
+GEMINI_MASTER="$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master"
 GEMINI_LOCAL="$HOME/.gemini/GEMINI.md"
 if [ -f "$GEMINI_MASTER" ]; then
   cp "$GEMINI_MASTER" "$GEMINI_LOCAL" && echo "✅ GEMINI.md synced from SSD master"
@@ -236,7 +236,7 @@ fi
 
 ```bash
 # プロジェクトルートを検索
-NEXT_SESSION=$(find . /Volumes/PortableSSD/STUDIO -maxdepth 3 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
+NEXT_SESSION=$(find . $SSD/STUDIO -maxdepth 3 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
 if [ -n "$NEXT_SESSION" ]; then
   echo "📋 前回セッション引き継ぎ発見: $NEXT_SESSION"
   cat "$NEXT_SESSION"
@@ -250,7 +250,7 @@ fi
 **NEXT_SESSION.md が見つかった場合:**
 - 未完了タスクを一覧表示
 - 「続きから作業しますか？ 新しいタスクを始めますか？」と確認
-- SSD ブレインログ (`/Volumes/PortableSSD/.antigravity/brain_log/`) にも最新ログがあれば参照
+- SSD ブレインログ (`$ANTIGRAVITY_DIR/brain_log/`) にも最新ログがあれば参照
 
 **見つからなかった場合:**
 - スキップして Phase 3 へ
@@ -278,7 +278,7 @@ done
 
 16. GEMINI.mdリソース一覧を動的更新
 ```bash
-/Volumes/PortableSSD/.antigravity/agent/scripts/list_resources.sh --update-gemini
+$ANTIGRAVITY_DIR/agent/scripts/list_resources.sh --update-gemini
 ```
 
 // turbo

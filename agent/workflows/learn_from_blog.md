@@ -26,12 +26,12 @@ description: Notionで手動修正された記事から「正解データ」を�
 2. **正解データの取得**
    - 以下のスクリプトを実行して、記事の全文（タイトル＋本文）を取得する。
    ```bash
-   node /Volumes/PortableSSD/.antigravity/agent/scripts/fetch_notion_page.js <PAGE_ID>
+   node $ANTIGRAVITY_DIR/agent/scripts/fetch_notion_page.js <PAGE_ID>
    ```
 
 3. **現状スキルの確認**
    - 以下のファイルを読む。
-   - `/Volumes/PortableSSD/.antigravity/agent/skills/checkpoint_social_blog.md`
+   - `$ANTIGRAVITY_DIR/agent/skills/checkpoint_social_blog.md`
 
 4. **差分分析と学習 (Active Learning)**
    - **取得したテキスト（正解）** と **現在のスキル定義** を比較し、以下の観点で分析する：
@@ -49,7 +49,7 @@ description: Notionで手動修正された記事から「正解データ」を�
     -   以下のスクリプトを実行し、記事をNotion上で「予約状態 (Ready)」にする。
     -   (実際の配信はクラウド上のGASが担当する)
     ```bash
-    node /Volumes/PortableSSD/.antigravity/agent/scripts/schedule_posts.js
+    node $ANTIGRAVITY_DIR/agent/scripts/schedule_posts.js
     ```
     -   ※実行後、「〇〇日〇〇時に予約されました」とユーザーに伝える。
 

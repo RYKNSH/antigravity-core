@@ -23,8 +23,8 @@ description: Generates a "Social Knowledge" blog post from recent work and uploa
 
 **記事を書く前に、以下を必ず参照する:**
 
-1. **テンプレート**: `/Volumes/PortableSSD/.antigravity/blogs/article_template.md`
-2. **参考例（最新）**: `/Volumes/PortableSSD/.antigravity/blogs/07_verification_team.md`
+1. **テンプレート**: `$ANTIGRAVITY_DIR/blogs/article_template.md`
+2. **参考例（最新）**: `$ANTIGRAVITY_DIR/blogs/07_verification_team.md`
 
 > [!IMPORTANT]
 > 参考例の文体・構成・一人称を完全にコピーすること。
@@ -62,7 +62,7 @@ description: Generates a "Social Knowledge" blog post from recent work and uploa
 
 ### 1. Authentication & Setup
 ```bash
-node /Volumes/PortableSSD/.antigravity/agent/scripts/auth_notion.js
+node $ANTIGRAVITY_DIR/agent/scripts/auth_notion.js
 ```
 
 ### 2. Input Collection
@@ -87,7 +87,7 @@ node /Volumes/PortableSSD/.antigravity/agent/scripts/auth_notion.js
 ### 3. Content Generation
 テンプレートに従って記事を生成:
 ```
-/Volumes/PortableSSD/.antigravity/blogs/article_template.md
+$ANTIGRAVITY_DIR/blogs/article_template.md
 ```
 
 **5ブロック構成チェック:**
@@ -100,13 +100,13 @@ node /Volumes/PortableSSD/.antigravity/agent/scripts/auth_notion.js
 ### 4. Brand Check
 ブランドコンセプトに沿っているか確認:
 ```
-/Volumes/PortableSSD/.antigravity/brand_concept.md
+$ANTIGRAVITY_DIR/brand_concept.md
 ```
 
 ### 5. Review & Upload
 ユーザーに確認後、Notionにアップロード:
 ```bash
-node /Volumes/PortableSSD/.antigravity/agent/scripts/notion_poster.js [file]
+node $ANTIGRAVITY_DIR/agent/scripts/notion_poster.js [file]
 ```
 
 ### 6. Git Save

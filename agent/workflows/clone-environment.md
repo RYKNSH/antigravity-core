@@ -38,7 +38,7 @@ ls /Volumes/ | grep -v "Macintosh HD"
 NEW_SSD="/Volumes/[新しいSSD名]"
 
 # .antigravityディレクトリをコピー
-cp -R /Volumes/PortableSSD/.antigravity "$NEW_SSD/.antigravity"
+cp -R $ANTIGRAVITY_DIR "$NEW_SSD/.antigravity"
 
 # リソースフォーク（._ファイル）を削除
 find "$NEW_SSD/.antigravity" -name "._*" -delete

@@ -12,7 +12,7 @@ description: 自己進化提案 - 使用データに基づく改善案を生成
 
 ```bash
 echo "=== Usage Analysis ==="
-cat /Volumes/PortableSSD/.antigravity/USAGE_TRACKER.md 2>/dev/null | grep -E "^\| /" | head -10
+cat $ANTIGRAVITY_DIR/USAGE_TRACKER.md 2>/dev/null | grep -E "^\| /" | head -10
 ```
 
 ---
@@ -21,7 +21,7 @@ cat /Volumes/PortableSSD/.antigravity/USAGE_TRACKER.md 2>/dev/null | grep -E "^\
 
 ```bash
 echo "=== Recent Errors ==="
-find /Volumes/PortableSSD/.antigravity/logs -name "*.log" -mtime -7 -exec grep -l "error\|Error\|ERROR" {} \; 2>/dev/null | head -5
+find $ANTIGRAVITY_DIR/logs -name "*.log" -mtime -7 -exec grep -l "error\|Error\|ERROR" {} \; 2>/dev/null | head -5
 ```
 
 ---
@@ -30,7 +30,7 @@ find /Volumes/PortableSSD/.antigravity/logs -name "*.log" -mtime -7 -exec grep -
 
 ```bash
 echo "=== Stale Knowledge (14+ days) ==="
-find /Volumes/PortableSSD/.antigravity/knowledge -name "metadata.json" -mtime +14 2>/dev/null | wc -l
+find $ANTIGRAVITY_DIR/knowledge -name "metadata.json" -mtime +14 2>/dev/null | wc -l
 ```
 
 ---

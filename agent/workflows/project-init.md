@@ -9,7 +9,7 @@ description: プロジェクト初期化 - First Principles開発環境を構築
 既存または新規のプロジェクトに「First Principles」開発環境をセットアップ。
 
 ## 前提条件
-- SSD (`/Volumes/PortableSSD`) が接続されていること
+- Antigravity (`~/.antigravity`) がセットアップ済みであること（GitHub clone or SSD）
 - ワークスペースがAntigravityで開かれていること
 
 ---
@@ -55,8 +55,8 @@ SSD上のマスターをホームディレクトリにコピー（初回また�
 
 ```bash
 mkdir -p ~/.gemini
-if [ -f "/Volumes/PortableSSD/.antigravity/agent/rules/GEMINI.md.master" ]; then
-    cp /Volumes/PortableSSD/.antigravity/agent/rules/GEMINI.md.master ~/.gemini/GEMINI.md
+if [ -f "$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master" ]; then
+    cp $ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master ~/.gemini/GEMINI.md
     echo "✅ GEMINI.md synced from SSD"
 else
     echo "⚠️ GEMINI.md.master not found on SSD"
@@ -78,7 +78,7 @@ mkdir -p .agent/{skills,workflows,mcp,plugins}
 SSD上のスキルをワークスペースにコピー:
 
 ```bash
-cp -R /Volumes/PortableSSD/.antigravity/agent/skills/* .agent/skills/ 2>/dev/null || echo "No skills to copy"
+cp -R $ANTIGRAVITY_DIR/agent/skills/* .agent/skills/ 2>/dev/null || echo "No skills to copy"
 ```
 
 ---
@@ -86,7 +86,7 @@ cp -R /Volumes/PortableSSD/.antigravity/agent/skills/* .agent/skills/ 2>/dev/nul
 ## 4. グローバルワークフローの同期
 
 ```bash
-cp /Volumes/PortableSSD/.antigravity/agent/workflows/*.md .agent/workflows/ 2>/dev/null || echo "No workflows to copy"
+cp $ANTIGRAVITY_DIR/agent/workflows/*.md .agent/workflows/ 2>/dev/null || echo "No workflows to copy"
 ```
 
 ---
@@ -96,7 +96,7 @@ cp /Volumes/PortableSSD/.antigravity/agent/workflows/*.md .agent/workflows/ 2>/d
 ```bash
 if [ ! -d "docs" ]; then
   mkdir -p docs
-  cp /Volumes/PortableSSD/.antigravity/project-templates/docs/*.md docs/
+  cp $ANTIGRAVITY_DIR/project-templates/docs/*.md docs/
   echo "docs/ initialized from templates"
 else
   echo "docs/ already exists, skipping"
@@ -113,7 +113,7 @@ fi
 - `turbo.json`（Turborepoプロジェクトの場合）
 
 ```bash
-[ ! -f ".env.local" ] && [ -f "/Volumes/PortableSSD/.antigravity/project-templates/configs/.env.example" ] && cp /Volumes/PortableSSD/.antigravity/project-templates/configs/.env.example .env.local
+[ ! -f ".env.local" ] && [ -f "$ANTIGRAVITY_DIR/project-templates/configs/.env.example" ] && cp $ANTIGRAVITY_DIR/project-templates/configs/.env.example .env.local
 ```
 
 ---

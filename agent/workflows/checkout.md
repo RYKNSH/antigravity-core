@@ -99,7 +99,7 @@ Yesの場合: `/checkpoint_to_blog` を実行。
 Antigravity core の変更を GitHub に自動 push（MacBook 版との同期）:
 
 ```bash
-ANTIGRAVITY_DIR="/Volumes/PortableSSD/.antigravity"
+ANTIGRAVITY_DIR="$ANTIGRAVITY_DIR"
 if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   cd "$ANTIGRAVITY_DIR"
   if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
@@ -118,15 +118,15 @@ fi
 0. USAGE_TRACKER更新 & GEMINI.md同期チェック
 ```bash
 # Usage tracking
-/Volumes/PortableSSD/.antigravity/agent/scripts/update_usage_tracker.sh checkout
+$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh checkout
 
 # GEMINI.md master diff warning
 GEMINI_LOCAL="$HOME/.gemini/GEMINI.md"
-GEMINI_MASTER="/Volumes/PortableSSD/.antigravity/agent/rules/GEMINI.md.master"
+GEMINI_MASTER="$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master"
 if [ -f "$GEMINI_MASTER" ]; then
     if ! diff -q "$GEMINI_LOCAL" "$GEMINI_MASTER" > /dev/null 2>&1; then
         echo "⚠️  WARNING: GEMINI.md differs from SSD master!"
-        echo "    Run: cp ~/.gemini/GEMINI.md /Volumes/PortableSSD/.antigravity/agent/rules/GEMINI.md.master"
+        echo "    Run: cp ~/.gemini/GEMINI.md $ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master"
         echo "    Or review diff with: diff ~/.gemini/GEMINI.md $GEMINI_MASTER"
     else
         echo "✅ GEMINI.md is in sync with SSD master"
@@ -429,7 +429,7 @@ Generated: [日時]
 NEXT_SESSION.md を SSD にも保存し、セッション間の知識持続性を担保：
 
 ```bash
-LOG_DIR="/Volumes/PortableSSD/.antigravity/brain_log"
+LOG_DIR="$ANTIGRAVITY_DIR/brain_log"
 mkdir -p "$LOG_DIR" 2>/dev/null
 DATE=$(date +%Y-%m-%d_%H%M)
 cp NEXT_SESSION.md "$LOG_DIR/session_${DATE}.md" 2>/dev/null && echo "✅ SSDブレインログ保存: $LOG_DIR/session_${DATE}.md" || echo "⚠️ SSD未接続、ローカルのみ保存"
@@ -445,7 +445,7 @@ cp NEXT_SESSION.md "$LOG_DIR/session_${DATE}.md" 2>/dev/null && echo "✅ SSDブ
 // turbo
 ```bash
 # .session_state.json をアーカイブし、アクティブファイルを削除
-node /Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js snapshot
+node $ANTIGRAVITY_DIR/agent/scripts/session_state.js snapshot
 ```
 
 ---
