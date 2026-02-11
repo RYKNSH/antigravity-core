@@ -93,7 +93,24 @@ Yesの場合: `/checkpoint_to_blog` を実行。
     -   Get remote URL and branch name.
     -   Display the clickable Pull Request URL: `https://github.com/[owner]/[repo]/compare/[branch]?expand=1`
 
+## Phase 0.6: Antigravity GitHub Auto-Sync
+// turbo
+
+Antigravity core の変更を GitHub に自動 push（MacBook 版との同期）:
+
+```bash
+ANTIGRAVITY_DIR="/Volumes/PortableSSD/.antigravity"
+if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
+  cd "$ANTIGRAVITY_DIR"
+  if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+    git add -A && git commit -m "auto-sync: $(date +%Y-%m-%d_%H%M) checkout"
+  fi
+  git push origin main 2>/dev/null && echo "✅ Antigravity core synced to GitHub" || echo "⚠️ GitHub push failed (offline?)"
+fi
+```
+
 ---
+
 
 ## Phase 1: クリーンアップ
 

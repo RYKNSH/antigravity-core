@@ -33,6 +33,21 @@ description: セッション開始時に不要データを削除し、環境を�
 - Chrome/Adobe/Notion/npmキャッシュ
 
 
+## Phase 0: Antigravity GitHub Sync
+// turbo
+
+GitHub から最新の Antigravity core を pull（他環境からの変更を取得）:
+
+```bash
+ANTIGRAVITY_DIR="/Volumes/PortableSSD/.antigravity"
+[ ! -d "$ANTIGRAVITY_DIR" ] && ANTIGRAVITY_DIR="$HOME/.antigravity"
+if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
+  cd "$ANTIGRAVITY_DIR"
+  git pull origin main 2>/dev/null && echo "✅ Antigravity core updated from GitHub" || echo "⚠️ GitHub pull failed (offline?)"
+fi
+```
+
+---
 
 ## Phase 1: クリーンアップ
 
