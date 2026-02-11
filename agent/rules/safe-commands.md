@@ -39,6 +39,27 @@
 ## パッケージ確認
 - `pnpm list`, `npm list`
 
+## 🔒 Git Safety Rules (Cross-Project Guard)
+
+| ルール | 説明 |
+|--------|------|
+| **プロジェクトバウンダリ** | `git add/commit/push` 前に `git rev-parse --show-toplevel` を確認 |
+| **1タスク=1プロジェクト** | 複数プロジェクトにまたがるgit操作は禁止 |
+| **git_guard.sh 使用推奨** | `/Volumes/PortableSSD/.antigravity/agent/scripts/git_guard.sh <project> <cmd>` |
+| **session_state確認** | git操作前に `current_project` と一致することを確認 |
+
+```bash
+# ✅ 正しい git 操作フロー
+git_guard.sh videdit status         # まずプロジェクト確認
+git_guard.sh videdit add -A         # ガード付き add
+git_guard.sh videdit commit -m "x"  # ガード付き commit
+git_guard.sh videdit push           # ガード付き push
+
+# ❌ 禁止パターン
+cd /some/other/project && git add -A   # 別プロジェクトで気づかずcommit
+git add -A && git commit               # プロジェクト未確認で操作
+```
+
 ---
 
 ## 禁止コマンド

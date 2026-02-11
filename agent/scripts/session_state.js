@@ -11,6 +11,7 @@
  *   node session_state.js add-task '<task>' <priority>  # タスク追加
  *   node session_state.js complete-task '<task>'   # タスク完了
  *   node session_state.js set-workflow '<wf>' '<phase>'  # ワークフロー設定
+ *   node session_state.js set-project '<project_id>'    # プロジェクト設定
  *   node session_state.js snapshot                 # checkout用スナップショット
  */
 
@@ -37,7 +38,9 @@ function createDefaultState() {
       workflow: null,       // e.g. "/go", "/work", "/bug-fix"
       phase: null,          // e.g. "phase1_checkin", "phase2_work"
       parent_workflow: null, // ネストされたWF呼び出し時の親
-      started_at: null
+      started_at: null,
+      project: null,        // e.g. "videdit", "discord-buddy"
+      project_path: null    // e.g. "/Volumes/PortableSSD/STUDIO/Apps/Videdit"
     },
 
     // 保留中のタスク
@@ -315,6 +318,7 @@ switch (command) {
     console.log(`\n📊 Session Summary`);
     console.log(`   ID: ${state.session_id}`);
     console.log(`   Current WF: ${state.current.workflow || 'none'} [${state.current.phase || '-'}]`);
+    console.log(`   Project: ${state.current.project || 'none'}`);
     console.log(`   WFs executed: ${state.metrics.workflows_executed}`);
     console.log(`   Tasks: ${state.metrics.tasks_completed} completed / ${state.pending_tasks.filter(t => t.status !== 'done').length} pending`);
     console.log(`   Decisions: ${state.design_decisions.length}`);
@@ -327,8 +331,40 @@ switch (command) {
     break;
   }
 
+  case 'set-project': {
+    const projectId = args[0];
+    if (!projectId) {
+      console.error('❌ Usage: set-project <project_id>');
+      process.exit(1);
+    }
+    const state = readState();
+    if (!state) {
+      console.error('❌ No active session state');
+      process.exit(1);
+    }
+    // projects.json からパスを解決
+    const PROJECTS_FILE = path.join(SSD_ROOT, 'projects.json');
+    try {
+      const projects = JSON.parse(fs.readFileSync(PROJECTS_FILE, 'utf8'));
+      const proj = projects.projects[projectId];
+      if (!proj) {
+        console.error(`❌ Unknown project: "${projectId}"`);
+        console.error(`   Available: ${Object.keys(projects.projects).join(', ')}`);
+        process.exit(1);
+      }
+      state.current.project = projectId;
+      state.current.project_path = proj.path;
+      writeState(state);
+      console.log(`📂 Project set: ${projectId} → ${proj.path}`);
+    } catch (err) {
+      console.error(`❌ Failed to read projects.json: ${err.message}`);
+      process.exit(1);
+    }
+    break;
+  }
+
   default:
     console.log(`Usage: node session_state.js <command> [args]`);
-    console.log(`Commands: read | init | write | update-field | set-workflow | add-task | complete-task | add-decision | snapshot | summary`);
+    console.log(`Commands: read | init | write | update-field | set-workflow | set-project | add-task | complete-task | add-decision | snapshot | summary`);
     break;
 }
