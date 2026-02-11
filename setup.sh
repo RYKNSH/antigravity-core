@@ -27,7 +27,22 @@ else
   echo "✅ クローン完了"
 fi
 
-# 2. .env setup
+# 2. Node.js チェック
+echo ""
+echo "🔍 Node.js チェック..."
+if ! command -v node &> /dev/null; then
+  echo "❌ Node.js が見つかりません"
+  echo "   Node.js >= 18 をインストールしてください:"
+  echo "   brew install node"
+  echo ""
+  echo "   インストール後、再度 setup.sh を実行してください"
+  exit 1
+fi
+
+NODE_VERSION=$(node -v)
+echo "✅ Node.js $NODE_VERSION"
+
+# 3. .env setup
 if [ ! -f "$ANTIGRAVITY_DIR/.env" ]; then
   echo ""
   echo "⚠️  .env ファイルが見つかりません"
@@ -47,12 +62,41 @@ else
   echo "✅ .env 存在確認OK"
 fi
 
-# 3. Summary
+# 4. 依存関係インストール
+echo ""
+echo "📦 依存関係をインストール中..."
+
+# Heartbeat daemon
+if [ -f "$ANTIGRAVITY_DIR/heartbeat/package.json" ]; then
+  echo "   → heartbeat..."
+  cd "$ANTIGRAVITY_DIR/heartbeat" && npm install --silent 2>/dev/null
+  if [ $? -eq 0 ]; then
+    echo "   ✅ heartbeat 依存関係OK"
+  else
+    echo "   ⚠️  heartbeat npm install 失敗（後で手動実行: cd $ANTIGRAVITY_DIR/heartbeat && npm install）"
+  fi
+fi
+
+# Checkpoint tool
+if [ -f "$ANTIGRAVITY_DIR/agent/scripts/checkpoint/package.json" ]; then
+  echo "   → checkpoint..."
+  cd "$ANTIGRAVITY_DIR/agent/scripts/checkpoint" && npm install --silent 2>/dev/null
+  if [ $? -eq 0 ]; then
+    echo "   ✅ checkpoint 依存関係OK"
+  else
+    echo "   ⚠️  checkpoint npm install 失敗（後で手動実行: cd $ANTIGRAVITY_DIR/agent/scripts/checkpoint && npm install）"
+  fi
+fi
+
+cd "$ANTIGRAVITY_DIR"
+
+# 5. Summary
 echo ""
 echo "========================"
 echo "✅ Antigravity 環境準備完了"
 echo ""
 echo "📂 $ANTIGRAVITY_DIR"
+echo "   node:       $NODE_VERSION"
 echo "   workflows:  $(ls "$ANTIGRAVITY_DIR/agent/workflows/" 2>/dev/null | wc -l | tr -d ' ') files"
 echo "   skills:     $(ls "$ANTIGRAVITY_DIR/agent/skills/" 2>/dev/null | wc -l | tr -d ' ') files"
 echo "   scripts:    $(ls "$ANTIGRAVITY_DIR/agent/scripts/" 2>/dev/null | wc -l | tr -d ' ') files"

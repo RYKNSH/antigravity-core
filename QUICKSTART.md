@@ -2,6 +2,11 @@
 
 > SSD1本で、どこでも同じ開発環境を再現。
 
+## 前提条件
+
+- **Node.js >= 18** (`brew install node` でインストール)
+- **Git**
+
 ---
 
 ## Step 1: SSD接続
