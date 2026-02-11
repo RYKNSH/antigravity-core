@@ -1,17 +1,26 @@
-# macOS resource forks
+# macOS
 ._*
 .DS_Store
 
-# Logs
-logs/
+# === SECRETS (NEVER PUSH) ===
+.env
+.env.*
+credentials/
+*.pem
+*.key
 
-# Queue (runtime state, not source)
+# === RUNTIME DATA ===
+logs/
 queue/running/
 queue/completed/
 queue/blocked/
+brain_log/states/
 
-# Node modules
+# === LOCAL-ONLY CONFIG ===
+.session_state.json
+
+# === Node ===
 node_modules/
 
-# Environment secrets
-.env
+# === Build artifacts ===
+*.tgz
