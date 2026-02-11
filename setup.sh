@@ -1,160 +1,61 @@
 #!/bin/bash
-# ============================================================
-# Antigravity Bootstrap — SSD初回セットアップ
-#
-# Usage: bash /Volumes/PortableSSD/.antigravity/setup.sh
-#
-# 実行内容:
-# 1. Node.js 存在チェック
-# 2. npm install (heartbeat/package.json)
-# 3. LaunchAgent plist を登録
-# 4. queue ディレクトリを作成
-# 5. APIキーをKeychainに登録（対話型、初回のみ）
-# ============================================================
+# Antigravity Bootstrap - 新マシンへの環境展開
+# Usage: curl -sL https://raw.githubusercontent.com/RYKNSH/antigravity-core/main/setup.sh | bash
 
 set -e
 
-SSD_ROOT="/Volumes/PortableSSD"
-ANTIGRAVITY_DIR="$SSD_ROOT/.antigravity"
-HEARTBEAT_DIR="$ANTIGRAVITY_DIR/heartbeat"
-PLIST_NAME="com.antigravity.heartbeat"
-PLIST_SRC="$HEARTBEAT_DIR/$PLIST_NAME.plist"
-PLIST_DEST="$HOME/Library/LaunchAgents/$PLIST_NAME.plist"
+ANTIGRAVITY_DIR="$HOME/.antigravity"
+REPO_URL="https://github.com/RYKNSH/antigravity-core.git"
 
 echo "🚀 Antigravity Bootstrap"
 echo "========================"
-echo ""
 
-# --- 1. Node.js チェック ---
-echo "🔍 Step 1: Node.js チェック..."
-if ! command -v node &> /dev/null; then
-    echo "❌ Node.js が見つかりません。"
-    echo "   インストール: https://nodejs.org/ (v18以上)"
-    exit 1
-fi
-
-NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
-if [ "$NODE_VERSION" -lt 18 ]; then
-    echo "❌ Node.js v18以上が必要です。現在: $(node -v)"
-    exit 1
-fi
-echo "✅ Node.js $(node -v) detected"
-
-# --- 2. npm install ---
-echo ""
-echo "📦 Step 2: 依存パッケージインストール..."
-cd "$HEARTBEAT_DIR"
-npm install --production --silent 2>/dev/null || true
-echo "✅ Dependencies ready (zero external deps)"
-
-# --- 3. Queue ディレクトリ作成 ---
-echo ""
-echo "📂 Step 3: Queue ディレクトリ作成..."
-mkdir -p "$ANTIGRAVITY_DIR/queue/pending"
-mkdir -p "$ANTIGRAVITY_DIR/queue/running"
-mkdir -p "$ANTIGRAVITY_DIR/queue/completed"
-mkdir -p "$ANTIGRAVITY_DIR/queue/blocked"
-mkdir -p "$ANTIGRAVITY_DIR/logs"
-echo "✅ Queue directories created"
-
-# --- 4. LaunchAgent 登録 ---
-echo ""
-echo "🔧 Step 4: LaunchAgent 登録..."
-
-# plist が存在しなければ生成
-if [ ! -f "$PLIST_SRC" ]; then
-    echo "  Generating plist..."
-    cat > "$PLIST_SRC" << 'PLIST_EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.antigravity.heartbeat</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/local/bin/node</string>
-        <string>/Volumes/PortableSSD/.antigravity/heartbeat/heartbeat.js</string>
-    </array>
-    <key>StartInterval</key>
-    <integer>30</integer>
-    <key>StandardOutPath</key>
-    <string>/Volumes/PortableSSD/.antigravity/logs/heartbeat.log</string>
-    <key>StandardErrorPath</key>
-    <string>/Volumes/PortableSSD/.antigravity/logs/heartbeat.error.log</string>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <dict>
-        <key>PathState</key>
-        <dict>
-            <key>/Volumes/PortableSSD/.antigravity/heartbeat/heartbeat.js</key>
-            <true/>
-        </dict>
-    </dict>
-</dict>
-</plist>
-PLIST_EOF
-fi
-
-# Node.js パスを動的に修正 (homebrew or nvm)
-NODE_PATH=$(which node)
-sed -i '' "s|/usr/local/bin/node|$NODE_PATH|g" "$PLIST_SRC"
-
-# 既存のLaunchAgentを停止
-if [ -f "$PLIST_DEST" ]; then
-    launchctl unload "$PLIST_DEST" 2>/dev/null || true
-fi
-
-# コピーしてロード
-cp "$PLIST_SRC" "$PLIST_DEST"
-launchctl load "$PLIST_DEST"
-echo "✅ LaunchAgent registered and started"
-
-# --- 5. APIキー設定（初回のみ） ---
-echo ""
-echo "🔑 Step 5: APIキー設定..."
-
-# Keychainに既にあるかチェック
-EXISTING_KEY=$(security find-generic-password -s "antigravity-api" -a "anthropic" -w 2>/dev/null || echo "")
-
-if [ -z "$EXISTING_KEY" ]; then
-    # .env から読み込みを試みる
-    ENV_FILE="$ANTIGRAVITY_DIR/.env"
-    if [ -f "$ENV_FILE" ]; then
-        API_KEY=$(grep "ANTHROPIC_API_KEY" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'")
-        if [ -n "$API_KEY" ]; then
-            security add-generic-password -s "antigravity-api" -a "anthropic" -w "$API_KEY" -U
-            echo "✅ APIキーを.envからKeychainに登録しました"
-        else
-            echo "⚠️  ANTHROPIC_API_KEY が .env に見つかりません"
-            echo "   手動設定: security add-generic-password -s \"antigravity-api\" -a \"anthropic\" -w \"YOUR_KEY\""
-        fi
-    else
-        echo "⚠️  .env ファイルが見つかりません"
-        echo "   手動設定: security add-generic-password -s \"antigravity-api\" -a \"anthropic\" -w \"YOUR_KEY\""
-    fi
+# 1. Clone or Pull
+if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
+  echo "📥 既存のAntigravityを更新中..."
+  cd "$ANTIGRAVITY_DIR"
+  git pull origin main
+  echo "✅ 更新完了"
 else
-    echo "✅ APIキーは既にKeychainに登録済み"
+  if [ -d "$ANTIGRAVITY_DIR" ]; then
+    echo "⚠️  $ANTIGRAVITY_DIR が存在しますがgitリポジトリではありません"
+    echo "   バックアップして再作成します..."
+    mv "$ANTIGRAVITY_DIR" "${ANTIGRAVITY_DIR}.bak.$(date +%Y%m%d%H%M)"
+  fi
+  echo "📥 Antigravityをクローン中..."
+  git clone "$REPO_URL" "$ANTIGRAVITY_DIR"
+  echo "✅ クローン完了"
 fi
 
-# --- 完了 ---
+# 2. .env setup
+if [ ! -f "$ANTIGRAVITY_DIR/.env" ]; then
+  echo ""
+  echo "⚠️  .env ファイルが見つかりません"
+  echo "   SSD版からコピーするか、手動で作成してください:"
+  echo ""
+  echo "   cp /Volumes/PortableSSD/.antigravity/.env $ANTIGRAVITY_DIR/.env"
+  echo ""
+  echo "   必要なキー:"
+  echo "   - NOTION_API_KEY"
+  echo "   - NOTION_DATABASE_ID"
+  echo "   - DISCORD_WEBHOOK_URL"
+  echo "   - GOOGLE_API_KEY / GEMINI_API_KEY"
+  echo "   - ANTHROPIC_API_KEY"
+  echo "   - OPENAI_API_KEY"
+  echo "   - DISCORD_BOT_TOKEN"
+else
+  echo "✅ .env 存在確認OK"
+fi
+
+# 3. Summary
 echo ""
-echo "============================================================"
-echo "🎉 Antigravity Bootstrap Complete!"
+echo "========================"
+echo "✅ Antigravity 環境準備完了"
 echo ""
-echo "  Heartbeat: 30秒ごとにキューを監視中"
-echo "  Queue:     $ANTIGRAVITY_DIR/queue/pending/"
-echo "  Logs:      $ANTIGRAVITY_DIR/logs/"
+echo "📂 $ANTIGRAVITY_DIR"
+echo "   workflows:  $(ls "$ANTIGRAVITY_DIR/agent/workflows/" 2>/dev/null | wc -l | tr -d ' ') files"
+echo "   skills:     $(ls "$ANTIGRAVITY_DIR/agent/skills/" 2>/dev/null | wc -l | tr -d ' ') files"
+echo "   scripts:    $(ls "$ANTIGRAVITY_DIR/agent/scripts/" 2>/dev/null | wc -l | tr -d ' ') files"
+echo "   knowledge:  $(ls "$ANTIGRAVITY_DIR/knowledge/" 2>/dev/null | wc -l | tr -d ' ') dirs"
 echo ""
-echo "  タスクを追加:"
-echo "    echo '# Fix bug X' > $ANTIGRAVITY_DIR/queue/pending/001_task.md"
-echo ""
-echo "  テスト実行:"
-echo "    node $HEARTBEAT_DIR/heartbeat.js --dry-run"
-echo ""
-echo "  停止:"
-echo "    launchctl unload ~/Library/LaunchAgents/$PLIST_NAME.plist"
-echo "============================================================"
-echo ""
-echo "SSD is alive. 💓"
+echo "🎯 次のステップ: Gemini Code Assist で /go を実行"

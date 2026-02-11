@@ -150,7 +150,7 @@ CARGO_TARGET_DIR=~/.tmp_build/portable-studio pnpm tauri build
 - **原因**: ExFAT 上の AppleDouble ファイル (`._*`) が破損しているか、ファイルシステム上のメタデータ属性 (Finder Information) が不整合を起こしている。
 - **解決策**: `dot_clean` コマンドを使用してディレクトリを修復する。
     ```bash
-    dot_clean -m --keep=dotbar "/Volumes/PortableSSD/01_アプリ開発/portable-studio"
+    dot_clean -m --keep=dotbar "/Volumes/PortableSSD/STUDIO/Apps/portable-studio"
     ```
 - **注意**: これを実行しても解消しない場合は、SSD の物理的な接続不良や、他のプロセスによるポート 1420 の掴み放し (Zombie process) を疑う。
 

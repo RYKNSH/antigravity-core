@@ -149,7 +149,7 @@ Videdit 3.0 では、従来の機械的な分割に加え、日本語の文法�
 - **Diagnostic Findings**:
     - **PNG Asset Verification (Pattern 201)**: `overlay.py` のデバッグログにより、テロップ用 PNG は正常に生成されていることを確認。生成時のファイル存在とサイズ（約40KB）は担保されている。
     - **UUID Verification**: フィルタスクリプト（`.txt`）内で指定されている PNG の UUID と、実際に `overlay.py` で生成されたファイルの UUID が一致することを確認。パス文字列の不整合ではなく、FFmpeg 実行時の「読み込み」フェーズに問題があることが判明。
-    - **FFmpeg Binary Path Verification**: 使用されているバイナリは `/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/.bin/ffmpeg` (Static binary)。
+    - **FFmpeg Binary Path Verification**: 使用されているバイナリは `/Volumes/PortableSSD/STUDIO/Apps/Videdit/.bin/ffmpeg` (Static binary)。
     - **Definitive Error Identified**: 直接実行テストにより `[Parsed_movie_5 @ ...] Failed to avformat_open_input ... Error : No such file or directory` が発生することを確認。これは、FFmpeg がアセットを読み込もうとした瞬間に物理ファイルが存在しない、あるいはアクセス不能であることを示している。
     - **The Success Illusion**: FFmpeg は特定のアセット読み込みに失敗しても、エンコード処理を完遂できれば **Exit Code 0** を返す。`subprocess.run(..., check=True)` ではこれを検知できず、サイレントな失敗（テロップなしの正常終了）となる。
 - **Investigation Points**:

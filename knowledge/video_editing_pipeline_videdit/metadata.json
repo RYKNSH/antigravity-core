@@ -24,11 +24,11 @@
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/backend/analysis/two_phase_extractor.py"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/analysis/two_phase_extractor.py"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/backend/blueprint/generator.py"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/blueprint/generator.py"
         },
         {
             "type": "file",
@@ -48,23 +48,23 @@
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/packages/telop-components/src/TelopEditor.tsx"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/packages/telop-components/src/TelopEditor.tsx"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/backend/api.py"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/api.py"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/apps/dashboard/src/store/telopStore.ts"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/store/telopStore.ts"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/apps/dashboard/src/components/TelopDesigner.tsx"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/components/TelopDesigner.tsx"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/packages/telop-components/src/LayeredPreviewPlayer.tsx"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/packages/telop-components/src/LayeredPreviewPlayer.tsx"
         },
         {
             "type": "conversation_id",
@@ -80,19 +80,19 @@
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/backend/text/splitter.py"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/text/splitter.py"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/apps/dashboard/src/lib/api-client.ts"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/lib/api-client.ts"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/apps/dashboard/src/hooks/useReviewShorts.ts"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/hooks/useReviewShorts.ts"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/apps/dashboard/src/components/ReviewModal.tsx"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/components/ReviewModal.tsx"
         },
         {
             "type": "conversation_id",
@@ -140,7 +140,7 @@
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/backend/config/fonts.json"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/config/fonts.json"
         },
         {
             "type": "conversation_id",
@@ -148,19 +148,19 @@
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/apps/dashboard/src/components/RenderQueue.tsx"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/components/RenderQueue.tsx"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/backend/rendering/renderer.py"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/rendering/renderer.py"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/backend/learning/diff_collector.py"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/learning/diff_collector.py"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/apps/dashboard/src/app/short-reviewer/page.tsx"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/app/short-reviewer/page.tsx"
         },
         {
             "type": "conversation_id",
@@ -168,11 +168,11 @@
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/backend/core/render_worker.py"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/core/render_worker.py"
         },
         {
             "type": "file",
-            "value": "/Volumes/PortableSSD/01_アプリ開発/Videdit_pipeline/backend/core/render_queue.py"
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/core/render_queue.py"
         },
         {
             "type": "file",

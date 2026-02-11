@@ -165,7 +165,7 @@ else
   echo "=== SSD Projects ==="
   echo ""
   echo "📦 Node.js projects (package.json detected):"
-  find "$SSD/01_アプリ開発" -maxdepth 2 -name "package.json" -not -path "*/node_modules/*" 2>/dev/null | while read pkg; do
+  find "$SSD/STUDIO/Apps" -maxdepth 2 -name "package.json" -not -path "*/node_modules/*" 2>/dev/null | while read pkg; do
     DIR=$(dirname "$pkg")
     NAME=$(basename "$DIR")
     HAS_NM="❌"
@@ -174,7 +174,7 @@ else
   done
   echo ""
   echo "🐍 Python projects (pyproject.toml detected):"
-  find "$SSD/01_アプリ開発" -maxdepth 2 -name "pyproject.toml" -not -path "*/.venv/*" 2>/dev/null | while read pyp; do
+  find "$SSD/STUDIO/Apps" -maxdepth 2 -name "pyproject.toml" -not -path "*/.venv/*" 2>/dev/null | while read pyp; do
     DIR=$(dirname "$pyp")
     NAME=$(basename "$DIR")
     HAS_VENV="❌"

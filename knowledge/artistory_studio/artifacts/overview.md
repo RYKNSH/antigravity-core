@@ -10,7 +10,7 @@ ARTISTORY STUDIO は、ポータブル開発環境上で管理・運用される
 ## 2. Infrastructure Architecture
 「常時即時反応」と視覚的な管理を実現するためのハイブリッド構成。
 
-- **Management Dashboard (Next.js)**: `/Volumes/PortableSSD/01_アプリ開発/ARTISTORY STUDIO` に配置されたフロントエンド基盤。Next.js 16.1.5, React 19, Tailwind CSS 4 を使用。スタジオの全体状況の可視化と設定管理を担う。
+- **Management Dashboard (Next.js)**: `/Volumes/PortableSSD/STUDIO/Apps/ARTISTORY-STUDIO` に配置されたフロントエンド基盤。Next.js 16.1.5, React 19, Tailwind CSS 4 を使用。スタジオの全体状況の可視化と設定管理を担う。
 - **Bot Hosting (Railway/Local)**: `discord.js` クライアントが常時稼働。WebSocket による入出力（ボタン操作への即時反応）を担当。
 - **Middleware (GAS)**: Cloud (Google) 上で常時稼動。外部サイトからの Webhook 受付窓口。受信データを正規化して Bot API へ転送。
 - **Editor Control Tower (OpsOS)**: 運営（Editor）がスタジオ全体を指揮するための統合管理基盤。NextAuth.js による Discord 認証を備え、CRM（顧客管理）、LMS（学習管理）、CMS（コンテンツ管理）、Economy（経済圏管理）の 4 つの柱で構成される。

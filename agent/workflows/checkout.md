@@ -220,7 +220,7 @@ echo ""
 
 # 2. 直近1時間以内に変更されたプロジェクト（作業中の可能性）
 echo "🟡 直近1時間以内に変更されたプロジェクト:"
-find "$SSD/01_アプリ開発" -maxdepth 2 \( -name "package.json" -o -name "pyproject.toml" \) -not -path "*/node_modules/*" 2>/dev/null | while read manifest; do
+find "$SSD/STUDIO/Apps" -maxdepth 2 \( -name "package.json" -o -name "pyproject.toml" \) -not -path "*/node_modules/*" 2>/dev/null | while read manifest; do
   PROJECT_DIR=$(dirname "$manifest")
   # プロジェクト内のソースファイルが直近1時間以内に変更されたか
   RECENT=$(find "$PROJECT_DIR" -maxdepth 3 -name "*.ts" -o -name "*.tsx" -o -name "*.py" -o -name "*.js" -o -name "*.jsx" 2>/dev/null | xargs stat -f "%m %N" 2>/dev/null | awk -v cutoff=$(($(date +%s) - 3600)) '$1 > cutoff {print $2}' | head -1)
@@ -250,7 +250,7 @@ echo "📋 方式: .ssdclean (opt-in削除 / デフォルト保護)"
 echo ""
 
 SSD="/Volumes/PortableSSD"
-DEV_DIR="$SSD/01_アプリ開発"
+DEV_DIR="$SSD/STUDIO/Apps"
 
 # node_modules 検出（.ssdclean があるプロジェクトのみ削除対象）
 echo "📦 node_modules:"
@@ -289,10 +289,10 @@ done
 
 echo ""
 
-# .DS_Store / ._* カウント（01_アプリ開発 配下のみ）
+# .DS_Store / ._* カウント（STUDIO/Apps 配下のみ）
 DS_COUNT=$(find "$DEV_DIR" -name ".DS_Store" -type f 2>/dev/null | wc -l | tr -d ' ')
 APPLE_COUNT=$(find "$DEV_DIR" -name "._*" -type f -not -path "*/.git/*" 2>/dev/null | wc -l | tr -d ' ')
-echo "🍎 macOS metadata (01_アプリ開発 only): .DS_Store ($DS_COUNT files), ._* ($APPLE_COUNT files)"
+echo "🍎 macOS metadata (STUDIO/Apps only): .DS_Store ($DS_COUNT files), ._* ($APPLE_COUNT files)"
 
 echo ""
 echo "=== SSD Before ===" && df -h /Volumes/PortableSSD | tail -1
@@ -304,7 +304,7 @@ echo "=== SSD Before ===" && df -h /Volumes/PortableSSD | tail -1
 
 ```bash
 SSD="/Volumes/PortableSSD"
-DEV_DIR="$SSD/01_アプリ開発"
+DEV_DIR="$SSD/STUDIO/Apps"
 
 # node_modules 削除（.ssdclean ありのプロジェクトのみ）
 find "$DEV_DIR" -maxdepth 4 -name "node_modules" -type d -not -path "*/.git/*" -not -path "*/.antigravity/*" -prune 2>/dev/null | while read nm; do
@@ -318,14 +318,14 @@ find "$DEV_DIR" -maxdepth 4 \( -name ".venv" -o -name "venv" \) -type d -not -pa
   [ -f "$PROJECT_ROOT/.ssdclean" ] && rm -rf "$venv" && echo "✅ Deleted: $venv"
 done
 
-# .next, .turbo, __pycache__, __MACOSX 削除（01_アプリ開発配下のみ、.antigravity除外）
+# .next, .turbo, __pycache__, __MACOSX 削除（STUDIO/Apps配下のみ、.antigravity除外）
 find "$DEV_DIR" -maxdepth 5 \( -name ".next" -o -name ".turbo" -o -name "__pycache__" -o -name "__MACOSX" \) -type d -not -path "*/.git/*" -not -path "*/.antigravity/*" -exec rm -rf {} + 2>/dev/null
 echo "✅ Build caches cleared"
 
-# .DS_Store / ._* 削除（01_アプリ開発配下のみ）
+# .DS_Store / ._* 削除（STUDIO/Apps配下のみ）
 find "$DEV_DIR" -name ".DS_Store" -type f -delete 2>/dev/null
 find "$DEV_DIR" -name "._*" -type f -not -path "*/.git/*" -delete 2>/dev/null
-echo "✅ macOS metadata cleared (01_アプリ開発 only)"
+echo "✅ macOS metadata cleared (STUDIO/Apps only)"
 
 echo ""
 echo "=== SSD After ===" && df -h /Volumes/PortableSSD | tail -1
