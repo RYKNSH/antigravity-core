@@ -37,6 +37,11 @@ DBマイグレーション、最終テスト、デプロイを連鎖実行。
 // turbo
 
 ```bash
+# git_guard: CWDとプロジェクトの一致を検証
+/Volumes/PortableSSD/.antigravity/agent/scripts/git_guard.sh --check
+```
+
+```bash
 pnpm build
 ```
 
