@@ -42,7 +42,36 @@ fi
 NODE_VERSION=$(node -v)
 echo "✅ Node.js $NODE_VERSION"
 
-# 3. .env setup
+# 3. シンボリックリンク作成（ワークフロー・スキルの有効化）
+echo ""
+echo "🔗 シンボリックリンク設定..."
+
+AGENT_LINK="$HOME/.agent"
+AGENT_TARGET="$ANTIGRAVITY_DIR/agent"
+
+if [ -L "$AGENT_LINK" ]; then
+  CURRENT_TARGET=$(readlink "$AGENT_LINK")
+  if [ "$CURRENT_TARGET" = "$AGENT_TARGET" ]; then
+    echo "✅ ~/.agent → $AGENT_TARGET（既にリンク済み）"
+  else
+    echo "⚠️  ~/.agent が別のターゲットを指しています: $CURRENT_TARGET"
+    echo "   更新します..."
+    rm "$AGENT_LINK"
+    ln -s "$AGENT_TARGET" "$AGENT_LINK"
+    echo "✅ ~/.agent → $AGENT_TARGET（更新完了）"
+  fi
+elif [ -d "$AGENT_LINK" ]; then
+  echo "⚠️  ~/.agent がディレクトリとして存在します"
+  echo "   バックアップして再作成します..."
+  mv "$AGENT_LINK" "${AGENT_LINK}.bak.$(date +%Y%m%d%H%M)"
+  ln -s "$AGENT_TARGET" "$AGENT_LINK"
+  echo "✅ ~/.agent → $AGENT_TARGET（作成完了、旧ディレクトリをバックアップ）"
+else
+  ln -s "$AGENT_TARGET" "$AGENT_LINK"
+  echo "✅ ~/.agent → $AGENT_TARGET（新規作成）"
+fi
+
+# 4. .env setup
 if [ ! -f "$ANTIGRAVITY_DIR/.env" ]; then
   echo ""
   echo "⚠️  .env ファイルが見つかりません"
@@ -62,7 +91,7 @@ else
   echo "✅ .env 存在確認OK"
 fi
 
-# 4. 依存関係インストール
+# 5. 依存関係インストール
 echo ""
 echo "📦 依存関係をインストール中..."
 
@@ -90,7 +119,7 @@ fi
 
 cd "$ANTIGRAVITY_DIR"
 
-# 5. Summary
+# 6. Summary
 echo ""
 echo "========================"
 echo "✅ Antigravity 環境準備完了"
