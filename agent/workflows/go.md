@@ -30,12 +30,27 @@ description: セッション開始から作業まで全自動化する究極の�
 // turbo
 
 以下を自動実行:
-- 環境クリーンアップ（`/checkin` 相当）
-- SSD同期
-- 開発サーバー起動（`/dev` 相当）
+
+0. **セッション状態の初期化/復元**
+```bash
+# 前回のstateが残っていれば読み込み（Compaction復元用）
+STATE_SCRIPT="/Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js"
+EXISTING=$(node "$STATE_SCRIPT" read 2>/dev/null)
+if [ "$EXISTING" != "null" ] && [ -n "$EXISTING" ]; then
+  echo "📋 前回セッション状態を復元:"
+  node "$STATE_SCRIPT" summary
+else
+  node "$STATE_SCRIPT" init
+fi
+```
+
+1. 環境クリーンアップ（`/checkin` 相当）
+2. SSD同期
+3. 開発サーバー起動（`/dev` 相当）
 
 ```markdown
 [🟢 セッション開始]
+✅ セッション状態初期化/復元
 ✅ 環境チェック完了
 ✅ SSD同期完了
 ✅ 開発サーバー起動
@@ -45,6 +60,12 @@ Ready!
 ---
 
 ### Phase 2: 作業モード
+
+// turbo
+**Phase遷移時にsession stateを更新:**
+```bash
+node /Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js set-workflow '/work' 'phase2_active'
+```
 
 #### A. 通常モード（自然言語）
 

@@ -423,6 +423,16 @@ cp NEXT_SESSION.md "$LOG_DIR/session_${DATE}.md" 2>/dev/null && echo "✅ SSDブ
 
 ---
 
+## Phase 4.5: セッション状態のアーカイブ
+
+// turbo
+```bash
+# .session_state.json をアーカイブし、アクティブファイルを削除
+node /Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js snapshot
+```
+
+---
+
 ## Phase 5: 完了
 
 ✅ チェックアウト完了
@@ -430,7 +440,7 @@ cp NEXT_SESSION.md "$LOG_DIR/session_${DATE}.md" 2>/dev/null && echo "✅ SSDブ
 - 自己評価完了
 - **改善提案の実装完了 (Kaizen Implemented)**
 - **NEXT_SESSION.md 生成済み**
-- **`.session_state` 削除済み（コンテキストは NEXT_SESSION.md に引き継ぎ）**
+- **`.session_state.json` アーカイブ済み（次回 /go で自動再init）**
 
 Safe to shutdown.
 

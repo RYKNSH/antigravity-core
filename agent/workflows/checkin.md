@@ -122,6 +122,18 @@ if ! command -v mcp-server-gdrive >/dev/null 2>&1; then
 fi
 ```
 
+10.5 GEMINI.md マスター同期（SSD → ホスト）
+SSDマスターから `~/.gemini/GEMINI.md` を同期し、Proactive Triggers等のグローバルルールを反映:
+```bash
+GEMINI_MASTER="/Volumes/PortableSSD/.antigravity/agent/rules/GEMINI.md.master"
+GEMINI_LOCAL="$HOME/.gemini/GEMINI.md"
+if [ -f "$GEMINI_MASTER" ]; then
+  cp "$GEMINI_MASTER" "$GEMINI_LOCAL" && echo "✅ GEMINI.md synced from SSD master"
+else
+  echo "⚠️ GEMINI.md.master not found on SSD"
+fi
+```
+
 ---
 
 ## Phase 2.5: プロジェクト環境復元 (Lazy Install)
