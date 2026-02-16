@@ -176,6 +176,8 @@ echo "[$(date)] Fixed: $ISSUE" >> fbl_audit.log
 
 フルスタック検証 + ペルソナ批評。重要な機能やリリース前に使用。
 
+> 🏥 **Health Check Protocol 適用** — `WORKFLOW_CONTRACTS.md` 参照。Pre-flight + メジャーPhase間でswapチェック。
+
 1. **全Phase（0-7）を実行**
 2. **Phase 7 の前に `/debate quick`** を実行
    - Bug Hunter, Browser Inspector, UX Advocate, Full-Stack Verifier が批評

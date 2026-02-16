@@ -30,6 +30,9 @@ description: リファクタリングの際の標準ワークフロー
 
 ## ステップ
 
+> 🧠 **THINK GATE — 計画フェーズ**: `WORKFLOW_CONTRACTS.md` の Core Engagement Matrix を参照。
+> Small: H | Medium: H + T(quick) + N(quick) | Large: H + T + N(deep) + I
+
 ### 1. 目的の明確化
 **目的**: なぜリファクタリングが必要かを明文化
 
@@ -194,6 +197,9 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ---
 
 ### 11. 統合検証（自動）
+
+> 🧠 **THINK GATE — 検証フェーズ**: `WORKFLOW_CONTRACTS.md` の Core Engagement Matrix を参照。
+> Small: K(参照) | Medium: K + N(quick) | Large: K + N(deep) + T
 
 リファクタリング完了後、`/verify --quick` を自動実行。
 機能変更を伴わない変更でも、リグレッションがないことを確実に担保。

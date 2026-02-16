@@ -10,6 +10,8 @@ description: 3巨頭（Steve, Elon, Jensen）による完全自律型・ビジ�
 - **Steve** (Vision): 品質への執着
 - **Elon** (Solve): 物理的解決と効率化
 
+> 🏥 **Health Check Protocol 適用** — `WORKFLOW_CONTRACTS.md` 参照。全メジャーPhase間でswapチェック。
+
 ---
 
 ## Integration Map

@@ -31,6 +31,9 @@ description: バグ修正の際の標準ワークフロー
 
 ## 🔍 探索フェーズ
 
+> 🧠 **THINK GATE — デバッグフェーズ**: `WORKFLOW_CONTRACTS.md` の Core Engagement Matrix を参照。
+> Small: H + K | Medium: H + K + T(quick) | Large: H + K + T + N(deep)
+
 ### 1. バグの再現と記録
 **目的**: バグを確実に再現し、症状を正確に記録する
 
@@ -173,6 +176,9 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ---
 
 ### 11. 統合検証（自動）
+
+> 🧠 **THINK GATE — 検証フェーズ**: `WORKFLOW_CONTRACTS.md` の Core Engagement Matrix を参照。
+> Small: K(参照) | Medium: K + N(quick) | Large: K + N(deep) + T
 
 修正完了後、`/verify --quick` を自動実行。
 直接呼び出し時も `/work` 経由時も同じ品質保証を担保。

@@ -42,6 +42,10 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 | 自然言語でタスク指定 | `/go "タスク"` → `/work` | |
 | 「ブレイクタイム」「記事作成」 | `/checkpoint_to_blog` | |
 | 「チェックポイント」 | `/checkpoint_to_blog` | |
+| 「慎重にやって」「手動で確認して」 | `/level 1` | Autonomy Level切替 |
+| 「確認しながら」「一つずつ」 | `/level 1` | Autonomy Level切替 |
+| 「いつも通りで」「自動で」 | `/level 2` | Autonomy Level切替 |
+| 「全自動で」「止まらないで」 | `/level 3` | Autonomy Level切替 |
 
 ### `/work` 内部ルーティング
 
@@ -55,6 +59,7 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 | エラーチェック、スイープ、精査 | `/error-sweep` |
 | デプロイ、リリース | `/ship` |
 | レビュー、確認 | `/debate` |
+| 本当に？、常識では、一般的に、検証して | `/galileo` |
 | マイグレーション | `/db-migrate` |
 | 不明 | ユーザーに確認 |
 
@@ -89,8 +94,8 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 ### 開発WF完了後の遷移
 
 ```
-/spec → /debate quick → /new-feature
-/new-feature → /verify --quick
+/spec → /galileo (技術選択時) → /debate quick → /new-feature
+/new-feature → /galileo (アーキテクチャ選択時) → /verify --quick
 /bug-fix → /verify --quick
 /refactor → /verify --quick
 ```
@@ -112,6 +117,14 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
  ├─ Step 3: アプローチ転換（前提を疑う）
  ├─ Step 4: 再実行
  └─ Step 5: 学習記録（.debug_learnings.md）
+
+/galileo（直接 or 他WFから呼出）
+ ├─ Phase 1: Consensus Map
+ ├─ Phase 2: Evidence Audit
+ ├─ Phase 3: Adversarial Hypothesis
+ ├─ Phase 4: First Principles Rebuild
+ └─ Phase 5: Verdict → CONFIRM / CHALLENGE / OVERTURN
+     └─ [OVERTURN] → ユーザー確認必須
 
 /verify 成功 → /ship
  ├─ Phase 1: /build
@@ -148,13 +161,16 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 | `/error-sweep` Phase 6 | critical = 0 | CLEAN / CONDITIONAL PASS | Self-Repairループ（上限5回） |
 | `/error-sweep` Self-Repair | 5回失敗 | - | → `/debug-deep` 自動エスカレーション |
 | `/debate` | preset指定あり | preset チーム使用 | 動的チーム編成 |
+| `/galileo` Phase 5 | Verdict = OVERTURN | ユーザー確認必須 | 自動進行 |
 | `/evolve-wiz` | vision-os経由 | `--preset=titan` 適用 | 動的チーム編成 |
 
 ---
 
 ## 4. 優先度ルール
 
-1. **安全性 > 自律性**: 破壊的操作（deploy, db-migrate, ファイル削除）は常にユーザー確認必須
+1. **安全性 > 自律性**: 破壊的操作（deploy, db-migrate, ファイル削除）は全Levelでユーザー確認必須（L3のstaging除く）
 2. **verify は省略不可**: 開発WF完了後、verify をスキップして ship してはならない
 3. **checkin は冪等**: 何回呼んでも同じ結果になる（副作用: cleanup のみ）
 4. **checkout は一度きり**: デュアル実行を防止（state で管理）
+5. **Autonomy Level は `.antigravity_config` で制御**: デフォルト L2。PAUSE条件は `WORKFLOW_CONTRACTS.md` の Autonomy Level セクションを参照
+6. **verify は規模自動判定**: `--quick`/`--deep` 未指定時は Phase 0 で変更規模から自動判定

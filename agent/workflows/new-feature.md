@@ -31,6 +31,9 @@ description: 新機能を開発する際の標準ワークフロー
 
 ## 🔍 探索フェーズ
 
+> 🧠 **THINK GATE — 計画フェーズ**: `WORKFLOW_CONTRACTS.md` の Core Engagement Matrix を参照。
+> Small: H | Medium: H + T(quick) + N(quick) | Large: H + T + N(deep) + I
+
 ### 1. 理想系の定義
 **目的**: 制約を無視した理想の状態を明確にする
 
@@ -59,6 +62,9 @@ description: 新機能を開発する際の標準ワークフロー
 
 ## 📝 計画フェーズ
 
+> 🧠 **THINK GATE — 設計フェーズ**: `WORKFLOW_CONTRACTS.md` の Core Engagement Matrix を参照。
+> Medium: N(quick) | Large: N(deep) + I
+
 ### 3. 設計とADR作成
 **目的**: アーキテクチャ決定を文書化し、レビューを受ける
 
@@ -76,14 +82,23 @@ description: 新機能を開発する際の標準ワークフロー
 ### 4. ユーザーレビュー
 **目的**: 実装前に設計の承認を得る
 
+#### L0-L1: 承認待ち
 ```markdown
 レビューポイント：
 1. 理想系の定義は妥当か
 2. 設計オプションの選択は適切か
 3. トレードオフの説明は納得できるか
 ```
-
 **ブロッカー**: 承認を得るまで次のステップに進まない
+
+#### L2: 条件付き自動
+以下の場合のみユーザー承認を求める（それ以外は `/debate quick` で自己レビュー）:
+- 新ファイル3つ以上の作成
+- DB schema変更を伴う
+- 外部API連携の新規追加
+
+#### L3: 全自動
+`/debate quick` で自己レビューし、問題なければ即実装に進む。
 
 ---
 
@@ -160,6 +175,9 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ---
 
 ### 11. 統合検証（自動）
+
+> 🧠 **THINK GATE — 検証フェーズ**: `WORKFLOW_CONTRACTS.md` の Core Engagement Matrix を参照。
+> Small: K(参照) | Medium: K + N(quick) | Large: K + N(deep) + T
 
 実装完了後、`/verify --quick` を自動実行。
 直接呼び出し時も `/work` 経由時も同じ品質保証を担保。

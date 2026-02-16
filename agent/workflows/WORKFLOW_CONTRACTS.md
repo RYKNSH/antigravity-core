@@ -90,6 +90,14 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | **完了条件** | 全ペルソナの発言完了 + Moderator による統合 |
 | **エラー時** | 合意不能→過半数の判定を採用。preset不明→動的チーム編成にフォールバック |
 
+### `/galileo`
+| 項目 | 定義 |
+|------|------|
+| **入力** | 検証対象の主張（自然言語）, `quick`(任意) |
+| **出力** | Galileo Test Report（Verdict: CONFIRM/CHALLENGE/OVERTURN）, Evidence Summary, galileo_log 記録 |
+| **完了条件** | Phase 5 Verdict 出力完了 + galileo_log 保存 |
+| **エラー時** | Web検索失敗→ナレッジベースのみで判定。証拠不足→CHALLENGE判定（CONFIRMもOVERTURNもしない）。OVERTURN判定→ユーザー確認必須（PAUSE） |
+
 ### `/verify`
 | 項目 | 定義 |
 |------|------|
@@ -214,20 +222,61 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | **完了条件** | 全ステップ実行 + 空き容量表示 |
 | **エラー時** | 削除失敗→スキップして次へ。purge失敗→sudo不要でスキップ |
 
-## ブロッカー定義（PAUSE vs 自動続行 vs 自動突破）
+### `/level`, `/level 0`, `/level 1`, `/level 2`, `/level 3`
+| 項目 | 定義 |
+|------|------|
+| **入力** | レベル番号(0-3) or エイリアス(manual/careful/auto/turbo) or なし |
+| **出力** | 現在レベル表示（引数なし）or 切替完了メッセージ |
+| **完了条件** | `.session_state` の `autonomy_level` 更新 |
+| **エラー時** | 不正な引数→使用方法表示。L3切替→確認プロンプト（拒否時は変更なし） |
+
+## Autonomy Level（自律レベル）
 
 > [!IMPORTANT]
-> **PAUSE（ユーザー確認待ち）は3条件のみ。それ以外は全て自律的に処理する。**
+> プロジェクトの `.antigravity_config` で設定。未設定時のデフォルトは **L2（Autonomous）**。
 
-### PAUSE条件（3つだけ）
+| Level | 名前 | PAUSE条件 | 用途 |
+|-------|------|-----------|------|
+| L0 | Manual | 全ステップで確認 | デバッグ・慎重な操作 |
+| L1 | Supervised | 設計承認 + 破壊的操作 + 情報不足 | 初期段階の開発 |
+| **L2** | **Autonomous** | **破壊的操作 + 情報不足のみ** | **バイブ開発（デフォルト）** |
+| L3 | Full Auto | 本番デプロイのみ確認 | 信頼関係確立後 |
 
-| PAUSE条件 | 動作 |
-|-----------|------|
-| 破壊的操作（deploy production, db-migrate, ファイル削除） | ユーザー確認必須 |
-| 設計承認（/new-feature Step 4, /spec Phase 2 ユーザーレビュー） | 設計書提示→承認待ち |
-| 情報不足（/spec で回答不能な質問, /bug-fix で再現不能） | ユーザーに質問 |
+### 設定ファイル
+```yaml
+# プロジェクトルート/.antigravity_config
+autonomy_level: 2  # L0-L3
+```
 
-### 自動突破条件（PAUSEしない → `/debug-deep` で突破）
+---
+
+## ブロッカー定義（PAUSE vs 自動続行 vs 自動突破）
+
+### PAUSE条件（Autonomy Level別）
+
+| PAUSE条件 | L0 | L1 | L2 | L3 |
+|-----------|----|----|-------|----|
+| 破壊的操作（deploy production, db-migrate, ファイル削除） | ✅ PAUSE | ✅ PAUSE | ✅ PAUSE | staging自動 / 本番PAUSE |
+| 課金・決済操作（API課金, サブスク変更, 外部サービス契約） | ✅ PAUSE | ✅ PAUSE | ✅ PAUSE | ✅ PAUSE |
+| 設計承認（/new-feature Step 4, /spec Phase 2） | ✅ PAUSE | ✅ PAUSE | ⚡ 条件付き自動 | ⚡ 自動 |
+| 情報不足（/spec 回答不能, /bug-fix 再現不能） | ✅ PAUSE | ✅ PAUSE | ✅ PAUSE | ✅ PAUSE |
+| `/work` ルーティング確認 | ✅ PAUSE | ✅ PAUSE | ⚡ 自動実行 | ⚡ 自動実行 |
+| `/galileo` OVERTURN 判定 | ✅ PAUSE | ✅ PAUSE | ✅ PAUSE | ✅ PAUSE |
+
+> [!CAUTION]
+> **課金・決済操作は全LevelでPAUSE**。具体例:
+> - 外部APIの有料プラン切替 / アップグレード
+> - Stripe / Paddle 等の決済系操作
+> - クラウドリソースのスケールアップ（コスト増加）
+> - DNSドメイン購入 / SSL証明書購入
+> - npmパッケージの有料プラン契約
+
+**L2 の「条件付き自動」ルール**:
+- 新ファイル3つ以上の作成 → 設計レビュー（PAUSE）
+- DB schema変更 → 設計レビュー（PAUSE）
+- 上記以外 → AI自己レビュー（`/debate quick`）で代替（自動続行）
+
+### 自動突破条件（全Level共通 — PAUSEしない → `/debug-deep` で突破）
 
 | 条件 | 動作 |
 |------|------|
@@ -243,7 +292,7 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | `/checkout` 完了 | NEXT_SESSION.md に次タスクを記録 → 次回 `/checkin` で自動再開 |
 | Compaction 発生 | `.session_state` から自動復元 |
 
-### 自動続行する場面（PAUSEしない）
+### 自動続行する場面（全Level共通 — PAUSEしない）
 - テスト実行・lint・typecheck
 - debate（全モード）
 - ファイル読み書き
@@ -251,8 +300,118 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 - コード生成・修正
 - ワークフロー間遷移
 - .session_state の読み書き
-- staging デプロイ
+- staging デプロイ（L3では本番も含む）
 - `/debug-deep` の自動発動と実行
+- `/verify` の規模自動判定と実行
+
+---
+
+## 🏥 Health Check Protocol（deep系WFリソースガード）
+
+> [!IMPORTANT]
+> deep系ワークフロー（長時間・多フェーズ実行）のメジャーPhase間で自動適用。
+> SWAP圧迫によるエージェント応答劣化・ワークフロー不安定化を予防する。
+
+### 適用対象WF
+
+| WF | 適用タイミング |
+|----|--------------|
+| `/fbl deep` | Phase 0, 3, 5.5, 6 の間 |
+| `/verify --deep` | Phase 0, 1, 2, 2.5, 3 の間 |
+| `/vision-os` | Phase 1-6 のメジャーPhase間 |
+| `/debug-deep` | Step 2, 3, 4, 5 の間 |
+| `/debate deep` | Round 2以降の開始前 |
+
+### Pre-flight（WF開始前）
+
+deep系WF開始時に `/lightweight` を自動実行してクリーンな状態で開始する。
+
+### Mid-flight Health Check（Phase間）
+
+```bash
+# Phase間で実行する Health Check
+swap_mb=$(sysctl vm.swapusage | awk '{print $7}' | sed 's/M//')
+echo "🏥 Health Check: SWAP ${swap_mb}MB"
+
+# 閾値超過時のみクリーンアップ（2048MB = 2GB）
+if [ $(echo "$swap_mb > 2048" | bc) -eq 1 ]; then
+  echo "⚠️ SWAP高負荷検知 — mini-lightweight 実行"
+  # 安全な操作のみ:
+  find ~/.gemini/antigravity/browser_recordings -type f -mmin +120 -delete 2>/dev/null
+  rm -rf ~/.npm/_logs 2>/dev/null
+  # 残存プロセス確認（dev serverの二重起動等）
+  echo "--- orphan process check ---"
+  ps aux | grep -E 'node.*dev|next.*dev|vite' | grep -v grep
+fi
+```
+
+### やらないこと（副作用リスク回避）
+
+| 操作 | 理由 |
+|------|------|
+| `purge` | ファイルI/Oキャッシュミスで直後の処理が逆に遅くなる |
+| `rm -rf ~/.npm/_cacache` | 実行中テストランナーがcacheを参照している可能性 |
+| Chrome SW削除 | ブラウザ操作Phase中の場合に副作用 |
+
+### 将来課題
+
+- SWAP閾値のマシン別動的化（`sysctl hw.memsize` でRAM量を取得→比率ベースに）
+- 「不要プロセス」判定の厳密化（PID追跡ベースへ）
+
+---
+
+## 🧠 THINK GATES（5コア経由必須化）
+
+> [!IMPORTANT]
+> 全開発WF（`/new-feature`, `/bug-fix`, `/refactor`, `/spec`）の各フェーズで適用される品質ゲート。
+> Autonomy Level × タスクサイズで自動選択される。WF内の `🧠 THINK` マーカーが発動ポイント。
+
+### THINK = 5コアの頭文字
+
+| Gate | コア機能 | 保証すること |
+|------|---------|------------|
+| **T** | Galileo Test (`/galileo`) | 事実に基づいているか — 一次ソースで検証 |
+| **H** | First Principles (5-Why) | 根本原因に到達しているか — 表面的解決を排除 |
+| **I** | Ideal Vision (天才会議 quick) | 理想から逆算しているか — Jensen/Steve/Elon 各1問 |
+| **N** | Negotiate (Deep Debate) | 多角的に検証されたか — ペルソナ議論 |
+| **K** | Knowledge Loop (強化学習) | 同じミスを繰り返さないか — 学習データ参照+蓄積 |
+
+### タスクサイズ自動判定
+
+| Size | 条件 |
+|------|------|
+| **Small** | 変更ファイル 1-2個 |
+| **Medium** | 変更ファイル 3-5個 |
+| **Large** | 変更ファイル 6+個, DB schema変更, アーキテクチャ変更, 新API追加 |
+
+### Core Engagement Matrix（フェーズ × サイズ）
+
+| フェーズ | Small | Medium | Large |
+|---------|-------|--------|-------|
+| **計画** | H | H + T(quick) + N(quick) | H + T + N(deep) + I |
+| **設計** | — | N(quick) | N(deep) + I |
+| **実装** | — | — | — |
+| **検証** | K(参照) | K + N(quick) | K + N(deep) + T |
+| **デバッグ** | H + K | H + K + T(quick) | H + K + T + N(deep) |
+
+### Level別適用範囲
+
+| Level | 適用範囲 |
+|-------|---------|
+| **L0** | 任意（ユーザーが手動で呼ぶ） |
+| **L1** | Large のマトリクスのみ強制 |
+| **L2** | Medium + Large のマトリクス強制 |
+| **L3** | **全Size のマトリクス強制**（Small含む） |
+
+### 天才会議 Quick版（I gate）
+
+フル `/vision-os` ではなく5分エッセンス版。L3 Large の計画・設計フェーズで自動発動:
+
+- 🔧 **Jensen**: 「技術的に最適な選択か？」
+- 🎨 **Steve**: 「ユーザー体験は理想的か？」
+- 🚀 **Elon**: 「最もシンプルな解決策か？」
+
+3問で結論を1行ずつ返す。フル版は `/go --vision` でのみ使用。
 
 ---
 
@@ -295,6 +454,11 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 ## Debug Context (debug-deep 発動時のみ)
 - trigger: なし
 - error_history: なし
+
+## Execution Summary
+- 🔧 /bug-fix: ログイン機能のバグ修正。原因: セッショントークンの有効期限未チェック。修正ファイル: auth.ts, middleware.ts
+- ✅ /verify: PASS (テスト 24/24, lint 0 errors)
+- 🛠️ /new-feature: ユーザープロフィール機能実装中 (Step 6)
 ```
 
 ### 運用ルール
@@ -304,3 +468,4 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 3. **削除タイミング**: `/checkout` 完了時に削除（NEXT_SESSION.md に引き継ぎ）
 4. **フォーマット**: Markdown（AIが自然に読み書き可能）
 5. **場所**: プロジェクトルート（.gitignore に追加）
+6. **Execution Summary**: WF完了時に1行で成果を追記。`/checkout` 時に NEXT_SESSION.md にコピーされ、次セッションでのコンテキスト復元に活用

@@ -29,6 +29,9 @@ Claude Code公式推奨の「Claudeにインタビューさせる」パターン
 
 ### Phase 1: ディープインタビュー
 
+> 🧠 **THINK GATE — 計画フェーズ**: `WORKFLOW_CONTRACTS.md` の Core Engagement Matrix を参照。
+> Small: H | Medium: H + T(quick) + N(quick) | Large: H + T + N(deep) + I
+
 以下の観点でユーザーにインタビューする:
 
 1. **技術実装**
