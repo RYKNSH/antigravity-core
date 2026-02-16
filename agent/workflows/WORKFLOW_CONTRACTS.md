@@ -46,9 +46,9 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | 項目 | 定義 |
 |------|------|
 | **入力** | なし（自動検出） |
-| **出力** | 環境ステータスレポート, NEXT_SESSION.md の内容（存在時） |
-| **完了条件** | Phase 1-3 全完了, 環境が作業可能状態 |
-| **エラー時** | SSD未接続→ローカルのみで続行。npm install失敗→エラー表示して続行 |
+| **出力** | 環境ステータスレポート, NEXT_SESSION.md の内容（存在時）, Deferred Tasks リトライ結果 |
+| **完了条件** | Phase 1-3 全完了（Phase 2.75 Deferred Tasks含む）, 環境が作業可能状態 |
+| **エラー時** | SSD未接続→ローカルのみで続行。npm install失敗→エラー表示して続行。Deferred Tasksリトライ失敗→記録を保持して続行 |
 
 ### `/checkout`
 | 項目 | 定義 |
@@ -284,6 +284,7 @@ autonomy_level: 2  # L0-L3
 | タイムアウト（fbl 30分） | → `/debug-deep` 自動発動（アプローチ転換） |
 | `/error-sweep` Self-Repair 5回失敗 | → `/debug-deep` 自動エスカレーション |
 | `/debug-deep` がさらに3回失敗 | → **真のPAUSE**（エスカレーション） |
+| **SSD I/O ハング**（10s超過） | → 3-Layer Defense自動発動（`safe-commands.md` 参照）→ 全失敗時Deferred Tasks記録 |
 
 ### セッション終了の扱い
 

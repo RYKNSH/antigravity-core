@@ -2,10 +2,13 @@
 ._*
 .DS_Store
 
-# === SECRETS (NEVER PUSH) ===
+# === SECRETS & PERSONAL DATA (NEVER PUSH) ===
 .env
 .env.*
 credentials/
+SERVICE_REGISTRY.md
+SECRETS_REFERENCE.md
+projects.json
 *.pem
 *.key
 

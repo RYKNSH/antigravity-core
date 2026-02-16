@@ -253,7 +253,29 @@ fi
 - SSD ブレインログ (`$ANTIGRAVITY_DIR/brain_log/`) にも最新ログがあれば参照
 
 **見つからなかった場合:**
-- スキップして Phase 3 へ
+- スキップして Phase 2.75 へ
+
+---
+
+## Phase 2.75: Deferred Tasks リトライ（自動）
+
+前回セッションで SSD I/O タイムアウト等により完了できなかったタスクを自動リトライする。
+
+16. NEXT_SESSION.md の `## 🔄 Deferred Tasks` セクションを検索
+
+```bash
+NEXT_SESSION=$(find . $SSD /Volumes/PortableSSD -maxdepth 2 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
+if [ -n "$NEXT_SESSION" ] && grep -q "Deferred Tasks" "$NEXT_SESSION" 2>/dev/null; then
+  echo "🔄 Deferred Tasks 検出:"
+  sed -n '/## 🔄 Deferred Tasks/,/^## /p' "$NEXT_SESSION" | head -20
+fi
+```
+
+17. 未完了タスクの自動リトライ
+- `- [ ]` で始まる行を抽出
+- 各タスクを **perl alarm 付き** で再実行
+- 成功 → `- [x]` に更新
+- 再度タイムアウト → そのまま残す（次回セッションでリトライ）
 
 ---
 

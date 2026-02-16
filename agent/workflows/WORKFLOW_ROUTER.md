@@ -32,6 +32,16 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 
 ## 1. エントリーポイント（トリガー → ワークフロー）
 
+### スラッシュコマンド（直接呼出し）
+
+| コマンド | ワークフロー | 備考 |
+|---------|------------|------|
+| `/level` | `level.md` | 現在のAutonomy Level表示 |
+| `/level 0` `/level manual` | `level.md` | L0 (Manual) に切替 |
+| `/level 1` `/level careful` | `level.md` | L1 (Supervised) に切替 |
+| `/level 2` `/level auto` | `level.md` | L2 (Autonomous) に切替 |
+| `/level 3` `/level turbo` | `level.md` | L3 (Full Auto) — 確認付き |
+
 ### 自然言語トリガー
 
 | パターン | ワークフロー | 備考 |
@@ -42,10 +52,10 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 | 自然言語でタスク指定 | `/go "タスク"` → `/work` | |
 | 「ブレイクタイム」「記事作成」 | `/checkpoint_to_blog` | |
 | 「チェックポイント」 | `/checkpoint_to_blog` | |
-| 「慎重にやって」「手動で確認して」 | `/level 1` | Autonomy Level切替 |
+| 「慎重にやって」「手動で確認して」「ゆっくり」 | `/level 0` or `/level 1` | Autonomy Level切替 |
 | 「確認しながら」「一つずつ」 | `/level 1` | Autonomy Level切替 |
-| 「いつも通りで」「自動で」 | `/level 2` | Autonomy Level切替 |
-| 「全自動で」「止まらないで」 | `/level 3` | Autonomy Level切替 |
+| 「いつも通りで」「自動で」「普通に」 | `/level 2` | Autonomy Level切替 |
+| 「全自動で」「止まらないで」「ターボ」 | `/level 3` | Autonomy Level切替 |
 
 ### `/work` 内部ルーティング
 
@@ -130,6 +140,15 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
  ├─ Phase 1: /build
  ├─ Phase 2: /db-migrate
  └─ Phase 4: /deploy (内部実装)
+```
+
+### Autonomy Level 切替
+
+```
+/level [0|1|2|3]
+ └─ .session_state の autonomy_level を更新
+ └─ 全WFのPAUSE条件がリアルタイムで切替
+ └─ [L3] 確認プロンプト表示
 ```
 
 ### ナレッジサイクル
