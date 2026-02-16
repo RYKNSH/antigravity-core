@@ -62,13 +62,18 @@ else
 fi
 ```
 
-### Step 2: ユーザー確認
+### Step 2: 記事化アクション
 
-- **スコア ≥ 5**: 「今回の作業を Evergreen Article として Notion に保存しますか？」と提案
+> [!IMPORTANT]
+> **スコア ≥ 5 の場合、記事化をスキップしてはならない。**
+> L2/L3モード → 自動で `/checkpoint_to_blog` を実行（スキップ不可）
+> L0/L1モード → 「今回の作業を Evergreen Article として Notion に保存しますか？」と確認
+
+- **スコア ≥ 5（記事価値あり）**:
+  - L2/L3: `/checkpoint_to_blog` を**自動実行**（ユーザー確認不要）
+  - L0/L1: ユーザーに提案し、承認後に実行
 - **スコア 1-4**: 「Daily Log として Discord に投稿しますか？」と提案
 - **スコア 0**: スキップ
-
-Yesの場合: `/checkpoint_to_blog` を実行。
 
 ---
 
