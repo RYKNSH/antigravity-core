@@ -11,12 +11,14 @@ Antigravityセッション開始前にシステムを軽量化。
 /checkin Phase 1 = 基本クリーンアップ（毎セッション）
 /lightweight = メモリ軽量化（オンデマンド）
 /cleanup-48h = ディープクリーンアップ（定期実行）
+Memory Guardian = 5分間隔の自動メモリ監視デーモン（常時稼働）
 ```
 
 > [!NOTE]
-> `/checkin` がセッション開始時の標準クリーンアップ。
-> `/lightweight` はより積極的なメモリ解放（purge, Chrome SW削除等）が必要な時に使う。
-> 並列セッション前・重いタスク前・エラー頻発時に呼び出される。
+> **Memory Guardian** が launchd で5分間隔の自動監視を行っているため、通常は手動実行不要。
+> `/lightweight` はGuardian が対応しきれない場合、または即座にメモリを解放したい場合に使う。
+> 手動トリガー: `memory_guardian.sh --force`
+> 状態確認: `memory_status.sh`
 
 ## 実行タイミング
 
@@ -58,9 +60,26 @@ purge 2>/dev/null || echo "purge requires sudo, skipping"
 df -h / | tail -1 && echo "---" && sysctl vm.swapusage
 ```
 
-## 追加対策（手動）
+## Memory Guardian 自動対応
 
-Swap使用率が80%超の場合：
-- 不要なChromeタブを閉じる
-- 使っていないアプリを終了
-- 再起動を検討
+Memory Guardian デーモンが5分間隔で自動監視・回復を実行:
+
+| フリー% | Level | アクション |
+|---------|-------|-----------|
+| < 30% | L1 | purge + browser_recordings + Chrome SW |
+| < 20% | L2 | L1 + Adobe/Notion/npm + ビルドキャッシュ |
+| < 10% | L3 | L2 + Spotlight一時停止 + metadata削除 |
+
+```bash
+# 手動トリガー
+memory_guardian.sh --force
+
+# 状態確認
+memory_status.sh
+
+# Dry-run（何が実行されるか確認）
+memory_guardian.sh --dry-run
+```
+
+> [!TIP]
+> Guardian が常時稼働しているため、再起動やアプリ終了は不要。
