@@ -16,11 +16,31 @@
 set -uo pipefail
 # NOTE: set -e を外してタイムアウトによる非ゼロ終了をハンドリング可能に
 
-# --- Configuration ---
-THRESHOLD_L1=30    # Level 1: 予防的クリーンアップ (フリー < 30%)
-THRESHOLD_L2=20    # Level 2: 積極的回復 (フリー < 20%)
-THRESHOLD_L3=10    # Level 3: 緊急対応 (フリー < 10%)
-SWAP_CRITICAL=2048 # SWAP 2GB超で Level 3 発動 (MB)
+# --- Configuration (Dynamic Thresholds) ---
+# RAM量に応じて閾値を動的に決定
+RAM_BYTES=$(sysctl -n hw.memsize 2>/dev/null || echo 8589934592)
+RAM_GB=$((RAM_BYTES / 1024 / 1024 / 1024))
+
+if [ "$RAM_GB" -le 8 ]; then
+  # 8GB以下: 厳しめの閾値
+  THRESHOLD_L1=35
+  THRESHOLD_L2=25
+  THRESHOLD_L3=15
+  SWAP_CRITICAL=1536
+elif [ "$RAM_GB" -le 16 ]; then
+  # 16GB: 標準
+  THRESHOLD_L1=30
+  THRESHOLD_L2=20
+  THRESHOLD_L3=10
+  SWAP_CRITICAL=2048
+else
+  # 32GB+: 余裕あり
+  THRESHOLD_L1=25
+  THRESHOLD_L2=15
+  THRESHOLD_L3=8
+  SWAP_CRITICAL=4096
+fi
+
 INTERVAL_GUARD=240 # 最低実行間隔 (秒) — 連続実行防止
 
 # --- Timeout Configuration ---
@@ -34,8 +54,9 @@ LOCK_FILE="/tmp/memory_guardian.lock"
 STATE_FILE="/tmp/memory_guardian.state"
 MAX_LOG_SIZE=1048576  # 1MB log rotation
 
-SSD="/Volumes/PortableSSD"
-DEV_DIR="$SSD/STUDIO/Apps"
+# SSD構成は廃止。ローカルのプロジェクトディレクトリを対象とする
+ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
+DEV_DIR="$HOME/Desktop"
 
 # --- Active Project Detection (with timeout protection) ---
 # 実行中のdev サーバーやプロセスが使用しているディレクトリを検出

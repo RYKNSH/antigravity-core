@@ -3,7 +3,8 @@
 # 使用法: ./update_usage_tracker.sh <workflow_name>
 # 例: ./update_usage_tracker.sh /checkin
 
-TRACKER_FILE="/Volumes/PortableSSD/.antigravity/USAGE_TRACKER.md"
+ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
+TRACKER_FILE="$ANTIGRAVITY_DIR/USAGE_TRACKER.md"
 WORKFLOW="${1:-unknown}"
 TODAY=$(date +"%Y-%m-%d")
 
