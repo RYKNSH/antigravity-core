@@ -7,13 +7,13 @@ description: タスクを自然言語で指定し、適切なワークフロー�
 ## Cross-Reference
 
 ```
-/go Phase 2 → /work → /new-feature|/bug-fix|/refactor|/spec → /verify
-/checkin → /work → /checkout
+/go Phase 2 → /work → /new-feature|/bug-fix|/refactor|/spec → /fbl quick (自動) → /checkout
+/checkin → /work → /fbl quick (自動) → /checkout
 ```
 
 > [!TIP]
-> **目標: 3コマンド → 1コマンド**
-> `/checkin` → `/work "タスク"` → `/checkout`
+> **目標達成: 1コマンドで完結**
+> `/go "タスク"` だけで実装 + 品質保証 + セッション管理が完了
 
 ---
 
@@ -90,7 +90,42 @@ description: タスクを自然言語で指定し、適切なワークフロー�
 
 ---
 
-### Step 4: 完了報告
+### Step 4: 自動品質保証（Ultimate Agent）
+
+**子ワークフロー完了後、自動的に `/fbl quick` を実行**:
+
+```bash
+echo ""
+echo "🔍 自動品質保証を実行中..."
+/fbl quick
+
+if [ $? -eq 0 ]; then
+  echo "✅ 品質保証完了 - 120%品質達成"
+else
+  echo "⚠️ 品質保証で問題検出"
+  echo "詳細は /fbl のログを確認してください"
+  echo ""
+  echo "修正後、再度 /work を実行するか、/fbl を手動実行してください"
+fi
+```
+
+**自動実行内容**:
+- Phase 0: Pre-Flight Check（lint, typecheck, test）
+- Phase 3: Frontend Layer（視覚確認）
+- Phase 7: Completion Report
+
+**効果**:
+- 全ての実装に自動品質保証
+- エラーの早期発見
+- 120%品質の自動達成
+- ユーザー操作ゼロ
+
+> [!NOTE]
+> この自動品質保証により、`/go "タスク"` だけで実装から検証まで完全自動化されます。
+
+---
+
+### Step 5: 完了報告
 
 ```markdown
 ✅ /work 完了
