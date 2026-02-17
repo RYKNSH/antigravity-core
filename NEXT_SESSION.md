@@ -1,27 +1,24 @@
 # 次回セッション引き継ぎメモ
-Generated: 2026-02-16T19:08+09:00
-
-## すぐやること
-1. Social Knowledge Score 8/10 — 今回の「Health Check Protocol導入」を `/checkpoint_to_blog` で記事化検討
-2. SSD Dev Cleanup の `find` が著しく遅い問題を調査（SSDの健康状態確認: `diskutil info /dev/disk6`）
-
-## 未完了のタスク
-- [ ] SWAP閾値のマシン別動的化（`sysctl hw.memsize` でRAM量取得→比率ベース化）— Health Check Protocol 将来課題
-- [ ] `update_usage_tracker.sh checkout` がハングする問題調査
-
-## 注意点
-- `usage_tracker.sh` スクリプトが checkout 時にハングする（今回スキップした）
-- SSD上の `find` コマンドが 2分以上無反応 — SSD接続 or ファイルシステムの状態に問題がある可能性
+Generated: 2026-02-17T17:26+09:00
 
 ## 今セッションの成果
-- **Health Check Protocol** を `WORKFLOW_CONTRACTS.md` に新設（54行追加）
-- deep系WF 5件（`fbl.md`, `verify.md`, `vision-os.md`, `debug-deep.md`, `debate.md`）に適用マーカー追記
-- `/debate deep` で5ペルソナによる3ラウンドディベートを実施し合意形成
+- **2リポ構成** 完成（antigravity-core: public, antigravity-private: private）
+- **セキュリティ修正**: PAT漏洩を発見 → git filter-repoで履歴除去 → PAT revoke → 新PAT発行
+- **setup.sh**: 新PC自動セットアップ + 既存環境保護（既存config上書きしない）
+- **消失WF復元**: lp.md, generate-lp-structure.md を再作成しGitHub push
+- **SSD依存の完全除去**: 全WFからSSDパス参照を除去（deprecated 2件は正当に残存）
+
+## 未完了のタスク
+- [ ] `update_usage_tracker.sh checkout` がハングする問題調査
+- [ ] SWAP閾値のマシン別動的化（`sysctl hw.memsize` でRAM量取得→比率ベース化）
+
+## 注意点
+- `antigravity-core`は**public**になった。秘密情報を絶対にcommitしないこと
+- `mcp_config.json`は`.gitignore`に入っているが、.gitignoreの変更には注意
+- `lp.md`/`generate-lp-structure.md`はSKILL.mdから再作成したもの。元のバージョンとは異なる可能性あり
 
 ## 関連ファイル
-- `/Volumes/PortableSSD/.antigravity/agent/workflows/WORKFLOW_CONTRACTS.md`
-- `/Volumes/PortableSSD/.antigravity/agent/workflows/fbl.md`
-- `/Volumes/PortableSSD/.antigravity/agent/workflows/verify.md`
-- `/Volumes/PortableSSD/.antigravity/agent/workflows/vision-os.md`
-- `/Volumes/PortableSSD/.antigravity/agent/workflows/debug-deep.md`
-- `/Volumes/PortableSSD/.antigravity/agent/workflows/debate.md`
+- `~/.antigravity/setup.sh` — セットアップスクリプト（2リポ自動接続 + 既存保護）
+- `~/.antigravity/.gitignore` — 秘密情報除外設定
+- `~/.antigravity/agent/workflows/lp.md` — LP構成案WF（再作成版）
+- `~/.antigravity/agent/workflows/generate-lp-structure.md` — LP構造生成WF（再作成版）
