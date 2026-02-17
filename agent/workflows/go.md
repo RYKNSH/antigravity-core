@@ -76,7 +76,21 @@ node $ANTIGRAVITY_DIR/agent/scripts/session_state.js set-workflow '/work' 'phase
 
 → 自動でタスク分析
 → /work 相当を実行
-→ 完了後 /verify 相当を自動実行
+→ 完了後 /fbl quick で自動品質保証 ✅
+→ 120%品質達成
+```
+
+**自動実行内容**:
+1. `/work` でタスク実行
+2. `/fbl quick` で自動品質保証
+   - Phase 0: Pre-Flight Check（lint, typecheck, test）
+   - Phase 3: Frontend Layer（視覚確認）
+   - Phase 7: Completion Report
+
+**メリット**:
+- 全ての実装に自動品質保証
+- エラーの早期発見
+- 120%品質の自動達成
 
 [🔵 検証中] テスト実行中...
 [🟢 作業中] ✅ 検証完了、問題なし
