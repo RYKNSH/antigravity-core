@@ -6,39 +6,39 @@
 .env
 .env.*
 credentials/
+credentials/*
 SERVICE_REGISTRY.md
 SECRETS_REFERENCE.md
 projects.json
 *.pem
 *.key
+*.secret
+mcp_config.json
 
-# === STATE LAYER (LOCAL ONLY) ===
-# Session history and runtime state - never sync via Git
+# === PERSONAL CONTENT (LOCAL ONLY) ===
+# Blog drafts and published articles - personal content
+blogs/
+# Session state and brain logs
+NEXT_SESSION.md
 brain_log/
-queue/
-heartbeat/
-logs/
-
-# === LOCAL-ONLY CONFIG ===
+brain/checkpoint_logs/
 .session_state.json
 
-# === Node ===
-# Personal directory (never commit)
+# === Personal directory ===
 personal/*
 !personal/.gitkeep
 !personal/README.md
 
-# Secrets and credentials
-.env
-.env.*
-credentials/*
-!credentials/.gitkeep
-*.key
-*.pem
-*.secret
+# === RUNTIME STATE (LOCAL ONLY) ===
+queue/
+heartbeat/
+logs/
 
-# Existing patterns
+# === Node ===
 node_modules/
 
 # === Build artifacts ===
 *.tgz
+
+# === Extensions (VSCode/IDE, too large for git) ===
+extensions/
