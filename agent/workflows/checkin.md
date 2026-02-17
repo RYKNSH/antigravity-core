@@ -228,6 +228,25 @@ fi
 
 ---
 
+## Phase 2.6: Project Mount Proposal (New)
+
+SSD I/O ボトルネック解消のため、Desktopへのマウントを提案する。
+
+13.5. マウント提案
+```bash
+echo "?? Project Mount System (Beta)"
+echo "  SSD上のプロジェクトを Desktop (~/Desktop/AntigravityWork) に展開し、"
+echo "  高速な内蔵SSDで作業することができます。"
+echo "  (終了時に /unmount で自動的に書き戻されます)"
+```
+
+**「プロジェクトをDesktopにマウントして作業しますか？ (y/n/skip)」**
+
+- **Yes**: `/mount` ワークフローを呼び出す（`/work` 経由または直接実行）
+- **No**: そのままSSD上で作業（従来通り Phase 2.7 へ）
+
+---
+
 ## Phase 2.7: 前回セッション引き継ぎ（自動）
 
 前回の `/checkout` で生成された `NEXT_SESSION.md` を自動的に読み込み、コンテキストを復元する。

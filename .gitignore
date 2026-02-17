@@ -12,12 +12,12 @@ projects.json
 *.pem
 *.key
 
-# === RUNTIME DATA ===
+# === STATE LAYER (LOCAL ONLY) ===
+# Session history and runtime state - never sync via Git
+brain_log/
+queue/
+heartbeat/
 logs/
-queue/running/
-queue/completed/
-queue/blocked/
-brain_log/states/
 
 # === LOCAL-ONLY CONFIG ===
 .session_state.json

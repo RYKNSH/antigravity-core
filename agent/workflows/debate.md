@@ -15,8 +15,8 @@ description: 強制的にMulti-Persona Debateを実行し、提案を複数ペ�
 | Command | Description | Loop Condition |
 |---------|-------------|----------------|
 | `/debate` | 標準ディベート（3〜5名） | 1ラウンド + 統合まで自動実行 |
-| `/debate deep` | 深掘り版（5名以上） | **最低3ラウンド** + 疑問が尽きるまで継続 |
-| `/debate team` | チームレビュー（合意形成） | **全員が `Approve` または `Compromise` するまで継続** |
+| `/debate deep` | 深掘り版（5名以上） | **Unlimited Rounds** (until quality > 120%) |
+| `/debate team` | チームレビュー（合意形成） | **Unlimited Rounds** (until Consensus) |
 | `/debate quick` | クイック版（Skeptic + 1名） | 1ラウンドのみ |
 
 ### Presets（チームプリセット）
@@ -38,7 +38,7 @@ description: 強制的にMulti-Persona Debateを実行し、提案を複数ペ�
 
 ### Step 0: Preparation (Knowledge Injection)
 議論を開始する前に、トピックに関連する知識を `knowledge/` から検索し、コンテキストに注入する。
-- **Search**: `grep_search` 等で関連キーワードを検索
+- **Search**: `grep_search` 等で関連キーワードを検索（`node_modules` 等の巨大ディレクトリは除外すること）
 - **Load**: 関連する `SKILL.md` やナレッジファイルを読み込む
 
 ### Step 1: Team Assembly (HR Director)
@@ -80,6 +80,10 @@ Moderator は議論の状況を評価し、次を決定する。
 
 - **Continue**: 議論が発散している、重大なリスクが残っている、合意に至っていない。
   → **Action**: 「論点Xについて深掘りします」と宣言し、Round N+1 へ進む。
+- **Continue (Deep Dive)**: 議論が発散している、重大なリスクが残っている、**品質が120%に達していない**。
+  → **Action**: 「まだ品質が不十分です。論点Xについて深掘りします」と宣言し、Round N+1 へ進む。
+- **Stall (Parallel Detected)**: 議論が同じ場所を回っている場合。
+  → **Action**: 「議論が停滞しています。視点を変えるため、新たなペルソナ（例: The Heretic）を召喚します」と宣言し、Round N+1 へ進む。
 - **Conclude**: 全員の懸念が出尽くし、解決策が見えた。
   → **Action**: Step 3 (Synthesis) へ進む。
 

@@ -94,3 +94,4 @@ description: Autonomy Levelの即時切替。モードスイッチコマンド�
 | L1 | Supervised | 設計承認 + 破壊的操作で確認。初期段階の開発向け |
 | L2 | Autonomous | 破壊的操作のみ確認。バイブ開発のデフォルト |
 | L3 | Full Auto | 本番デプロイのみ確認。信頼関係確立後 |
+

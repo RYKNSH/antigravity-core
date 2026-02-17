@@ -38,20 +38,23 @@ echo "=== Social Knowledge Score ==="
 SCORE=0
 
 # 1. git diff 行数（変更量）
-DIFF_LINES=$(git diff --stat HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | tail -1 | grep -oE '[0-9]+ insertion|[0-9]+ deletion' | grep -oE '[0-9]+' | paste -sd+ - | bc 2>/dev/null || echo 0)
+# timeout 5s to prevent hang on large diffs
+DIFF_LINES=$(perl -e 'alarm 5; exec @ARGV' git diff --stat HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | tail -1 | grep -oE '[0-9]+ insertion|[0-9]+ deletion' | grep -oE '[0-9]+' | paste -sd+ - | bc 2>/dev/null || echo 0)
 echo "  変更行数: $DIFF_LINES"
-[ "$DIFF_LINES" -gt 100 ] 2>/dev/null && SCORE=$((SCORE + 3))
-[ "$DIFF_LINES" -gt 300 ] 2>/dev/null && SCORE=$((SCORE + 2))
+if [ "$DIFF_LINES" -gt 100 ] 2>/dev/null; then SCORE=$((SCORE + 3)); fi
+if [ "$DIFF_LINES" -gt 300 ] 2>/dev/null; then SCORE=$((SCORE + 2)); fi
 
 # 2. 新規ファイル数
-NEW_FILES=$(git diff --name-status HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | grep '^A' | wc -l | tr -d ' ')
+# timeout 5s
+NEW_FILES=$(perl -e 'alarm 5; exec @ARGV' git diff --name-status HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | grep '^A' | wc -l | tr -d ' ')
 echo "  新規ファイル: $NEW_FILES"
-[ "$NEW_FILES" -gt 3 ] 2>/dev/null && SCORE=$((SCORE + 3))
+if [ "$NEW_FILES" -gt 3 ] 2>/dev/null; then SCORE=$((SCORE + 3)); fi
 
 # 3. コミット数
-COMMIT_COUNT=$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ')
+# timeout 5s
+COMMIT_COUNT=$(perl -e 'alarm 5; exec @ARGV' git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ')
 echo "  コミット数: $COMMIT_COUNT"
-[ "$COMMIT_COUNT" -gt 5 ] 2>/dev/null && SCORE=$((SCORE + 2))
+if [ "$COMMIT_COUNT" -gt 5 ] 2>/dev/null; then SCORE=$((SCORE + 2)); fi
 
 echo ""
 echo "  🎯 Social Knowledge Score: $SCORE / 10"
@@ -111,6 +114,26 @@ if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
     git add -A && git commit -m "auto-sync: $(date +%Y-%m-%d_%H%M) checkout"
   fi
   git push origin main 2>/dev/null && echo "✅ Antigravity core synced to GitHub" || echo "⚠️ GitHub push failed (offline?)"
+fi
+```
+
+---
+
+## Phase 0.7: Project Unmount Check (重要)
+
+Desktop にマウントされたままのプロジェクトがないか確認し、あれば書き戻しを提案する。
+
+11.5. マウント確認
+```bash
+MOUNT_ROOT="$HOME/Desktop/AntigravityWork"
+if [ -d "$MOUNT_ROOT" ] && [ "$(ls -A $MOUNT_ROOT)" ]; then
+    echo "⚠️  There are mounted projects in $MOUNT_ROOT"
+    ls -1 "$MOUNT_ROOT"
+    
+    # ユーザーに確認
+    # 「これらをSSDに書き戻してアンマウントしますか？ (Recommended)」
+    
+    # Yes -> /unmount ワークフローを実行
 fi
 ```
 
