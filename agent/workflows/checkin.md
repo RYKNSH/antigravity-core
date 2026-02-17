@@ -159,29 +159,13 @@ fi
 
 ```bash
 echo "=== Local Projects ==="
-if [ ! -d "$SSD" ]; then
-  echo "⏭️  SSD not connected, skipping project restore"
-else
-  echo "=== SSD Projects ==="
-  echo ""
-  echo "📦 Node.js projects (package.json detected):"
-  find "$SSD/STUDIO/Apps" -maxdepth 2 -name "package.json" -not -path "*/node_modules/*" 2>/dev/null | while read pkg; do
-    DIR=$(dirname "$pkg")
-    NAME=$(basename "$DIR")
-    HAS_NM="❌"
-    [ -d "$DIR/node_modules" ] && HAS_NM="✅"
-    echo "  $HAS_NM $NAME ($DIR)"
-  done
-  echo ""
-  echo "🐍 Python projects (pyproject.toml detected):"
-  find "$SSD/STUDIO/Apps" -maxdepth 2 -name "pyproject.toml" -not -path "*/.venv/*" 2>/dev/null | while read pyp; do
-    DIR=$(dirname "$pyp")
-    NAME=$(basename "$DIR")
-    HAS_VENV="❌"
-    [ -d "$DIR/.venv" ] && HAS_VENV="✅"
-    echo "  $HAS_VENV $NAME ($DIR)"
-  done
-fi
+find ~/Desktop ~/Documents -maxdepth 2 -type d \( -name "package.json" -o -name "pyproject.toml" \) 2>/dev/null | while read manifest; do
+  DIR=$(dirname "$manifest")
+  NAME=$(basename "$DIR")
+  echo "  → $NAME"
+done
+echo ""
+echo "💡 プロジェクトは ~/Desktop または ~/Documents に配置することを推奨"
 ```
 
 12. ユーザーに作業対象プロジェクトを確認

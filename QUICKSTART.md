@@ -1,6 +1,6 @@
 # 🚀 Antigravity: 5分クイックスタート
 
-> SSD1本で、どこでも同じ開発環境を再現。
+> GitHub1本で、どこでも同じ開発環境を再現。
 
 ## 前提条件
 
@@ -9,43 +9,30 @@
 
 ---
 
-## Step 1: SSD接続
-
-1. PortableSSD を Mac に接続
-2. `/Volumes/PortableSSD` が表示されることを確認
-
----
-
-## Step 2: プロジェクト初期化
-
-新しいプロジェクト or 新しいPCで:
+## Step 1: インストール
 
 ```bash
-# この1行だけ！
-/project-init
+curl -sL https://raw.githubusercontent.com/RYKNSH/antigravity-core/main/setup.sh | bash
 ```
 
 これで自動的に:
-- ✅ GEMINI.md → ホームディレクトリへコピー
-- ✅ ワークフロー・スキル → プロジェクトへ同期
-- ✅ Docker等の依存関係チェック
+- ✅ GitHub から clone
+- ✅ Pre-commit hook インストール
+- ✅ 依存関係チェック
 
 ---
 
-## Step 3: 日次ルーティン
+## Step 2: 日次ルーティン
 
 ```
 🌅 朝: /checkin
-   └── 環境クリーンアップ＆最新化
+   └── 環境クリーンアップ＆GitHub同期
 
-💻 作業
-   └── /dev で開発サーバー起動
-
-☕ 休憩時: /checkpoint_to_blog
-   └── 学んだことをブログ化 → Notion投稿
+💻 作業: /go "タスク"
+   └── 自動でワークフロー実行
 
 🌙 終了: /checkout
-   └── 自己評価＆改善提案
+   └── 自己評価＆GitHub push
 ```
 
 ---
@@ -54,20 +41,38 @@
 
 | コマンド | 用途 |
 |---------|------|
+| `/go` | セッション開始〜作業〜終了まで全自動 |
 | `/checkin` | セッション開始 |
 | `/checkout` | セッション終了 |
-| `/dev` | 開発サーバー起動 |
-| `/test` | テスト実行 |
-| `/fbl` | 品質フィードバックループ |
+| `/work` | タスク実行 |
+| `/verify` | テスト・検証 |
 | `/debate` | Multi-Persona批評 |
+
+---
+
+## 個人用カスタマイズ
+
+```bash
+# 個人用ディレクトリで実験
+cd ~/.antigravity/personal/
+vim my-workflow.md
+
+# OSS貢献したくなったら
+mv my-workflow.md ../contrib/workflows/
+git add contrib/workflows/my-workflow.md
+git commit -m "contrib: add my-workflow"
+git push
+```
+
+詳細: [docs/PERSONAL_TO_OSS.md](docs/PERSONAL_TO_OSS.md)
 
 ---
 
 ## 困ったら
 
-1. **GEMINI.md** を確認 → 全リソース一覧あり
-2. **ワークフロー一覧** → `SSD/.antigravity/agent/workflows/`
-3. **スキル一覧** → `SSD/.antigravity/agent/skills/`
+1. **README.md** を確認 → 基本情報
+2. **PHILOSOPHY.md** → なぜ作ったか
+3. **CONTRIBUTING.md** → 貢献方法
 
 ---
 
