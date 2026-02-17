@@ -1,324 +1,42 @@
 ---
-description: セッション終了時にデータを整理し、自己評価・改善提案を行いクリーンな状態で終了
+description: データを整理し自己評価を行いクリーンな状態で終了
 ---
-# Check-out (セッション終了)
+# /checkout - Ultra-Lean
 
-作業終了時に実行。クリーンアップ＋**自己評価フィードバックループ**。
+// turbo-all
 
-## Cross-Reference
-
-```
-/go → ... → /checkout（自動呼び出し）
-  ├─ Phase 0: Social Knowledge 自動判定 → /checkpoint_to_blog
-  ├─ Phase 0.5: Git Save & PR
-  ├─ Phase 1-1.5: クリーンアップ
-  ├─ Phase 2: 自己評価 + Vision OS 乖離チェック
-  ├─ Phase 3: 改善実装
-  └─ Phase 4: NEXT_SESSION.md 生成 → ブレインログ保存
-```
-
-## 実行タイミング
-
-- 1日の作業終了時
-- PC再起動/シャットダウン前
-
----
-
-## Phase 0: Social Knowledge (インテリジェント判定)
-
-ユーザーに「記事にしますか？」と聞く前に、**まず自動で「記事にする価値」をスコアリング**する。
-
-### Step 1: 自動スコアリング
-
-// turbo
 ```bash
-# セッションの「記事価値」を数値化
-echo "=== Social Knowledge Score ==="
-SCORE=0
+ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 
-# 1. git diff 行数（変更量）
-DIFF_LINES=$(git diff --stat HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | tail -1 | grep -oE '[0-9]+ insertion|[0-9]+ deletion' | grep -oE '[0-9]+' | paste -sd+ - | bc 2>/dev/null || echo 0)
-echo "  変更行数: $DIFF_LINES"
-[ "$DIFF_LINES" -gt 100 ] 2>/dev/null && SCORE=$((SCORE + 3))
-[ "$DIFF_LINES" -gt 300 ] 2>/dev/null && SCORE=$((SCORE + 2))
+# 1. Scoring & Sync
+SCORE=$(( ( $(git diff --shortstat HEAD~1 2>/dev/null | grep -oE '[0-9]+' | head -1 || echo 0) / 100 ) + $(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l) ))
+echo "🎯 Score: $SCORE/10"
 
-# 2. 新規ファイル数
-NEW_FILES=$(git diff --name-status HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | grep '^A' | wc -l | tr -d ' ')
-echo "  新規ファイル: $NEW_FILES"
-[ "$NEW_FILES" -gt 3 ] 2>/dev/null && SCORE=$((SCORE + 3))
-
-# 3. コミット数
-COMMIT_COUNT=$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ')
-echo "  コミット数: $COMMIT_COUNT"
-[ "$COMMIT_COUNT" -gt 5 ] 2>/dev/null && SCORE=$((SCORE + 2))
-
-echo ""
-echo "  🎯 Social Knowledge Score: $SCORE / 10"
-if [ "$SCORE" -ge 5 ]; then
-  echo "  ✅ 記事にする価値があります！"
-else
-  echo "  ℹ️  軽微な変更。Daily Log が適切かも。"
+if [ -d "$ANTIGRAVITY_DIR/.git" ] && [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+  cd "$ANTIGRAVITY_DIR" && git add -A && git commit -m "auto-sync: $(date +%m%d%H%M)" && git push origin main 2>/dev/null &
 fi
+
+# 2. Parallel Cleanup
+rm -rf ~/.gemini/antigravity/{browser_recordings,implicit}/* \
+       ~/Library/Application\ Support/{Google/Chrome/Default/Service\ Worker,Adobe/CoreSync,Notion/Partitions} \
+       ~/.npm/_{npx,logs,prebuilds,cacache} 2>/dev/null &
+find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null &
+
+# 3. Session Info & State
+[ -f "NEXT_SESSION.md" ] && cp NEXT_SESSION.md "$ANTIGRAVITY_DIR/brain_log/session_$(date +%m%d%H%M).md" 2>/dev/null
+node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" snapshot 2>/dev/null
+
+wait && echo "✅ Checkout complete!" && df -h . | tail -1
 ```
 
-### Step 2: ユーザー確認
-
-- **スコア ≥ 5**: 「今回の作業を Evergreen Article として Notion に保存しますか？」と提案
-- **スコア 1-4**: 「Daily Log として Discord に投稿しますか？」と提案
-- **スコア 0**: スキップ
-
-Yesの場合: `/checkpoint_to_blog` を実行。
-
----
-
-## Phase 0.5: Git Save & PR (Confirmed Commit)
-
-1.  **Check for Changes**
-    -   Run `git status --porcelain 2>/dev/null`
-    -   **⚠️ CRITICAL: Must run SYNCHRONOUSLY. Do not background this command.**
-    -   If the output is empty or fails (not a repo), skip to "PR Link Generation" (Assume changes were already committed or not in a repo).
-
-2.  **Review Changes (If changes exist)**
-    -   Run `git status --short` and `git diff --stat` to display the changes.
-    -   **ユーザーに変更一覧を見せて「この変更をコミットしますか？」と確認する。**
-    -   ユーザーが承認した場合のみ、コミットメッセージを質問して以下を実行:
-        ```bash
-        git add -A && git commit -m "checkout: [User Input]" && git push
-        ```
-    -   ⚠️ `git add .` は危険なため使用しない。`git add -A` / `git add -p` を使用する。
-    -   ⚠️ コミット前に `.gitignore` が適切か確認し、`.env` 等のシークレットが含まれていないことを確認する。
-
-3.  **PR Link Generation**
-    -   Get remote URL and branch name.
-    -   Display the clickable Pull Request URL: `https://github.com/[owner]/[repo]/compare/[branch]?expand=1`
-
-## Phase 0.6: Antigravity GitHub Auto-Sync
-// turbo
-
-Antigravity core の変更を GitHub に自動 push（MacBook 版との同期）:
-
-```bash
-ANTIGRAVITY_DIR="$ANTIGRAVITY_DIR"
-if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
-  cd "$ANTIGRAVITY_DIR"
-  if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-    git add -A && git commit -m "auto-sync: $(date +%Y-%m-%d_%H%M) checkout"
-  fi
-  git push origin main 2>/dev/null && echo "✅ Antigravity core synced to GitHub" || echo "⚠️ GitHub push failed (offline?)"
-fi
-```
-
----
-
-
-## Phase 1: クリーンアップ
-
-// turbo
-0. USAGE_TRACKER更新 & GEMINI.md同期チェック
-```bash
-# Usage tracking
-$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh checkout
-
-# GEMINI.md master diff warning
-GEMINI_LOCAL="$HOME/.gemini/GEMINI.md"
-GEMINI_MASTER="$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master"
-if [ -f "$GEMINI_MASTER" ]; then
-    if ! diff -q "$GEMINI_LOCAL" "$GEMINI_MASTER" > /dev/null 2>&1; then
-        echo "⚠️  WARNING: GEMINI.md differs from master!"
-        echo "    Run: cp ~/.gemini/GEMINI.md $ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master"
-        echo "    Or review diff with: diff ~/.gemini/GEMINI.md $GEMINI_MASTER"
-    else
-        echo "✅ GEMINI.md is in sync with master"
-    fi
-else
-    echo "📝 GEMINI.md.master not found, creating initial copy..."
-    cp "$GEMINI_LOCAL" "$GEMINI_MASTER" 2>/dev/null && echo "✅ Created GEMINI.md.master"
-fi
-```
-
-// turbo
-1. 現在のストレージ確認
-```bash
-echo "=== Before ===" && df -h / | tail -1
-```
-
-2. browser_recordings全削除
-```bash
-rm -rf ~/.gemini/antigravity/browser_recordings && mkdir -p ~/.gemini/antigravity/browser_recordings && echo "browser_recordings cleared"
-```
-
-3. implicit全削除
-```bash
-rm -rf ~/.gemini/antigravity/implicit && mkdir -p ~/.gemini/antigravity/implicit && echo "implicit cache cleared"
-```
-
-4. システムキャッシュ削除
-```bash
-rm -rf ~/Library/Application\ Support/Google/Chrome/Default/Service\ Worker 2>/dev/null
-rm -rf ~/Library/Application\ Support/Adobe/CoreSync 2>/dev/null
-rm -rf ~/Library/Application\ Support/Notion/Partitions 2>/dev/null
-rm -rf ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null
-echo "system caches cleared"
-```
-
-
-5. ゴミ箱の古いファイルを削除（48時間超のみ）
-```bash
-find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null && echo "Trash: files older than 48h deleted (recent files preserved)"
-```
-
-// turbo
-6. 最終確認（ローカル）
-```bash
-echo "=== After (Local) ===" && df -h / | tail -1
-```
-
----
-
-## Phase 2: 自己評価フィードバックループ
-
-このセッションでの自分のパフォーマンスを厳しく評価し、改善点を洗い出す。
-
-### 評価項目（5段階）
-
-1. **効率性** (1-5): 無駄なツール呼び出しはなかったか？最短経路で解決できたか？
-
-2. **正確性** (1-5): 初回で正しい解を提示できたか？バックトラックはなかったか？
-
-3. **コミュニケーション** (1-5): ユーザーの意図を正確に理解できたか？不要な確認はなかったか？
-
-4. **自律性** (1-5): 適切な判断を自分で行えたか？過度な依存はなかったか？
-
-5. **品質** (1-5): 出力物の品質は高かったか？ベストプラクティスに従っていたか？
-
-6. **ビジョン乖離** (Vision OSセッションのみ): `/vision-os` で作成した `VISION.md` と最終成果物の乖離度を評価。
-   - 乖離度 Low: ビジョン通りの実装
-   - 乖離度 Mid: 意図的なピボット（理由を記録）
-   - 乖離度 High: 問題あり（次回セッションで修正必要）
-
-### 評価フォーマット
-
-```markdown
-## 🔍 セッション自己評価
-
-| 評価項目 | スコア | 問題点 |
-|---------|--------|--------|
-| 効率性 | X/5 | [具体的な問題] |
-| 正確性 | X/5 | [具体的な問題] |
-| コミュニケーション | X/5 | [具体的な問題] |
-| 自律性 | X/5 | [具体的な問題] |
-| 品質 | X/5 | [具体的な問題] |
-| ビジョン乖離 | Low/Mid/High | (Vision OSセッションのみ) |
-| **総合** | XX/25 | |
-
-### 最大の課題
-[このセッションで最も改善が必要だった点]
-
-### 再発防止ソリューション
-[具体的な改善策。ワークフロー/スキル/ルールへの反映案]
-```
-
----
-
-## Phase 3: 改善提案と実装 (Mandatory)
-
-評価で洗い出した課題に対するソリューションを**その場で実装する**。
-
-1. **提案**: 課題解決のためのコード変更やルール更新を提案。
-2. **実装**: ユーザー承認後、即座に実装・適用する。
-    - ワークフロー更新
-    - スキル更新
-    - ルール更新
-3. **検証**: 実装内容が正しいか確認。
-
-**フィードバックループ:**
-```
-チェックアウト自己評価 → 課題特定 → ソリューション実装(必須) 
-    → チェックアウト完了
-```
-
----
-
-## Phase 4: 次回セッション引き継ぎ
-
-次回の自分への引き継ぎメモを生成する。
-
-```markdown
-## NEXT_SESSION.md 生成フォーマット
-
-# 次回セッション引き継ぎメモ
-Generated: [日時]
-
-## すぐやること
-1. [最優先タスク]
-2. [次に重要なタスク]
-
-## 未完了のタスク
-- [ ] [タスク1]
-- [ ] [タスク2]
-
-## 注意点
-- [今回発生した問題や、次回気をつけること]
-
-## 関連ファイル
-- [変更したファイルへのパス]
-```
-
-**出力先**: プロジェクトルートに `NEXT_SESSION.md` を生成
-
-### ブレインログ保存
-
-NEXT_SESSION.md をブレインログに保存し、セッション間の知識持続性を担保：
-
-```bash
-LOG_DIR="$ANTIGRAVITY_DIR/brain_log"
-mkdir -p "$LOG_DIR" 2>/dev/null
-DATE=$(date +%Y-%m-%d_%H%M)
-cp NEXT_SESSION.md "$LOG_DIR/session_${DATE}.md" 2>/dev/null && echo "✅ ブレインログ保存: $LOG_DIR/session_${DATE}.md" || echo "⚠️ ブレインログ保存失敗"
-```
-
-> [!TIP]
-> 次回の `/checkin` Phase 2.7 で `NEXT_SESSION.md` とブレインログが自動読み込まれる。
-
----
-
-## Phase 4.5: セッション状態のアーカイブ
-
-// turbo
-```bash
-# .session_state.json をアーカイブし、アクティブファイルを削除
-node $ANTIGRAVITY_DIR/agent/scripts/session_state.js snapshot
-```
-
----
-
-## Phase 5: 完了
-
-✅ チェックアウト完了
-- クリーンアップ実行済み
-- 自己評価完了
-- **改善提案の実装完了 (Kaizen Implemented)**
-- **NEXT_SESSION.md 生成済み**
-- **`.session_state.json` アーカイブ済み（次回 /go で自動再init）**
-
-Safe to shutdown.
-
-> [!IMPORTANT]
-> **Final Action**: Please manually delete this chat session history to keep the environment pristine for the next run.
-
----
-
-## checkin vs checkout
-
-| コマンド | タイミング | 削除対象 | 特別機能 |
-|----------|------------|----------|----------|
-| `/checkin` | 開始時 | 全データ + 24h+ conversations | 環境最新化（rsync --update） |
-| `/checkout` | 終了時 | キャッシュ + .ssdcleanプロジェクトのみ | 自己評価＋改善提案 |
-
-## 安全メカニズム
-
-| メカニズム | 説明 |
-|-----------|------|
-| `.ssdclean` | プロジェクトルートに配置 → checkout時に `node_modules`/`.venv` 削除対象（SSD接続時のみ） |
-| `// turbo` | 安全な読み取り専用コマンドのみに個別付与 |
-| `rsync --update` | ローカルの方が新しいファイルは上書きしない |
+## 🔍 自己評価 (必須)
+| 項目 | スコア | 課題 |
+|---|---|---|
+| 効率/正確/コミュ/自律/品質 | X/5 | [簡潔に] |
+
+### 改善ソリューション (即時実装)
+[評価に基づく改善案と実装結果]
+
+## 📋 NEXT_SESSION.md
+1. [タスク]
+2. [注意]
