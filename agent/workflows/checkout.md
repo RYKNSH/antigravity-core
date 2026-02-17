@@ -45,6 +45,40 @@ fi
 
 ---
 
+## Phase -0.5: Context Compression（コンテキスト圧縮）
+
+セッション終了前に、重要情報を抽出・圧縮して永続化する。
+
+// turbo
+```bash
+echo "🧠 コンテキスト圧縮中..."
+
+# セッション開始時刻を記録（なければ現在時刻の6時間前）
+SESSION_START=${SESSION_START:-$(($(date +%s) - 21600))}
+
+# 1. セッションデータ収集
+SESSION_DATA=$(SESSION_START=$SESSION_START node $ANTIGRAVITY_DIR/agent/scripts/collect_session_data.js)
+
+# 2. 重要情報抽出
+COMPRESSED=$(echo "$SESSION_DATA" | node $ANTIGRAVITY_DIR/agent/scripts/extract_context.js)
+
+# 3. アーカイブディレクトリ作成
+mkdir -p .session_archive
+
+# 4. 圧縮データ保存
+ARCHIVE_FILE=".session_archive/$(date +%Y%m%d_%H%M%S).json"
+echo "$COMPRESSED" > "$ARCHIVE_FILE"
+
+echo "✅ コンテキスト保存完了: $ARCHIVE_FILE"
+```
+
+**効果**:
+- セッション情報を永続化
+- 次回セッションで復元可能
+- ブログソースを保持
+
+---
+
 ## Phase 0: Social Knowledge (インテリジェント判定)
 
 ユーザーに「記事にしますか？」と聞く前に、**まず自動で「記事にする価値」をスコアリング**する。
