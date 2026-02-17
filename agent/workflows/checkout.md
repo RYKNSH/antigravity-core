@@ -235,14 +235,9 @@ SSD上のプロジェクトから `node_modules`, `.venv`, `.next` 等の再生�
 > 明示的にクリーンアップしたいプロジェクトにのみ `.ssdclean` を配置する。
 
 // turbo
-7. SSD接続確認
+7. ローカル環境確認
 ```bash
-if [ ! -d "/Volumes/PortableSSD" ]; then
-  echo "⏭️  SSD not connected, skipping Dev Cleanup"
-  # SSD未接続時はこのPhaseをスキップ
-else
-  echo "✅ SSD detected: $(df -h /Volumes/PortableSSD | tail -1)"
-fi
+echo "✅ Local environment: $(df -h . | tail -1)"
 ```
 
 8. ⚠️ 稼働中プロジェクト検出（干渉警告）

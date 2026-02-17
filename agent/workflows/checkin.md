@@ -57,9 +57,9 @@ $ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh checkin
 ```
 
 // turbo
-1. SSD構造確認（コンテキスト把握高速化）
+1. Antigravity構造確認（コンテキスト把握高速化）
 ```bash
-echo "=== SSD Structure ===" && ls $ANTIGRAVITY_DIR/ 2>/dev/null || echo "SSD not connected"
+echo "=== Antigravity Structure ===" && ls $ANTIGRAVITY_DIR/ 2>/dev/null || echo "Antigravity not installed"
 ```
 
 // turbo
@@ -107,25 +107,25 @@ echo "system caches cleared"
 mkdir -p .agent/{skills,workflows}
 ```
 
-8. グローバルワークフローの同期（SSD → ワークスペース）
-SSDから最新のワークフローを同期（ローカルの方が新しいファイルは保護）:
+8. グローバルワークフローの同期（GitHub → ワークスペース）
+GitHubから最新のワークフローを同期（ローカルの方が新しいファイルは保護）:
 ```bash
-rsync -a --update $ANTIGRAVITY_DIR/agent/workflows/*.md .agent/workflows/ 2>/dev/null && echo "workflows synced (--update: local customizations preserved)" || echo "SSD not connected, skipping workflow sync"
+rsync -a --update $ANTIGRAVITY_DIR/agent/workflows/*.md .agent/workflows/ 2>/dev/null && echo "workflows synced (--update: local customizations preserved)" || echo "Antigravity not found at $ANTIGRAVITY_DIR"
 ```
 
-9. グローバルスキルの同期・アップデート（SSD → ワークスペース）
-SSDから最新のスキルを同期（ローカルの方が新しいファイルは保護）:
+9. グローバルスキルの同期・アップデート（GitHub → ワークスペース）
+GitHubから最新のスキルを同期（ローカルの方が新しいファイルは保護）:
 ```bash
-rsync -a --update $ANTIGRAVITY_DIR/agent/skills/ .agent/skills/ 2>/dev/null && echo "skills synced/updated (--update: local customizations preserved)" || echo "SSD not connected, skipping skill sync"
+rsync -a --update $ANTIGRAVITY_DIR/agent/skills/ .agent/skills/ 2>/dev/null && echo "skills synced/updated (--update: local customizations preserved)" || echo "Antigravity not found at $ANTIGRAVITY_DIR"
 ```
 
-10. MCP設定の同期（SSD → ホスト）
-SSDからマスターMCP設定をコピーし、チルダパスを展開、gdrive クレデンシャルをローカルにコピー:
+10. MCP設定の同期（GitHub → ホスト）
+GitHubからマスターMCP設定をコピーし、チルダパスを展開、gdrive クレデンシャルをローカルにコピー:
 ```bash
 # MCP設定コピー + チルダ展開
 cp $ANTIGRAVITY_DIR/mcp_config.json ~/.gemini/antigravity/mcp_config.json 2>/dev/null && \
   sed -i '' "s|~/|$HOME/|g" ~/.gemini/antigravity/mcp_config.json && \
-  echo "mcp_config synced" || echo "SSD not connected, skipping MCP config sync"
+  echo "mcp_config synced" || echo "MCP config not found, skipping"
 # gdrive クレデンシャルをローカルにコピー
 mkdir -p ~/.secrets/antigravity/gdrive && \
   cp $ANTIGRAVITY_DIR/credentials/credentials.json ~/.secrets/antigravity/gdrive/gcp-oauth.keys.json 2>/dev/null && \
@@ -137,15 +137,15 @@ if ! command -v mcp-server-gdrive >/dev/null 2>&1; then
 fi
 ```
 
-10.5 GEMINI.md マスター同期（SSD → ホスト）
-SSDマスターから `~/.gemini/GEMINI.md` を同期し、Proactive Triggers等のグローバルルールを反映:
+10.5 GEMINI.md マスター同期（GitHub → ホスト）
+GitHubマスターから `~/.gemini/GEMINI.md` を同期し、Proactive Triggers等のグローバルルールを反映:
 ```bash
 GEMINI_MASTER="$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master"
 GEMINI_LOCAL="$HOME/.gemini/GEMINI.md"
 if [ -f "$GEMINI_MASTER" ]; then
-  cp "$GEMINI_MASTER" "$GEMINI_LOCAL" && echo "✅ GEMINI.md synced from SSD master"
+  cp "$GEMINI_MASTER" "$GEMINI_LOCAL" && echo "✅ GEMINI.md synced from GitHub master"
 else
-  echo "⚠️ GEMINI.md.master not found on SSD"
+  echo "⚠️ GEMINI.md.master not found in Antigravity"
 fi
 ```
 
@@ -155,10 +155,10 @@ fi
 
 前回の `/checkout` で削除された `node_modules` / `.venv` 等を、**作業対象プロジェクトのみ**復元する。
 
-11. SSD上のプロジェクト一覧を表示
+11. ローカルプロジェクト一覧を表示
 
 ```bash
-SSD="/Volumes/PortableSSD"
+echo "=== Local Projects ==="
 if [ ! -d "$SSD" ]; then
   echo "⏭️  SSD not connected, skipping project restore"
 else
