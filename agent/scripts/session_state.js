@@ -18,9 +18,13 @@
 const fs = require('fs');
 const path = require('path');
 
-const SSD_ROOT = '/Volumes/PortableSSD/.antigravity';
-const STATE_FILE = path.join(SSD_ROOT, '.session_state.json');
-const ARCHIVE_DIR = path.join(SSD_ROOT, 'brain_log', 'states');
+// パス構成の動的決定
+const SSD_MOUNT = '/Volumes/PortableSSD/.antigravity';
+const HOME_FALLBACK = path.join(process.env.HOME, '.antigravity');
+const ANTIGRAVITY_DIR = process.env.ANTIGRAVITY_DIR || (fs.existsSync(SSD_MOUNT) ? SSD_MOUNT : HOME_FALLBACK);
+
+const STATE_FILE = path.join(ANTIGRAVITY_DIR, '.session_state.json');
+const ARCHIVE_DIR = path.join(ANTIGRAVITY_DIR, 'brain_log', 'states');
 
 /**
  * デフォルトスキーマ
@@ -71,7 +75,10 @@ function createDefaultState() {
       active: true,
       last_fired: null,
       suppressed: []  // 一時的に無効化されたトリガー
-    }
+    },
+
+    // 自律性レベル (L0-L3)
+    autonomy_level: 2
   };
 }
 
@@ -117,7 +124,7 @@ function archiveState(state) {
     const archivePath = path.join(ARCHIVE_DIR, `state_${timestamp}.json`);
     fs.writeFileSync(archivePath, JSON.stringify(state, null, 2), 'utf8');
     console.log(`📦 State archived: ${archivePath}`);
-    
+
     // 古いアーカイブの削除（30個以上なら古い方を削除）
     const files = fs.readdirSync(ARCHIVE_DIR)
       .filter(f => f.startsWith('state_'))
@@ -138,7 +145,7 @@ function archiveState(state) {
 
 // ─── CLI ───────────────────────────────────────
 
-const [,, command, ...args] = process.argv;
+const [, , command, ...args] = process.argv;
 
 switch (command) {
   case 'read': {
@@ -317,6 +324,7 @@ switch (command) {
     }
     console.log(`\n📊 Session Summary`);
     console.log(`   ID: ${state.session_id}`);
+    console.log(`   Autonomy: L${(state.autonomy_level !== undefined) ? state.autonomy_level : 2}`);
     console.log(`   Current WF: ${state.current.workflow || 'none'} [${state.current.phase || '-'}]`);
     console.log(`   Project: ${state.current.project || 'none'}`);
     console.log(`   WFs executed: ${state.metrics.workflows_executed}`);
@@ -363,8 +371,25 @@ switch (command) {
     break;
   }
 
+  case 'set-level': {
+    const level = parseInt(args[0], 10);
+    if (isNaN(level) || level < 0 || level > 3) {
+      console.error('❌ Level must be 0, 1, 2, or 3');
+      process.exit(1);
+    }
+    const state = readState();
+    if (!state) {
+      console.error('❌ No active session state');
+      process.exit(1);
+    }
+    state.autonomy_level = level;
+    writeState(state);
+    console.log(`⚙️ Autonomy Level set to: L${level}`);
+    break;
+  }
+
   default:
     console.log(`Usage: node session_state.js <command> [args]`);
-    console.log(`Commands: read | init | write | update-field | set-workflow | set-project | add-task | complete-task | add-decision | snapshot | summary`);
+    console.log(`Commands: read | init | write | update-field | set-workflow | set-level | set-project | add-task | complete-task | add-decision | snapshot | summary`);
     break;
 }
