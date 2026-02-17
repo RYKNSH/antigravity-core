@@ -5,7 +5,7 @@ const https = require('https');
 // Simple .env parser
 let envPath = path.join(process.cwd(), '.env');
 if (!fs.existsSync(envPath)) {
-    envPath = '/Volumes/PortableSSD/.antigravity/.env';
+    envPath = path.join(process.env.HOME, '.antigravity', '.env');
 }
 
 if (fs.existsSync(envPath)) {
