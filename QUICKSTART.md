@@ -12,7 +12,7 @@
 ## Step 1: インストール
 
 ```bash
-curl -sL https://raw.githubusercontent.com/RYKNSH/antigravity-core/main/setup.sh | bash
+git clone https://github.com/RYKNSH/antigravity-core.git ~/.antigravity && bash ~/.antigravity/setup.sh
 ```
 
 これで自動的に:
