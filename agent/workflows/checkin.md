@@ -17,133 +17,77 @@ description: セッション開始時に不要データを削除し、環境を�
               NEXT_SESSION.md を自動読み込み
 ```
 
-## 保持するもの
+// turbo-all
+
+---
+
+## Phase 1: GitHub Sync + クリーンアップ（統合ブロック）
+
+1つのコマンドで全クリーンアップを並列実行し、I/Oバーストを最小化する。
+
+```bash
+ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
+
+# --- GitHub Sync ---
+if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
+  cd "$ANTIGRAVITY_DIR"
+  git pull origin main 2>/dev/null && echo "✅ GitHub synced" || echo "⚠️ GitHub pull failed (offline?)"
+fi
+
+# --- クリーンアップ（並列実行） ---
+rm -rf ~/.gemini/antigravity/browser_recordings/* \
+       ~/.gemini/antigravity/implicit/* \
+       ~/Library/Application\ Support/Google/Chrome/Default/Service\ Worker \
+       ~/Library/Application\ Support/Adobe/CoreSync \
+       ~/Library/Application\ Support/Notion/Partitions \
+       ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null &
+
+find ~/.gemini/antigravity/conversations -name "*.pb" -mtime +1 -delete 2>/dev/null &
+find ~/.gemini/antigravity/brain -mindepth 1 -maxdepth 1 -type d -mtime +1 -exec rm -rf {} + 2>/dev/null &
+
+wait
+echo "✅ cleanup done"
+df -h . | tail -1
+```
+
+### 保持するもの
 
 - `knowledge/` - ナレッジベース
 - `user_settings.pb` - ユーザー設定
 - `mcp_config.json` - MCP設定
 - `browserAllowlist.txt` - ブラウザ許可リスト
 
-## 削除するもの
-
-- `browser_recordings/` - 全削除
-- `conversations/*.pb` - 古いもの全削除
-- `brain/` - 古いartifacts全削除
-- `implicit/` - キャッシュ全削除
-- Chrome/Adobe/Notion/npmキャッシュ
-
-
-## Phase 0: Antigravity GitHub Sync
-// turbo
-
-GitHub から最新の Antigravity core を pull（他環境からの変更を取得）:
-
-```bash
-ANTIGRAVITY_DIR="$ANTIGRAVITY_DIR"
-[ ! -d "$ANTIGRAVITY_DIR" ] && ANTIGRAVITY_DIR="$HOME/.antigravity"
-if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
-  cd "$ANTIGRAVITY_DIR"
-  git pull origin main 2>/dev/null && echo "✅ Antigravity core updated from GitHub" || echo "⚠️ GitHub pull failed (offline?)"
-fi
-```
-
 ---
 
-## Phase 1: クリーンアップ
+## Phase 2: 環境同期（統合ブロック）
 
-0. USAGE_TRACKER更新（自動トラッキング）
+ワークフロー/スキル/MCP/GEMINI.mdを1コマンドで同期。rsyncは `--checksum --quiet` でI/O最小化。
+
 ```bash
-$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh checkin
-```
+ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 
-// turbo
-1. Antigravity構造確認（コンテキスト把握高速化）
-```bash
-echo "=== Antigravity Structure ===" && ls $ANTIGRAVITY_DIR/ 2>/dev/null || echo "Antigravity dir not found"
-```
-
-// turbo
-2. 現在のストレージ確認
-```bash
-df -h . | tail -1
-```
-
-
-2. browser_recordings全削除
-```bash
-rm -rf ~/.gemini/antigravity/browser_recordings/* && echo "browser_recordings cleared"
-```
-
-3. 古いconversations削除 (24h+)
-```bash
-find ~/.gemini/antigravity/conversations -name "*.pb" -mtime +1 -delete && echo "old conversations cleared"
-```
-
-4. 古いbrain artifacts削除 (24h+)
-```bash
-find ~/.gemini/antigravity/brain -mindepth 1 -maxdepth 1 -type d -mtime +1 -exec rm -rf {} + 2>/dev/null; echo "old brain artifacts cleared"
-```
-
-5. implicit全削除
-```bash
-rm -rf ~/.gemini/antigravity/implicit/* && echo "implicit cache cleared"
-```
-
-6. システムキャッシュ削除
-```bash
-rm -rf ~/Library/Application\ Support/Google/Chrome/Default/Service\ Worker 2>/dev/null
-rm -rf ~/Library/Application\ Support/Adobe/CoreSync 2>/dev/null
-rm -rf ~/Library/Application\ Support/Notion/Partitions 2>/dev/null
-rm -rf ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null
-echo "system caches cleared"
-```
-
----
-
-## Phase 2: 環境最新化（プロジェクト初期化）
-
-7. ワークスペースの.agentディレクトリ確認・作成
-```bash
+# --- ワークスペース .agent 準備 ---
 mkdir -p .agent/{skills,workflows}
-```
 
-8. グローバルワークフローの同期（Antigravity → ワークスペース）
-Antigravityから最新のワークフローを同期（ローカルの方が新しいファイルは保護）:
-```bash
-rsync -a --update $ANTIGRAVITY_DIR/agent/workflows/*.md .agent/workflows/ 2>/dev/null && echo "workflows synced (--update: local customizations preserved)" || echo "Antigravity dir not found, skipping workflow sync"
-```
+# --- ワークフロー・スキル同期（並列 + checksumで差分のみ） ---
+rsync -a --update --checksum --quiet "$ANTIGRAVITY_DIR/agent/workflows/"*.md .agent/workflows/ 2>/dev/null && echo "✅ workflows synced" &
+rsync -a --update --checksum --quiet "$ANTIGRAVITY_DIR/agent/skills/" .agent/skills/ 2>/dev/null && echo "✅ skills synced" &
+wait
 
-9. グローバルスキルの同期・アップデート（Antigravity → ワークスペース）
-Antigravityから最新のスキルを同期（ローカルの方が新しいファイルは保護）:
-```bash
-rsync -a --update $ANTIGRAVITY_DIR/agent/skills/ .agent/skills/ 2>/dev/null && echo "skills synced/updated (--update: local customizations preserved)" || echo "Antigravity dir not found, skipping skill sync"
-```
-
-10. MCP設定の同期（Antigravity → ホスト）
-AntigravityからマスターMCP設定をコピーし、チルダパスを展開、gdrive クレデンシャルをローカルにコピー:
-```bash
-# MCP設定コピー + チルダ展開
-cp $ANTIGRAVITY_DIR/mcp_config.json ~/.gemini/antigravity/mcp_config.json 2>/dev/null && \
+# --- MCP設定 ---
+cp "$ANTIGRAVITY_DIR/mcp_config.json" ~/.gemini/antigravity/mcp_config.json 2>/dev/null && \
   sed -i '' "s|~/|$HOME/|g" ~/.gemini/antigravity/mcp_config.json && \
-  echo "mcp_config synced" || echo "Antigravity dir not found, skipping MCP config sync"
-# gdrive クレデンシャルをローカルにコピー
-mkdir -p ~/.secrets/antigravity/gdrive && \
-  cp $ANTIGRAVITY_DIR/credentials/credentials.json ~/.secrets/antigravity/gdrive/gcp-oauth.keys.json 2>/dev/null && \
-  cp $ANTIGRAVITY_DIR/credentials/.gdrive-server-credentials.json ~/.secrets/antigravity/gdrive/.gdrive-server-credentials.json 2>/dev/null && \
-  echo "gdrive credentials synced" || echo "gdrive credentials not found, skipping"
-# mcp-server-gdrive 確認（グローバルインストールはユーザー確認が必要）
-if ! command -v mcp-server-gdrive >/dev/null 2>&1; then
-  echo "⚠️  mcp-server-gdrive が未インストールです。必要な場合は手動で: npm install -g @modelcontextprotocol/server-gdrive"
-fi
-```
+  echo "✅ mcp_config synced" || echo "⚠️ MCP config sync skipped"
 
-10.5 GEMINI.md マスター同期（Antigravity → ホスト）
-Antigravityマスターから `~/.gemini/GEMINI.md` を同期し、Proactive Triggers等のグローバルルールを反映:
-```bash
+# --- gdrive credentials ---
+mkdir -p ~/.secrets/antigravity/gdrive
+cp "$ANTIGRAVITY_DIR/credentials/credentials.json" ~/.secrets/antigravity/gdrive/gcp-oauth.keys.json 2>/dev/null
+cp "$ANTIGRAVITY_DIR/credentials/.gdrive-server-credentials.json" ~/.secrets/antigravity/gdrive/.gdrive-server-credentials.json 2>/dev/null
+
+# --- GEMINI.md master sync ---
 GEMINI_MASTER="$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master"
-GEMINI_LOCAL="$HOME/.gemini/GEMINI.md"
 if [ -f "$GEMINI_MASTER" ]; then
-  cp "$GEMINI_MASTER" "$GEMINI_LOCAL" && echo "✅ GEMINI.md synced from Antigravity master"
+  cp "$GEMINI_MASTER" "$HOME/.gemini/GEMINI.md" && echo "✅ GEMINI.md synced"
 else
   echo "⚠️ GEMINI.md.master not found"
 fi
@@ -151,120 +95,77 @@ fi
 
 ---
 
-## Phase 2.5: プロジェクト環境復元 (Lazy Install)
+## Phase 3: セッション引き継ぎ + 学習データ + プロジェクト環境（統合ブロック）
 
-作業対象プロジェクトの `node_modules` / `.venv` 等を復元する。
+前回セッション情報の読み込み、学習データの読み込み、プロジェクト環境の自動復元を1つのブロックで実行。
 
-11. ユーザーに作業対象プロジェクトを確認
-
-**「今回どのプロジェクトで作業しますか？」** とユーザーに質問する。
-回答パターン:
-- プロジェクト名を指定 → そのプロジェクトのみ復元
-- `skip` or 空 → 復元をスキップ（後で手動実行）
-
-12. 指定プロジェクトの環境構築
-
-ユーザーが指定したプロジェクトに対して以下を実行:
-
-**Node.js プロジェクトの場合:**
-```bash
-# 対象ディレクトリに cd して実行
-cd "$PROJECT_DIR"
-if [ -f "pnpm-lock.yaml" ]; then
-  pnpm install && echo "✅ pnpm install complete: $(basename $PROJECT_DIR)"
-elif [ -f "package-lock.json" ]; then
-  npm install && echo "✅ npm install complete: $(basename $PROJECT_DIR)"
-elif [ -f "yarn.lock" ]; then
-  yarn install && echo "✅ yarn install complete: $(basename $PROJECT_DIR)"
-else
-  pnpm install && echo "✅ pnpm install complete: $(basename $PROJECT_DIR)"
-fi
-```
-
-**Python プロジェクトの場合:**
-```bash
-cd "$PROJECT_DIR"
-if [ -f "pyproject.toml" ]; then
-  if command -v uv >/dev/null; then
-    uv venv .venv --allow-existing --python 3.11 && source .venv/bin/activate && uv pip install -r requirements.txt && echo "✅ uv pip install complete: $(basename $PROJECT_DIR)"
-  else
-    # Fallback to python3.11 if available, else python3 (with warning)
-    PY_BIN="python3"
-    if command -v python3.11 >/dev/null; then PY_BIN="python3.11"; fi
-    $PY_BIN -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && echo "✅ pip install complete: $(basename $PROJECT_DIR)"
-  fi
-fi
-```
-
----
-
-## Phase 2.7: 前回セッション引き継ぎ（自動）
-
-前回の `/checkout` で生成された `NEXT_SESSION.md` を自動的に読み込み、コンテキストを復元する。
-
-14. NEXT_SESSION.md の検索と読み込み
+**プロジェクト検出ロジック**: ワークスペースルートの `package.json` / `pyproject.toml` を自動検出。質問不要。
 
 ```bash
-# プロジェクトルートを検索
-NEXT_SESSION=$(find . $ANTIGRAVITY_DIR -maxdepth 3 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
+ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
+
+# --- 前回セッション引き継ぎ ---
+NEXT_SESSION=$(find . "$ANTIGRAVITY_DIR" -maxdepth 3 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
 if [ -n "$NEXT_SESSION" ]; then
-  echo "📋 前回セッション引き継ぎ発見: $NEXT_SESSION"
+  echo "📋 前回セッション引き継ぎ: $NEXT_SESSION"
   cat "$NEXT_SESSION"
 else
   echo "ℹ️  NEXT_SESSION.md なし（新規セッション）"
 fi
+
+echo "---"
+
+# --- 学習データ読み込み ---
+for f in .sweep_patterns.md .debug_learnings.md; do
+  [ -f "$f" ] && echo "📚 学習データ: $f" && cat "$f"
+done
+
+echo "---"
+
+# --- プロジェクト環境自動復元 ---
+if [ -f "pnpm-lock.yaml" ] && [ ! -d "node_modules" ]; then
+  pnpm install && echo "✅ pnpm install complete"
+elif [ -f "package-lock.json" ] && [ ! -d "node_modules" ]; then
+  npm install && echo "✅ npm install complete"
+elif [ -f "yarn.lock" ] && [ ! -d "node_modules" ]; then
+  yarn install && echo "✅ yarn install complete"
+elif [ -f "package.json" ] && [ ! -d "node_modules" ]; then
+  pnpm install && echo "✅ pnpm install complete (default)"
+elif [ -f "pyproject.toml" ] && [ ! -d ".venv" ]; then
+  if command -v uv >/dev/null; then
+    uv venv .venv --allow-existing --python 3.11 && source .venv/bin/activate && uv pip install -r requirements.txt && echo "✅ uv install complete"
+  else
+    python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && echo "✅ pip install complete"
+  fi
+else
+  echo "✅ project env already set up (or no lockfile found)"
+fi
 ```
 
-15. 引き継ぎ内容の表示
-
-**NEXT_SESSION.md が見つかった場合:**
+NEXT_SESSION.md が見つかった場合:
 - 未完了タスクを一覧表示
 - 「続きから作業しますか？ 新しいタスクを始めますか？」と確認
-- ブレインログ (`$ANTIGRAVITY_DIR/brain_log/`) にも最新ログがあれば参照
-
-**見つからなかった場合:**
-- スキップして Phase 3 へ
 
 ---
 
-## Phase 2.8: 学習データ読み込み（自動）
-
-プロジェクトルートに以下のファイルが存在すれば自動読み込み:
-
-- **`.sweep_patterns.md`** — `/error-sweep` Phase 7 で蓄積された検出原則
-- **`.debug_learnings.md`** — `/debug-deep` Step 6 で蓄積されたデバッグ知見
+## Phase 4: 最終確認（統合ブロック）
 
 ```bash
-for f in .sweep_patterns.md .debug_learnings.md; do
-  [ -f "$f" ] && echo "📚 学習データ読み込み: $f" && cat "$f" || true
-done
-```
+ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 
-> これらは `/error-sweep` Phase 0 (Step 0-0) でも参照されるが、`/checkin` 時に先に読み込むことでセッション全体のコンテキストに含まれる。
+# GEMINI.mdリソース一覧を動的更新
+$ANTIGRAVITY_DIR/agent/scripts/list_resources.sh --update-gemini 2>/dev/null
+
+# 最終確認
+df -h . | tail -1
+echo "---"
+echo "workflows: $(ls .agent/workflows/ 2>/dev/null | wc -l) files"
+echo "skills: $(ls .agent/skills/ 2>/dev/null | wc -l | tr -d ' ') dirs"
+echo "---"
+echo "✅ Check-in complete!"
+```
 
 ---
-
-## Phase 3: 完了
-
-16. GEMINI.mdリソース一覧を動的更新
-```bash
-$ANTIGRAVITY_DIR/agent/scripts/list_resources.sh --update-gemini
-```
-
-// turbo
-17. 最終確認
-```bash
-df -h . | tail -1 && echo "---"
-ls .agent/workflows/ 2>/dev/null | head -5
-ls .agent/skills/ 2>/dev/null | head -5
-echo "---Check-in complete!"
-```
-
-✅ チェックイン完了
-- 一時データ削除済み
-- ワークフロー最新化済み
-- スキル最新化済み（first-principles等のアップデート反映）
-- 前回セッション引き継ぎ済み（NEXT_SESSION.md）
 
 ## Vision OS モード対応
 
@@ -277,4 +178,3 @@ echo "---Check-in complete!"
 
 > このワークフローは**全ての一時データを削除**します。
 > 引き継ぎたいconversationがある場合は事前にKI化してください。
-
