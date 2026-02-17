@@ -24,14 +24,14 @@ const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
 
 if (!NOTION_API_KEY || !NOTION_DATABASE_ID) {
-  console.error('Error: NOTION_API_KEY and NOTION_DATABASE_ID environment variables must be set.');
-  process.exit(1);
+    console.error('Error: NOTION_API_KEY and NOTION_DATABASE_ID environment variables must be set.');
+    process.exit(1);
 }
 
 const contentFile = process.argv[2];
 if (!contentFile) {
-  console.error('Usage: node notion_poster.js <content_file_path>');
-  process.exit(1);
+    console.error('Usage: node notion_poster.js <content_file_path>');
+    process.exit(1);
 }
 
 // Database Schema Configuration
@@ -40,10 +40,10 @@ const TAGS_KEY = "カテゴリー";
 
 let content;
 try {
-  content = fs.readFileSync(contentFile, 'utf8');
+    content = fs.readFileSync(contentFile, 'utf8');
 } catch (err) {
-  console.error(`Error reading file: ${err.message}`);
-  process.exit(1);
+    console.error(`Error reading file: ${err.message}`);
+    process.exit(1);
 }
 
 const lines = content.split('\n');
@@ -69,8 +69,8 @@ function request(options, body) {
                     try {
                         const json = JSON.parse(data);
                         resolve(json);
-                    } catch(e) {
-                         resolve(data);
+                    } catch (e) {
+                        resolve(data);
                     }
                 } else {
                     reject({ statusCode: res.statusCode, body: data });
@@ -120,7 +120,7 @@ async function archiveExistingPage(title) {
         }
     } catch (error) {
         console.error("Error checking for duplicates:", error);
-       // Continue even if check fails, to ensure post happens
+        // Continue even if check fails, to ensure post happens
     }
 }
 
@@ -128,33 +128,59 @@ async function main() {
     // 1. Check and Archive Duplicates
     await archiveExistingPage(pageTitle);
 
-    // 2. Prepare Payload
-    const bodyContent = lines.slice(startIndex).join('\n');
-    const rawBlocks = bodyContent.split('\n\n').filter(p => p.trim() !== '');
-    
-    const blocks = rawBlocks.map(paragraph => {
-        // Check for code block
-        const codeMatch = paragraph.match(/^```(\w*)\n([\s\S]*)\n```$/);
-        if (codeMatch) {
-            return {
+    // 2. Prepare Payload — line-by-line to preserve article breathing pattern
+    // Each text line → its own paragraph block
+    // Each empty line → empty paragraph block (preserves spacing)
+    const bodyLines = lines.slice(startIndex);
+    const blocks = [];
+    let inCodeBlock = false;
+    let codeLines = [];
+    let codeLang = '';
+
+    for (const line of bodyLines) {
+        // Handle code blocks
+        if (line.trim().startsWith('```') && !inCodeBlock) {
+            inCodeBlock = true;
+            codeLang = line.trim().replace('```', '') || 'plain text';
+            codeLines = [];
+            continue;
+        }
+        if (line.trim() === '```' && inCodeBlock) {
+            inCodeBlock = false;
+            blocks.push({
                 object: 'block',
                 type: 'code',
                 code: {
-                    language: codeMatch[1] || 'plain text',
-                    rich_text: [{ type: 'text', text: { content: codeMatch[2] } }]
+                    language: codeLang,
+                    rich_text: [{ type: 'text', text: { content: codeLines.join('\n') } }]
                 }
-            };
+            });
+            continue;
         }
-        
-        // Default to paragraph
-        return {
+        if (inCodeBlock) {
+            codeLines.push(line);
+            continue;
+        }
+
+        // Empty line → empty paragraph (preserves breathing/spacing)
+        if (line.trim() === '') {
+            blocks.push({
+                object: 'block',
+                type: 'paragraph',
+                paragraph: { rich_text: [] }
+            });
+            continue;
+        }
+
+        // Text line → paragraph block
+        blocks.push({
             object: 'block',
             type: 'paragraph',
             paragraph: {
-                rich_text: [{ type: 'text', text: { content: paragraph.trim() } }]
+                rich_text: [{ type: 'text', text: { content: line } }]
             }
-        };
-    });
+        });
+    }
 
     const properties = {};
     properties[TITLE_KEY] = {
@@ -164,16 +190,30 @@ async function main() {
         multi_select: [{ name: 'Social Knowledge' }]
     };
 
+    // Notion API limit: max 100 children per request
+    const firstChunk = blocks.slice(0, 100);
+    const remainingBlocks = blocks.slice(100);
+
     const data = {
-      parent: { database_id: NOTION_DATABASE_ID },
-      properties: properties,
-      children: blocks
+        parent: { database_id: NOTION_DATABASE_ID },
+        properties: properties,
+        children: firstChunk
     };
 
-    // 3. Create Page
+    // 3. Create Page (with first 100 blocks)
     try {
         const response = await notionApi('/v1/pages', 'POST', data);
         console.log(`Successfully created page: ${response.url}`);
+
+        // 4. Append remaining blocks in chunks of 100
+        if (remainingBlocks.length > 0) {
+            const pageId = response.id;
+            for (let i = 0; i < remainingBlocks.length; i += 100) {
+                const chunk = remainingBlocks.slice(i, i + 100);
+                await notionApi(`/v1/blocks/${pageId}/children`, 'PATCH', { children: chunk });
+            }
+            console.log(`Appended ${remainingBlocks.length} additional blocks.`);
+        }
     } catch (error) {
         console.error(`Error creating page: Status Code ${error.statusCode}`);
         console.error(error.body);
