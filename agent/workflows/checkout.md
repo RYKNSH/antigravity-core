@@ -5,17 +5,11 @@ description: セッション終了時にデータを整理し、自己評価・�
 
 作業終了時に実行。クリーンアップ＋**自己評価フィードバックループ**。
 
-> [!CAUTION]
-> **MANDATORY GATE: Phase 0（ブログ判定）は絶対にスキップするな。**
-> ユーザーが「チェックアウト」と言ったら、**最初に必ずPhase 0のSocial Knowledge Scoreを計算せよ**。
-> Phase 0を実行せずにPhase 1以降に進むことは禁止。
-> Phase 5の完了表示の前に「Phase 0を実行したか？」を自己チェックし、未実行なら戻れ。
-
 ## Cross-Reference
 
 ```
 /go → ... → /checkout（自動呼び出し）
-  ├─ Phase 0: Social Knowledge 自動判定 → /checkpoint_to_blog ★必須★
+  ├─ Phase 0: Social Knowledge 自動判定 → /checkpoint_to_blog
   ├─ Phase 0.5: Git Save & PR
   ├─ Phase 1-1.5: クリーンアップ
   ├─ Phase 2: 自己評価 + Vision OS 乖離チェック
@@ -27,60 +21,6 @@ description: セッション終了時にデータを整理し、自己評価・�
 
 - 1日の作業終了時
 - PC再起動/シャットダウン前
-
----
-
-## Phase -1: Pre-flight SWAP Check
-
-セッション終了前にSWAP圧迫を検知し、必要に応じてクリーンアップを実行する。
-
-// turbo
-```bash
-swap_mb=$(sysctl vm.swapusage | awk '{print $7}' | sed 's/M//')
-echo "🏥 Pre-flight Check: SWAP ${swap_mb}MB"
-
-if [ $(echo "$swap_mb > 2048" | bc) -eq 1 ]; then
-  echo "⚠️ SWAP高負荷検知 (${swap_mb}MB > 2048MB) — mini-lightweight 実行"
-  # 安全な操作のみ:
-  find ~/.gemini/antigravity/browser_recordings -type f -mmin +120 -delete 2>/dev/null
-  rm -rf ~/.npm/_logs 2>/dev/null
-  echo "✅ mini-lightweight 完了"
-fi
-```
-
----
-
-## Phase -0.5: Context Compression（コンテキスト圧縮）
-
-セッション終了前に、重要情報を抽出・圧縮して永続化する。
-
-// turbo
-```bash
-echo "🧠 コンテキスト圧縮中..."
-
-# セッション開始時刻を記録（なければ現在時刻の6時間前）
-SESSION_START=${SESSION_START:-$(($(date +%s) - 21600))}
-
-# 1. セッションデータ収集
-SESSION_DATA=$(SESSION_START=$SESSION_START node $ANTIGRAVITY_DIR/agent/scripts/collect_session_data.js)
-
-# 2. 重要情報抽出
-COMPRESSED=$(echo "$SESSION_DATA" | node $ANTIGRAVITY_DIR/agent/scripts/extract_context.js)
-
-# 3. アーカイブディレクトリ作成
-mkdir -p .session_archive
-
-# 4. 圧縮データ保存
-ARCHIVE_FILE=".session_archive/$(date +%Y%m%d_%H%M%S).json"
-echo "$COMPRESSED" > "$ARCHIVE_FILE"
-
-echo "✅ コンテキスト保存完了: $ARCHIVE_FILE"
-```
-
-**効果**:
-- セッション情報を永続化
-- 次回セッションで復元可能
-- ブログソースを保持
 
 ---
 
@@ -96,24 +36,21 @@ echo "✅ コンテキスト保存完了: $ARCHIVE_FILE"
 echo "=== Social Knowledge Score ==="
 SCORE=0
 
-# 1. git diff 行数(変更量)
-# timeout 30s (extended for large repos)
-DIFF_LINES=$(perl -e 'alarm 30; exec @ARGV' git diff --stat HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | tail -1 | grep -oE '[0-9]+ insertion|[0-9]+ deletion' | grep -oE '[0-9]+' | paste -sd+ - | bc 2>/dev/null || echo 0)
+# 1. git diff 行数（変更量）
+DIFF_LINES=$(git diff --stat HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | tail -1 | grep -oE '[0-9]+ insertion|[0-9]+ deletion' | grep -oE '[0-9]+' | paste -sd+ - | bc 2>/dev/null || echo 0)
 echo "  変更行数: $DIFF_LINES"
-if [ "$DIFF_LINES" -gt 100 ] 2>/dev/null; then SCORE=$((SCORE + 3)); fi
-if [ "$DIFF_LINES" -gt 300 ] 2>/dev/null; then SCORE=$((SCORE + 2)); fi
+[ "$DIFF_LINES" -gt 100 ] 2>/dev/null && SCORE=$((SCORE + 3))
+[ "$DIFF_LINES" -gt 300 ] 2>/dev/null && SCORE=$((SCORE + 2))
 
 # 2. 新規ファイル数
-# timeout 30s (extended for large repos)
-NEW_FILES=$(perl -e 'alarm 30; exec @ARGV' git diff --name-status HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | grep '^A' | wc -l | tr -d ' ')
+NEW_FILES=$(git diff --name-status HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | grep '^A' | wc -l | tr -d ' ')
 echo "  新規ファイル: $NEW_FILES"
-if [ "$NEW_FILES" -gt 3 ] 2>/dev/null; then SCORE=$((SCORE + 3)); fi
+[ "$NEW_FILES" -gt 3 ] 2>/dev/null && SCORE=$((SCORE + 3))
 
 # 3. コミット数
-# timeout 30s (extended for large repos)
-COMMIT_COUNT=$(perl -e 'alarm 30; exec @ARGV' git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ')
+COMMIT_COUNT=$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ')
 echo "  コミット数: $COMMIT_COUNT"
-if [ "$COMMIT_COUNT" -gt 5 ] 2>/dev/null; then SCORE=$((SCORE + 2)); fi
+[ "$COMMIT_COUNT" -gt 5 ] 2>/dev/null && SCORE=$((SCORE + 2))
 
 echo ""
 echo "  🎯 Social Knowledge Score: $SCORE / 10"
@@ -124,18 +61,13 @@ else
 fi
 ```
 
-### Step 2: 記事化アクション
+### Step 2: ユーザー確認
 
-> [!IMPORTANT]
-> **スコア ≥ 5 の場合、記事化をスキップしてはならない。**
-> L2/L3モード → 自動で `/checkpoint_to_blog` を実行（スキップ不可）
-> L0/L1モード → 「今回の作業を Evergreen Article として Notion に保存しますか？」と確認
-
-- **スコア ≥ 5（記事価値あり）**:
-  - L2/L3: `/checkpoint_to_blog` を**自動実行**（ユーザー確認不要）
-  - L0/L1: ユーザーに提案し、承認後に実行
+- **スコア ≥ 5**: 「今回の作業を Evergreen Article として Notion に保存しますか？」と提案
 - **スコア 1-4**: 「Daily Log として Discord に投稿しますか？」と提案
 - **スコア 0**: スキップ
+
+Yesの場合: `/checkpoint_to_blog` を実行。
 
 ---
 
@@ -143,7 +75,7 @@ fi
 
 1.  **Check for Changes**
     -   Run `git status --porcelain 2>/dev/null`
-    -   **⚠️ CRITICAL: Must run SYNCHRONOUSLY. Do not background this command.** (Prevents SSD corruption)
+    -   **⚠️ CRITICAL: Must run SYNCHRONOUSLY. Do not background this command.**
     -   If the output is empty or fails (not a repo), skip to "PR Link Generation" (Assume changes were already committed or not in a repo).
 
 2.  **Review Changes (If changes exist)**
@@ -173,26 +105,6 @@ if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
     git add -A && git commit -m "auto-sync: $(date +%Y-%m-%d_%H%M) checkout"
   fi
   git push origin main 2>/dev/null && echo "✅ Antigravity core synced to GitHub" || echo "⚠️ GitHub push failed (offline?)"
-fi
-```
-
----
-
-## Phase 0.7: Project Unmount Check (重要)
-
-Desktop にマウントされたままのプロジェクトがないか確認し、あれば書き戻しを提案する。
-
-11.5. マウント確認
-```bash
-MOUNT_ROOT="$HOME/Desktop/AntigravityWork"
-if [ -d "$MOUNT_ROOT" ] && [ "$(ls -A $MOUNT_ROOT)" ]; then
-    echo "⚠️  There are mounted projects in $MOUNT_ROOT"
-    ls -1 "$MOUNT_ROOT"
-    
-    # ユーザーに確認
-    # 「これらをSSDに書き戻してアンマウントしますか？ (Recommended)」
-    
-    # Yes -> /unmount ワークフローを実行
 fi
 ```
 
@@ -261,27 +173,6 @@ find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null && echo "Trash: files ol
 echo "=== After (Local) ===" && df -h / | tail -1
 ```
 
-7. 自己進化（学習データ蓄積）
-```bash
-echo ""
-echo "🧠 自己進化プロセスを実行中..."
-/evolve
-
-echo "✅ 学習データ蓄積完了"
-```
-
-**自動実行内容**:
-- セッション中の成功/失敗パターンを分析
-- 改善提案を生成
-- 学習データを蓄積
-
-**メリット**:
-- 全セッションで自動学習
-- 継続的な改善
-- 次回セッションでの精度向上
-
----
-
 ---
 
 ## Phase 2: 自己評価フィードバックループ
@@ -329,26 +220,21 @@ echo "✅ 学習データ蓄積完了"
 
 ---
 
-> [!CAUTION]
-> **Phase 3 は自分で合否を判定するな。**
-> 自分の改善を自分でチェックするのは「味見の限界」と同じ構造だ。
-> 改善内容はユーザーに見せて、ユーザーが納得して初めて Phase 4 に進める。
-
-## Phase 3: 改善提案と実装 (Mandatory — スキップ不可)
+## Phase 3: 改善提案と実装 (Mandatory)
 
 評価で洗い出した課題に対するソリューションを**その場で実装する**。
 
 1. **提案**: 課題解決のためのコード変更やルール更新を提案。
-2. **実装**: 即座に実装・適用する。
+2. **実装**: ユーザー承認後、即座に実装・適用する。
     - ワークフロー更新
     - スキル更新
     - ルール更新
-3. **コミット**: 改善内容を `kaizen: [内容]` プレフィックスでコミット。
-4. **ユーザーレビュー**: 変更内容をユーザーに提示し、「この改善で根本原因が解決されるか？」を問う。ユーザーが承認して初めて Phase 4 に進む。
+3. **検証**: 実装内容が正しいか確認。
 
 **フィードバックループ:**
 ```
-自己評価 → 課題特定 → 実装 → kaizen コミット → ユーザーレビュー → Phase 4 へ
+チェックアウト自己評価 → 課題特定 → ソリューション実装(必須) 
+    → チェックアウト完了
 ```
 
 ---
@@ -371,11 +257,6 @@ Generated: [日時]
 - [ ] [タスク1]
 - [ ] [タスク2]
 
-## 🔄 Deferred Tasks
-> SSD I/Oタイムアウト等で完了できなかったタスク。次回 `/checkin` Phase 2.75 で自動リトライされる。
-
-- [ ] `[コマンド]` — timeout [N]s at [日時]
-
 ## 注意点
 - [今回発生した問題や、次回気をつけること]
 
@@ -387,7 +268,7 @@ Generated: [日時]
 
 ### ブレインログ保存
 
-NEXT_SESSION.md をブレインログにも保存し、セッション間の知識持続性を担保：
+NEXT_SESSION.md をブレインログに保存し、セッション間の知識持続性を担保：
 
 ```bash
 LOG_DIR="$ANTIGRAVITY_DIR/brain_log"
@@ -438,7 +319,6 @@ Safe to shutdown.
 
 | メカニズム | 説明 |
 |-----------|------|
-| `.ssdclean` | プロジェクトルートに配置 → checkout時に `node_modules`/`.venv` 削除対象 |
-| デフォルト | **保護**（`.ssdclean` なし = 削除されない） |
+| `.ssdclean` | プロジェクトルートに配置 → checkout時に `node_modules`/`.venv` 削除対象（SSD接続時のみ） |
 | `// turbo` | 安全な読み取り専用コマンドのみに個別付与 |
 | `rsync --update` | ローカルの方が新しいファイルは上書きしない |
