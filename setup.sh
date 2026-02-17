@@ -28,7 +28,7 @@ echo "📥 Phase 1: OSS Core 同期"
 if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   echo "   既存のAntigravityを更新中..."
   cd "$ANTIGRAVITY_DIR"
-  git pull origin main 2>/dev/null && echo "   ✅ GitHub pull 完了" || echo "   ⚠️ GitHub pull 失敗（オフライン？）"
+  git pull --ff-only origin main 2>/dev/null && echo "   ✅ GitHub pull 完了" || echo "   ⚠️ pull失敗（ローカル変更あり or オフライン → 手動で git pull してください）"
 else
   if [ -d "$ANTIGRAVITY_DIR" ]; then
     mv "$ANTIGRAVITY_DIR" "${ANTIGRAVITY_DIR}.bak.$(date +%Y%m%d%H%M)"
@@ -46,7 +46,7 @@ echo "🔑 Phase 2: 個人設定 同期"
 if [ -d "$PRIVATE_DIR/.git" ]; then
   echo "   既存の個人設定を更新中..."
   cd "$PRIVATE_DIR"
-  git pull origin main 2>/dev/null && echo "   ✅ Private pull 完了" || echo "   ⚠️ Private pull 失敗"
+  git pull --ff-only origin main 2>/dev/null && echo "   ✅ Private pull 完了" || echo "   ⚠️ Private pull 失敗（手動で git pull してください）"
 else
   echo "   個人設定をクローン中..."
   git clone "$PRIVATE_REPO" "$PRIVATE_DIR" 2>/dev/null
@@ -65,32 +65,47 @@ echo ""
 echo "🔗 Phase 3: 自動接続"
 
 if [ -d "$PRIVATE_DIR" ]; then
-  # mcp_config.json
-  [ -f "$PRIVATE_DIR/mcp_config.json" ] && \
-    cp "$PRIVATE_DIR/mcp_config.json" "$ANTIGRAVITY_DIR/mcp_config.json" && \
-    echo "   ✅ mcp_config.json 接続"
+  # mcp_config.json — 既存なら上書きしない（ローカルのMCP設定を保護）
+  if [ -f "$PRIVATE_DIR/mcp_config.json" ]; then
+    if [ ! -f "$ANTIGRAVITY_DIR/mcp_config.json" ]; then
+      cp "$PRIVATE_DIR/mcp_config.json" "$ANTIGRAVITY_DIR/mcp_config.json"
+      echo "   ✅ mcp_config.json 接続（新規）"
+    else
+      echo "   ⏭️  mcp_config.json 既存（スキップ）"
+    fi
+  fi
 
-  # .env
-  [ -f "$PRIVATE_DIR/.env" ] && \
-    cp "$PRIVATE_DIR/.env" "$ANTIGRAVITY_DIR/.env" && \
-    echo "   ✅ .env 接続"
+  # .env — 既存なら上書きしない
+  if [ -f "$PRIVATE_DIR/.env" ]; then
+    if [ ! -f "$ANTIGRAVITY_DIR/.env" ]; then
+      cp "$PRIVATE_DIR/.env" "$ANTIGRAVITY_DIR/.env"
+      echo "   ✅ .env 接続（新規）"
+    else
+      echo "   ⏭️  .env 既存（スキップ）"
+    fi
+  fi
 
-  # blogs/
+  # blogs/ — rsync --update（新しいファイルのみ追加、既存は新しい方が勝つ）
   [ -d "$PRIVATE_DIR/blogs" ] && \
     rsync -a --update "$PRIVATE_DIR/blogs/" "$ANTIGRAVITY_DIR/blogs/" && \
     echo "   ✅ blogs/ 接続 ($(ls "$ANTIGRAVITY_DIR/blogs/"*.md 2>/dev/null | wc -l | tr -d ' ') 記事)"
 
-  # brain_log/
+  # brain_log/ — rsync --update（追記型）
   [ -d "$PRIVATE_DIR/brain_log" ] && \
     rsync -a --update "$PRIVATE_DIR/brain_log/" "$ANTIGRAVITY_DIR/brain_log/" && \
     echo "   ✅ brain_log/ 接続 ($(ls "$ANTIGRAVITY_DIR/brain_log/"*.md 2>/dev/null | wc -l | tr -d ' ') セッション)"
 
-  # NEXT_SESSION.md
-  [ -f "$PRIVATE_DIR/NEXT_SESSION.md" ] && \
-    cp "$PRIVATE_DIR/NEXT_SESSION.md" "$ANTIGRAVITY_DIR/NEXT_SESSION.md" && \
-    echo "   ✅ NEXT_SESSION.md 接続"
+  # NEXT_SESSION.md — 既存なら上書きしない（マシン固有の引き継ぎ情報を保護）
+  if [ -f "$PRIVATE_DIR/NEXT_SESSION.md" ]; then
+    if [ ! -f "$ANTIGRAVITY_DIR/NEXT_SESSION.md" ]; then
+      cp "$PRIVATE_DIR/NEXT_SESSION.md" "$ANTIGRAVITY_DIR/NEXT_SESSION.md"
+      echo "   ✅ NEXT_SESSION.md 接続（新規）"
+    else
+      echo "   ⏭️  NEXT_SESSION.md 既存（スキップ）"
+    fi
+  fi
 
-  # credentials/
+  # credentials/ — rsync --update
   [ -d "$PRIVATE_DIR/credentials" ] && \
     rsync -a --update "$PRIVATE_DIR/credentials/" "$ANTIGRAVITY_DIR/credentials/" && \
     echo "   ✅ credentials/ 接続"
@@ -143,8 +158,12 @@ GEMINI_MASTER="$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master"
 GEMINI_LOCAL="$HOME/.gemini/GEMINI.md"
 
 if [ -f "$GEMINI_MASTER" ]; then
-  cp "$GEMINI_MASTER" "$GEMINI_LOCAL"
-  echo "   ✅ GEMINI.md 同期完了"
+  if [ ! -f "$GEMINI_LOCAL" ]; then
+    cp "$GEMINI_MASTER" "$GEMINI_LOCAL"
+    echo "   ✅ GEMINI.md セットアップ完了（新規）"
+  else
+    echo "   ⏭️  GEMINI.md 既存（スキップ — カスタムルールを保護）"
+  fi
 fi
 
 # =============================================
