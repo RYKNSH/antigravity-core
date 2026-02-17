@@ -18,11 +18,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// パス構成の動的決定
-const SSD_MOUNT = '/Volumes/PortableSSD/.antigravity';
-const HOME_FALLBACK = path.join(process.env.HOME, '.antigravity');
-const ANTIGRAVITY_DIR = process.env.ANTIGRAVITY_DIR || (fs.existsSync(SSD_MOUNT) ? SSD_MOUNT : HOME_FALLBACK);
-
+// パス構成の決定
+const ANTIGRAVITY_DIR = process.env.ANTIGRAVITY_DIR || path.join(process.env.HOME, '.antigravity');
 const STATE_FILE = path.join(ANTIGRAVITY_DIR, '.session_state.json');
 const ARCHIVE_DIR = path.join(ANTIGRAVITY_DIR, 'brain_log', 'states');
 
