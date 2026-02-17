@@ -4,11 +4,11 @@ description: Desktop上の作業内容をSSDに書き戻し（逆同期）、変
 
 # /unmount - Project Unmount & Sync Back
 
-`~/Desktop/AntigravityWork` で作業した内容を、`/Volumes/PortableSSD` のマスタープロジェクトに書き戻す。
+`~/Desktop/AntigravityWork` で作業した内容を、`${CORE_ROOT%/.antigravity}` のマスタープロジェクトに書き戻す。
 
 **Concept**:
 - **Source**: `~/Desktop/AntigravityWork/[Project]` (作業済み最新版)
-- **Target**: `/Volumes/PortableSSD/STUDIO/Apps/[Project]` (マスター)
+- **Target**: `${CORE_ROOT%/.antigravity}/STUDIO/Apps/[Project]` (マスター)
 
 > [!IMPORTANT]
 > この操作は **Desktop → SSD への上書き** です。SSD側で並行して変更があった場合、上書きされる可能性があります。
@@ -20,7 +20,7 @@ description: Desktop上の作業内容をSSDに書き戻し（逆同期）、変
 
 ```bash
 MOUNT_ROOT="$HOME/Desktop/AntigravityWork"
-SSD="/Volumes/PortableSSD"
+SSD="${CORE_ROOT%/.antigravity}"
 
 if [ ! -d "$MOUNT_ROOT" ]; then
     echo "❌ No mounted projects found ($MOUNT_ROOT does not exist)."

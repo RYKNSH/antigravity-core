@@ -4,7 +4,7 @@ const https = require('https');
 const { exec } = require('child_process');
 const readline = require('readline');
 
-const GLOBAL_ENV_PATH = '/Volumes/PortableSSD/.antigravity/.env';
+const GLOBAL_ENV_PATH = '${process.env.ANTIGRAVITY_DIR || path.join(require("os").homedir(), ".antigravity")}/.env';
 let ENV_PATH = path.join(process.cwd(), '.env');
 if (!fs.existsSync(ENV_PATH) && fs.existsSync(GLOBAL_ENV_PATH)) {
     ENV_PATH = GLOBAL_ENV_PATH;

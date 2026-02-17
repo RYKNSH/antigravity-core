@@ -6,7 +6,7 @@ const path = require('path');
 let envPath = path.join(process.cwd(), '.env');
 if (!fs.existsSync(envPath)) {
     // Fallback to SSD global env
-    envPath = '/Volumes/PortableSSD/.antigravity/.env';
+    envPath = '${process.env.ANTIGRAVITY_DIR || path.join(require("os").homedir(), ".antigravity")}/.env';
 }
 
 if (fs.existsSync(envPath)) {

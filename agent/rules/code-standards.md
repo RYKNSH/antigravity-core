@@ -15,7 +15,7 @@
 - ミス発生時は修正後、関連ルールファイルを更新
 - 新しいパターンを発見したらナレッジとして蓄積
 - GEMINI.md更新時は必ずSSDマスターにも同期:
-  `cp ~/.gemini/GEMINI.md /Volumes/PortableSSD/.antigravity/agent/rules/GEMINI.md.master`
+  `cp ~/.gemini/GEMINI.md ${ANTIGRAVITY_DIR:-$HOME/.antigravity}/agent/rules/GEMINI.md.master`
 
 ## Experiential Rules（経験則）
 セッションの失敗/成功から抽出された行動原則。checkout 時に自動で進化する。

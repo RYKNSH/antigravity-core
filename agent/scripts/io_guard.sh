@@ -1,5 +1,5 @@
 #!/bin/bash
-# ssd_guard.sh — SSD I/O ハング防止ラッパー (3-Layer Defense)
+# ssd_guard.sh — I/O ハング防止ラッパー (3-Layer Defense)
 # Usage: ssd_guard.sh <timeout_seconds> <command> [args...]
 #
 # Layer 1: perl alarm でタイムアウト
@@ -12,11 +12,11 @@ CMD="$@"
 
 if [ -z "$CMD" ]; then
   echo "Usage: ssd_guard.sh <timeout_seconds> <command> [args...]"
-  echo "Example: ssd_guard.sh 10 cp file.txt /Volumes/PortableSSD/dest/"
+  echo "Example: ssd_guard.sh 10 cp file.txt /Volumes/PortableCore/dest/"
   exit 1
 fi
 
-echo "🛡️ SSD Guard: timeout=${TIMEOUT}s cmd='$CMD'"
+echo "🛡️ Core Guard: timeout=${TIMEOUT}s cmd='$CMD'"
 
 # Layer 1: perl alarm
 perl -e "alarm $TIMEOUT; exec @ARGV" $CMD

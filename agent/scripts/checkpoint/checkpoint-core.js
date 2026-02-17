@@ -9,7 +9,7 @@ import { scanForSecrets, printSecurityReport } from './lib/secret_scanner.js';
 const ARGS = process.argv.slice(2);
 const COMMAND = ARGS[0];
 
-const LOG_DIR = '/Volumes/PortableSSD/.antigravity/brain/checkpoint_logs';
+const LOG_DIR = path.join(process.env.ANTIGRAVITY_DIR || path.join(require('os').homedir(), '.antigravity'), 'brain', 'checkpoint_logs');
 const LOG_FILE = path.join(LOG_DIR, 'history.jsonl');
 
 function logToBrain(type, data) {

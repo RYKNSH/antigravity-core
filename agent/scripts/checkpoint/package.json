@@ -1,7 +1,7 @@
 {
     "name": "checkpoint-tool",
     "version": "1.0.0",
-    "description": "SSD-Native Checkpoint Tool for Safe AI Coding",
+    "description": "Core-Native Checkpoint Tool for Safe AI Coding",
     "main": "checkpoint-core.js",
     "type": "module",
     "scripts": {

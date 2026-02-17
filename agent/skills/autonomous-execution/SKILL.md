@@ -52,14 +52,14 @@ description: 自律的なタスク実行とエージェントオーケストレ�
 #### Step 1: READ
 ```bash
 # 実ファイルから読み込み
-STATE=$(node /Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js read)
+STATE=$(node ${ANTIGRAVITY_DIR:-$HOME/.antigravity}/agent/scripts/session_state.js read)
 if [ "$STATE" != "null" ]; then
   # 現在のWF、Phase、親WFを読み込み
   # Compaction後のコンテキスト復元としても機能
-  node /Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js summary
+  node ${ANTIGRAVITY_DIR:-$HOME/.antigravity}/agent/scripts/session_state.js summary
 else
   # 新規セッション（/checkin から開始）
-  node /Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js init
+  node ${ANTIGRAVITY_DIR:-$HOME/.antigravity}/agent/scripts/session_state.js init
 fi
 ```
 
@@ -104,13 +104,13 @@ PAUSEは3条件だけ:
 #### Step 5: UPDATE
 ```bash
 # WF遷移時
-node /Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js set-workflow '<wf>' '<phase>'
+node ${ANTIGRAVITY_DIR:-$HOME/.antigravity}/agent/scripts/session_state.js set-workflow '<wf>' '<phase>'
 
 # 設計判断時（Compaction対策: 設計判断の理由が消えない）
-node /Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js add-decision '<context>' '<decision>' '<reason>'
+node ${ANTIGRAVITY_DIR:-$HOME/.antigravity}/agent/scripts/session_state.js add-decision '<context>' '<decision>' '<reason>'
 
 # タスク完了時
-node /Volumes/PortableSSD/.antigravity/agent/scripts/session_state.js complete-task '<task>'
+node ${ANTIGRAVITY_DIR:-$HOME/.antigravity}/agent/scripts/session_state.js complete-task '<task>'
 ```
 
 **WF完了時の仕上げが必要か判定 → Step 6 へ**

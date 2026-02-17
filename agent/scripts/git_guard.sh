@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-PROJECTS_JSON="/Volumes/PortableSSD/.antigravity/projects.json"
+PROJECTS_JSON="${ANTIGRAVITY_DIR:-$HOME/.antigravity}/projects.json"
 
 # ── Helper ──────────────────────────────────────
 resolve_project_path() {

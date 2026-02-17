@@ -52,7 +52,7 @@
 
 > [!IMPORTANT]
 > 以下のトリガー条件に合致した場合、AIは**確認なしで対応するワークフローを提案または実行**すること。
-> 詳細ルール: `/Volumes/PortableSSD/.antigravity/AUTO_TRIGGERS.md`
+> 詳細ルール: `${ANTIGRAVITY_DIR:-$HOME/.antigravity}/AUTO_TRIGGERS.md`
 
 | トリガー | アクション |
 |---------|-----------|
@@ -71,9 +71,9 @@
 - **Constraint**: 同時アクティブタブ数は最大 **3** までとする
 - **Action**: ブラウザ操作開始時に `check_tabs` → `close_old_tabs` → `open_new_tab` の手順を守る
 
-## 📦 ワークフロー自動同期 (SSD起点)
+## 📦 ワークフロー自動同期 (Core起点)
 ワークスペース読み込み時、SSDが接続されている場合:
-1. `/Volumes/PortableSSD/.antigravity/agent/workflows/` の存在確認
+1. `${ANTIGRAVITY_DIR:-$HOME/.antigravity}/agent/workflows/` の存在確認
 2. ワークスペースの `.agent/workflows/` に標準ワークフローが不足していれば自動コピー
 3. ワークスペースの `.agent/skills/` にグローバルスキルが不足していれば自動コピー
 4. 完了時「✓ Workflows synced from SSD」と表示

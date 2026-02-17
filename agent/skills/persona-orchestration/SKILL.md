@@ -319,7 +319,7 @@ Antigravity は真のサブエージェント（並列LLMインスタンス）�
 ### 9.2 ストレージ構造
 
 ```
-/Volumes/PortableSSD/.antigravity/agent/
+${ANTIGRAVITY_DIR:-$HOME/.antigravity}/agent/
 ├── skills/
 │   └── persona-orchestration/
 │       ├── SKILL.md          # このファイル

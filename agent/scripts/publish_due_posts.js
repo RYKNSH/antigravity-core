@@ -6,7 +6,7 @@ const { exec } = require('child_process');
 // 1. Global Env Retrieval
 let envPath = path.join(process.cwd(), '.env');
 if (!fs.existsSync(envPath)) {
-    envPath = '/Volumes/PortableSSD/.antigravity/.env';
+    envPath = '${process.env.ANTIGRAVITY_DIR || path.join(require("os").homedir(), ".antigravity")}/.env';
 }
 
 if (fs.existsSync(envPath)) {

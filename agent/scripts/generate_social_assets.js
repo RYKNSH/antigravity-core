@@ -6,7 +6,7 @@ const prompts = require('./social_prompts');
 // 1. Env Setup
 let envPath = path.join(process.cwd(), '.env');
 if (!fs.existsSync(envPath)) {
-    envPath = '/Volumes/PortableSSD/.antigravity/.env';
+    envPath = '${process.env.ANTIGRAVITY_DIR || path.join(require("os").homedir(), ".antigravity")}/.env';
 }
 if (fs.existsSync(envPath)) {
     const envConfig = fs.readFileSync(envPath, 'utf8');

@@ -4,10 +4,10 @@ description: SSD上のプロジェクトをDesktopに「マウント」（同期
 
 # /mount - Project Mount System
 
-SSD (`/Volumes/PortableSSD`) 上のプロジェクトを、PC内蔵SSD (`~/Desktop/AntigravityWork`) に同期し、高速なI/O環境で作業するためのワークフロー。
+SSD (`${CORE_ROOT%/.antigravity}`) 上のプロジェクトを、PC内蔵SSD (`~/Desktop/AntigravityWork`) に同期し、高速なI/O環境で作業するためのワークフロー。
 
 **Concept**:
-- **Source**: `/Volumes/PortableSSD/STUDIO/Apps/[Project]` (低速I/O, 真実のソース)
+- **Source**: `${CORE_ROOT%/.antigravity}/STUDIO/Apps/[Project]` (低速I/O, 真実のソース)
 - **Work**: `~/Desktop/AntigravityWork/[Project]` (高速I/O, 使い捨て作業領域)
 
 > [!WARNING]
@@ -26,7 +26,7 @@ mkdir -p "$MOUNT_ROOT"
 
 2. SSD上のプロジェクト一覧を表示
 ```bash
-SSD="/Volumes/PortableSSD"
+SSD="${CORE_ROOT%/.antigravity}"
 echo "=== Available Projects on SSD ==="
 find "$SSD/STUDIO/Apps" -maxdepth 2 \( -name "package.json" -o -name "pyproject.toml" \) -not -path "*/node_modules/*" -not -path "*/.venv/*" 2>/dev/null | while read manifest; do
     DIR=$(dirname "$manifest")

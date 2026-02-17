@@ -45,7 +45,7 @@
 |--------|------|
 | **プロジェクトバウンダリ** | `git add/commit/push` 前に `git rev-parse --show-toplevel` を確認 |
 | **1タスク=1プロジェクト** | 複数プロジェクトにまたがるgit操作は禁止 |
-| **git_guard.sh 使用推奨** | `/Volumes/PortableSSD/.antigravity/agent/scripts/git_guard.sh <project> <cmd>` |
+| **git_guard.sh 使用推奨** | `${ANTIGRAVITY_DIR:-$HOME/.antigravity}/agent/scripts/git_guard.sh <project> <cmd>` |
 | **session_state確認** | git操作前に `current_project` と一致することを確認 |
 
 ```bash
