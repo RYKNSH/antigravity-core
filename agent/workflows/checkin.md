@@ -110,13 +110,13 @@ mkdir -p .agent/{skills,workflows}
 8. グローバルワークフローの同期（GitHub → ワークスペース）
 GitHubから最新のワークフローを同期（ローカルの方が新しいファイルは保護）:
 ```bash
-rsync -a --update $ANTIGRAVITY_DIR/agent/workflows/*.md .agent/workflows/ 2>/dev/null && echo "workflows synced (--update: local customizations preserved)" || echo "Antigravity not found at $ANTIGRAVITY_DIR"
+timeout 30 rsync -a --update $ANTIGRAVITY_DIR/agent/workflows/*.md .agent/workflows/ 2>/dev/null && echo "workflows synced (--update: local customizations preserved)" || echo "⚠️ Sync timeout or Antigravity not found"
 ```
 
 9. グローバルスキルの同期・アップデート（GitHub → ワークスペース）
 GitHubから最新のスキルを同期（ローカルの方が新しいファイルは保護）:
 ```bash
-rsync -a --update $ANTIGRAVITY_DIR/agent/skills/ .agent/skills/ 2>/dev/null && echo "skills synced/updated (--update: local customizations preserved)" || echo "Antigravity not found at $ANTIGRAVITY_DIR"
+timeout 30 rsync -a --update $ANTIGRAVITY_DIR/agent/skills/ .agent/skills/ 2>/dev/null && echo "skills synced/updated (--update: local customizations preserved)" || echo "⚠️ Sync timeout or Antigravity not found"
 ```
 
 10. MCP設定の同期（GitHub → ホスト）
@@ -242,8 +242,8 @@ echo "  (終了時に /unmount で自動的に書き戻されます)"
 14. NEXT_SESSION.md の検索と読み込み
 
 ```bash
-# プロジェクトルートを検索
-NEXT_SESSION=$(find . $SSD/STUDIO -maxdepth 3 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
+# ローカルのみ検索（SSDスキャン回避でハング防止）
+NEXT_SESSION=$(timeout 5 find . ~/Desktop ~/Documents -maxdepth 2 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
 if [ -n "$NEXT_SESSION" ]; then
   echo "📋 前回セッション引き継ぎ発見: $NEXT_SESSION"
   cat "$NEXT_SESSION"
@@ -271,7 +271,8 @@ fi
 16. NEXT_SESSION.md の `## 🔄 Deferred Tasks` セクションを検索
 
 ```bash
-NEXT_SESSION=$(find . $SSD /Volumes/PortableSSD -maxdepth 2 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
+# ローカルのみ検索（タイムアウト付き）
+NEXT_SESSION=$(timeout 5 find . ~/Desktop ~/Documents -maxdepth 2 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
 if [ -n "$NEXT_SESSION" ] && grep -q "Deferred Tasks" "$NEXT_SESSION" 2>/dev/null; then
   echo "🔄 Deferred Tasks 検出:"
   sed -n '/## 🔄 Deferred Tasks/,/^## /p' "$NEXT_SESSION" | head -20
