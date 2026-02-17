@@ -1,8 +1,60 @@
 ---
-description: 実装後の検証を一括実行（test/fbl/error-sweep/debate統合）
+description: 実装後の検証を一括実行（/fblにリダイレクト）
 ---
 
 # /verify - 統合検証ワークフロー
+
+> [!NOTE]
+> **このワークフローは `/fbl` にリダイレクトされます。**
+> 
+> `/verify` と `/fbl` の機能が重複していたため、統合しました。
+> 今後は直接 `/fbl` を使用してください。
+
+---
+
+## 自動リダイレクト
+
+```bash
+echo "⚠️  /verify は /fbl にリダイレクトされます"
+echo "📋 /fbl を実行中..."
+echo ""
+
+# /fbl を実行
+/fbl
+```
+
+---
+
+## 移行ガイド
+
+### Before
+```bash
+/verify
+```
+
+### After
+```bash
+/fbl          # 標準検証（全フェーズ）
+/fbl quick    # 高速検証（Phase 0+3のみ）
+/fbl deep     # フルスタック検証 + ペルソナ批評
+```
+
+---
+
+## /fbl の機能
+
+`/fbl` (Feedback Loop) は以下を提供します:
+
+**Phase 0**: Pre-Flight Check（lint, typecheck, test）  
+**Phase 1**: DB Layer検証  
+**Phase 2**: API Layer検証  
+**Phase 3**: Frontend Layer検証  
+**Phase 4**: E2E Data Flow検証  
+**Phase 5**: 120% Quality Gate  
+**Phase 6**: Self-Repair Loop  
+**Phase 7**: Completion Report
+
+詳細は [`/fbl`](file:///Volumes/PortableSSD/.antigravity/agent/workflows/fbl.md) を参照してください。
 
 実装作業（`/work`）完了後に実行する検証フェーズ。
 
