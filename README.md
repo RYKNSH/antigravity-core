@@ -108,4 +108,15 @@ AGPL v3 - 詳細は [LICENSE](LICENSE) および [LICENSE-FAQ.md](LICENSE-FAQ.md
 
 ---
 
+## 📦 Legacy Features (Deprecated)
+
+以下の機能はSSD時代の遺産です。GitHub-Firstアーキテクチャでは不要です：
+
+- **Phase 2.6 (Project Mount)**: `git clone`を使用してください
+- **Phase 1.5 (SSD Dev Cleanup)**: ローカルクリーンアップは自動化されました
+
+これらはv3.0で削除予定です。
+
+---
+
 **一緒に、AI時代のクリエイター文化を作りましょう。**

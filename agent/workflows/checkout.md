@@ -224,6 +224,10 @@ echo "=== After (Local) ===" && df -h / | tail -1
 
 ---
 
+> [!CAUTION]
+> **DEPRECATED**: This phase is no longer needed with GitHub-First architecture.
+> Local cleanup is handled automatically. This section will be removed in v3.0.
+
 ## Phase 1.5: SSD Dev Cleanup (再生可能ファイル削除)
 
 SSD上のプロジェクトから `node_modules`, `.venv`, `.next` 等の再生可能ファイルを検出・削除する。

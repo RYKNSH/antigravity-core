@@ -212,6 +212,10 @@ fi
 
 ---
 
+> [!CAUTION]
+> **DEPRECATED**: This phase is no longer needed with GitHub-First architecture.
+> Use `git clone` instead of SSD mount. This section will be removed in v3.0.
+
 ## Phase 2.6: Project Mount Proposal (New)
 
 SSD I/O ボトルネック解消のため、Desktopへのマウントを提案する。
