@@ -23,6 +23,21 @@ logs/
 .session_state.json
 
 # === Node ===
+# Personal directory (never commit)
+personal/*
+!personal/.gitkeep
+!personal/README.md
+
+# Secrets and credentials
+.env
+.env.*
+credentials/*
+!credentials/.gitkeep
+*.key
+*.pem
+*.secret
+
+# Existing patterns
 node_modules/
 
 # === Build artifacts ===
