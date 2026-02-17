@@ -59,7 +59,7 @@ $ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh checkin
 // turbo
 1. Antigravity構造確認（コンテキスト把握高速化）
 ```bash
-echo "=== Antigravity Structure ===" && ls $ANTIGRAVITY_DIR/ 2>/dev/null || echo "Antigravity not installed"
+echo "=== Antigravity Structure ===" && ls $ANTIGRAVITY_DIR/ 2>/dev/null || echo "Antigravity dir not found"
 ```
 
 // turbo
@@ -107,25 +107,25 @@ echo "system caches cleared"
 mkdir -p .agent/{skills,workflows}
 ```
 
-8. グローバルワークフローの同期（GitHub → ワークスペース）
-GitHubから最新のワークフローを同期（ローカルの方が新しいファイルは保護）:
+8. グローバルワークフローの同期（Antigravity → ワークスペース）
+Antigravityから最新のワークフローを同期（ローカルの方が新しいファイルは保護）:
 ```bash
-timeout 30 rsync -a --update $ANTIGRAVITY_DIR/agent/workflows/*.md .agent/workflows/ 2>/dev/null && echo "workflows synced (--update: local customizations preserved)" || echo "⚠️ Sync timeout or Antigravity not found"
+rsync -a --update $ANTIGRAVITY_DIR/agent/workflows/*.md .agent/workflows/ 2>/dev/null && echo "workflows synced (--update: local customizations preserved)" || echo "Antigravity dir not found, skipping workflow sync"
 ```
 
-9. グローバルスキルの同期・アップデート（GitHub → ワークスペース）
-GitHubから最新のスキルを同期（ローカルの方が新しいファイルは保護）:
+9. グローバルスキルの同期・アップデート（Antigravity → ワークスペース）
+Antigravityから最新のスキルを同期（ローカルの方が新しいファイルは保護）:
 ```bash
-timeout 30 rsync -a --update $ANTIGRAVITY_DIR/agent/skills/ .agent/skills/ 2>/dev/null && echo "skills synced/updated (--update: local customizations preserved)" || echo "⚠️ Sync timeout or Antigravity not found"
+rsync -a --update $ANTIGRAVITY_DIR/agent/skills/ .agent/skills/ 2>/dev/null && echo "skills synced/updated (--update: local customizations preserved)" || echo "Antigravity dir not found, skipping skill sync"
 ```
 
-10. MCP設定の同期（GitHub → ホスト）
-GitHubからマスターMCP設定をコピーし、チルダパスを展開、gdrive クレデンシャルをローカルにコピー:
+10. MCP設定の同期（Antigravity → ホスト）
+AntigravityからマスターMCP設定をコピーし、チルダパスを展開、gdrive クレデンシャルをローカルにコピー:
 ```bash
 # MCP設定コピー + チルダ展開
 cp $ANTIGRAVITY_DIR/mcp_config.json ~/.gemini/antigravity/mcp_config.json 2>/dev/null && \
   sed -i '' "s|~/|$HOME/|g" ~/.gemini/antigravity/mcp_config.json && \
-  echo "mcp_config synced" || echo "MCP config not found, skipping"
+  echo "mcp_config synced" || echo "Antigravity dir not found, skipping MCP config sync"
 # gdrive クレデンシャルをローカルにコピー
 mkdir -p ~/.secrets/antigravity/gdrive && \
   cp $ANTIGRAVITY_DIR/credentials/credentials.json ~/.secrets/antigravity/gdrive/gcp-oauth.keys.json 2>/dev/null && \
@@ -137,15 +137,15 @@ if ! command -v mcp-server-gdrive >/dev/null 2>&1; then
 fi
 ```
 
-10.5 GEMINI.md マスター同期（GitHub → ホスト）
-GitHubマスターから `~/.gemini/GEMINI.md` を同期し、Proactive Triggers等のグローバルルールを反映:
+10.5 GEMINI.md マスター同期（Antigravity → ホスト）
+Antigravityマスターから `~/.gemini/GEMINI.md` を同期し、Proactive Triggers等のグローバルルールを反映:
 ```bash
 GEMINI_MASTER="$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master"
 GEMINI_LOCAL="$HOME/.gemini/GEMINI.md"
 if [ -f "$GEMINI_MASTER" ]; then
-  cp "$GEMINI_MASTER" "$GEMINI_LOCAL" && echo "✅ GEMINI.md synced from GitHub master"
+  cp "$GEMINI_MASTER" "$GEMINI_LOCAL" && echo "✅ GEMINI.md synced from Antigravity master"
 else
-  echo "⚠️ GEMINI.md.master not found in Antigravity"
+  echo "⚠️ GEMINI.md.master not found"
 fi
 ```
 
@@ -153,30 +153,16 @@ fi
 
 ## Phase 2.5: プロジェクト環境復元 (Lazy Install)
 
-前回の `/checkout` で削除された `node_modules` / `.venv` 等を、**作業対象プロジェクトのみ**復元する。
+作業対象プロジェクトの `node_modules` / `.venv` 等を復元する。
 
-11. ローカルプロジェクト一覧を表示
-
-```bash
-echo "=== Local Projects ==="
-find ~/Desktop ~/Documents -maxdepth 2 -type d \( -name "package.json" -o -name "pyproject.toml" \) 2>/dev/null | while read manifest; do
-  DIR=$(dirname "$manifest")
-  NAME=$(basename "$DIR")
-  echo "  → $NAME"
-done
-echo ""
-echo "💡 プロジェクトは ~/Desktop または ~/Documents に配置することを推奨"
-```
-
-12. ユーザーに作業対象プロジェクトを確認
+11. ユーザーに作業対象プロジェクトを確認
 
 **「今回どのプロジェクトで作業しますか？」** とユーザーに質問する。
 回答パターン:
 - プロジェクト名を指定 → そのプロジェクトのみ復元
-- `all` → 全プロジェクト復元（時間に余裕がある場合）
 - `skip` or 空 → 復元をスキップ（後で手動実行）
 
-13. 指定プロジェクトの環境構築
+12. 指定プロジェクトの環境構築
 
 ユーザーが指定したプロジェクトに対して以下を実行:
 
@@ -212,29 +198,6 @@ fi
 
 ---
 
-> [!CAUTION]
-> **DEPRECATED**: This phase is no longer needed with GitHub-First architecture.
-> Use `git clone` instead of SSD mount. This section will be removed in v3.0.
-
-## Phase 2.6: Project Mount Proposal (New)
-
-SSD I/O ボトルネック解消のため、Desktopへのマウントを提案する。
-
-13.5. マウント提案
-```bash
-echo "?? Project Mount System (Beta)"
-echo "  SSD上のプロジェクトを Desktop (~/Desktop/AntigravityWork) に展開し、"
-echo "  高速な内蔵SSDで作業することができます。"
-echo "  (終了時に /unmount で自動的に書き戻されます)"
-```
-
-**「プロジェクトをDesktopにマウントして作業しますか？ (y/n/skip)」**
-
-- **Yes**: `/mount` ワークフローを呼び出す（`/work` 経由または直接実行）
-- **No**: そのままSSD上で作業（従来通り Phase 2.7 へ）
-
----
-
 ## Phase 2.7: 前回セッション引き継ぎ（自動）
 
 前回の `/checkout` で生成された `NEXT_SESSION.md` を自動的に読み込み、コンテキストを復元する。
@@ -242,8 +205,8 @@ echo "  (終了時に /unmount で自動的に書き戻されます)"
 14. NEXT_SESSION.md の検索と読み込み
 
 ```bash
-# ローカルのみ検索（SSDスキャン回避でハング防止）
-NEXT_SESSION=$(timeout 5 find . ~/Desktop ~/Documents -maxdepth 2 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
+# プロジェクトルートを検索
+NEXT_SESSION=$(find . $ANTIGRAVITY_DIR -maxdepth 3 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
 if [ -n "$NEXT_SESSION" ]; then
   echo "📋 前回セッション引き継ぎ発見: $NEXT_SESSION"
   cat "$NEXT_SESSION"
@@ -257,33 +220,10 @@ fi
 **NEXT_SESSION.md が見つかった場合:**
 - 未完了タスクを一覧表示
 - 「続きから作業しますか？ 新しいタスクを始めますか？」と確認
-- SSD ブレインログ (`$ANTIGRAVITY_DIR/brain_log/`) にも最新ログがあれば参照
+- ブレインログ (`$ANTIGRAVITY_DIR/brain_log/`) にも最新ログがあれば参照
 
 **見つからなかった場合:**
-- スキップして Phase 2.75 へ
-
----
-
-## Phase 2.75: Deferred Tasks リトライ（自動）
-
-前回セッションで SSD I/O タイムアウト等により完了できなかったタスクを自動リトライする。
-
-16. NEXT_SESSION.md の `## 🔄 Deferred Tasks` セクションを検索
-
-```bash
-# ローカルのみ検索（タイムアウト付き）
-NEXT_SESSION=$(timeout 5 find . ~/Desktop ~/Documents -maxdepth 2 -name "NEXT_SESSION.md" -mtime -7 2>/dev/null | head -1)
-if [ -n "$NEXT_SESSION" ] && grep -q "Deferred Tasks" "$NEXT_SESSION" 2>/dev/null; then
-  echo "🔄 Deferred Tasks 検出:"
-  sed -n '/## 🔄 Deferred Tasks/,/^## /p' "$NEXT_SESSION" | head -20
-fi
-```
-
-17. 未完了タスクの自動リトライ
-- `- [ ]` で始まる行を抽出
-- 各タスクを **perl alarm 付き** で再実行
-- 成功 → `- [x]` に更新
-- 再度タイムアウト → そのまま残す（次回セッションでリトライ）
+- スキップして Phase 3 へ
 
 ---
 
@@ -324,7 +264,6 @@ echo "---Check-in complete!"
 - 一時データ削除済み
 - ワークフロー最新化済み
 - スキル最新化済み（first-principles等のアップデート反映）
-- プロジェクト環境復元済み（指定プロジェクトのみ）
 - 前回セッション引き継ぎ済み（NEXT_SESSION.md）
 
 ## Vision OS モード対応
