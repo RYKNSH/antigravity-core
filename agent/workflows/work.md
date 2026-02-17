@@ -97,12 +97,18 @@ description: タスクを自然言語で指定し、適切なワークフロー�
 ```bash
 echo ""
 echo "🔍 自動品質保証を実行中..."
-/fbl quick
 
-if [ $? -eq 0 ]; then
+# タイムアウト保護（5分）
+timeout 300 /fbl quick
+FBL_EXIT_CODE=$?
+
+if [ $FBL_EXIT_CODE -eq 0 ]; then
   echo "✅ 品質保証完了 - 120%品質達成"
+elif [ $FBL_EXIT_CODE -eq 124 ]; then
+  echo "⚠️ 品質保証タイムアウト（5分）"
+  echo "大規模な変更の可能性があります。手動で /fbl を実行してください。"
 else
-  echo "⚠️ 品質保証で問題検出"
+  echo "⚠️ 品質保証で問題検出（Exit Code: $FBL_EXIT_CODE）"
   echo "詳細は /fbl のログを確認してください"
   echo ""
   echo "修正後、再度 /work を実行するか、/fbl を手動実行してください"
@@ -113,6 +119,11 @@ fi
 - Phase 0: Pre-Flight Check（lint, typecheck, test）
 - Phase 3: Frontend Layer（視覚確認）
 - Phase 7: Completion Report
+
+**エラーハンドリング**:
+- ✅ タイムアウト保護（5分）
+- ✅ Exit Code判定
+- ✅ グレースフルな失敗
 
 **効果**:
 - 全ての実装に自動品質保証
