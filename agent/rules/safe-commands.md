@@ -82,7 +82,7 @@ git add -A && git commit               # プロジェクト未確認で操作
 
 ## ⏱️ SSD Timeout Guard (3-Layer Defense)
 
-SSD (`/Volumes/PortableSSD`) 上の**書き込み・削除コマンド**は I/O ハングリスクがある。
+SSD (`${CORE_ROOT}`) 上の**書き込み・削除コマンド**は I/O ハングリスクがある。
 以下の3層防御を適用する。
 
 ### Layer 1: `perl alarm` (通常のハング対策)

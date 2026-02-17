@@ -9,7 +9,7 @@ description: 新しいSSDにポータブル開発環境を複製
 新しいSSDに完全なポータブル開発環境を複製します。
 
 ## 前提条件
-- 現在のSSD（PortableSSD）が接続されていること
+- 現在のSSD（CommonCore）が接続されていること
 - 新しいSSDがマウントされていること
 
 ---
@@ -27,7 +27,7 @@ ls /Volumes/ | grep -v "Macintosh HD"
 ## 2. クローン先のボリューム名を入力
 
 ユーザーに新しいSSDのボリューム名を確認：
-- 例: `NewSSD`, `PortableSSD2`, `Samsung_T7` など
+- 例: `NewSSD`, `CommonCore2`, `Samsung_T7` など
 
 ---
 

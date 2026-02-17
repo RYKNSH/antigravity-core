@@ -41,7 +41,7 @@ function createDefaultState() {
       parent_workflow: null, // ネストされたWF呼び出し時の親
       started_at: null,
       project: null,        // e.g. "videdit", "discord-buddy"
-      project_path: null    // e.g. "/Volumes/PortableSSD/STUDIO/Apps/Videdit"
+      project_path: null    // e.g. "${CORE_ROOT}/apps/example"
     },
 
     // 保留中のタスク
