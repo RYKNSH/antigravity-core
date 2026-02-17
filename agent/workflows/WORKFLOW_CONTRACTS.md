@@ -315,17 +315,21 @@ autonomy_level: 2  # L0-L3
 
 ### 適用対象WF
 
-| WF | 適用タイミング |
-|----|--------------|
-| `/fbl deep` | Phase 0, 3, 5.5, 6 の間 |
-| `/verify --deep` | Phase 0, 1, 2, 2.5, 3 の間 |
-| `/vision-os` | Phase 1-6 のメジャーPhase間 |
-| `/debug-deep` | Step 2, 3, 4, 5 の間 |
-| `/debate deep` | Round 2以降の開始前 |
+| WF | 適用タイミング | 実装状況 |
+|----|--------------|---------|
+| `/fbl deep` | Phase 0, 3, 5.5, 6 の間 | ✅ 実装済み (documented) |
+| `/verify --deep` | Phase 0, 1, 2, 2.5, 3 の間 | ✅ 実装済み (documented) |
+| `/vision-os` | Phase 1-6 のメジャーPhase間 | ✅ 実装済み (documented) |
+| `/debug-deep` | Step 2, 3, 4, 5 の間 | ✅ 実装済み (documented) |
+| `/debate deep` | Round 2以降の開始前 | ✅ 実装済み (code) |
+| `/error-sweep` | Phase 3, 5 の開始前 | ✅ 実装済み (documented) |
+| `/checkout` | Phase -1 (Pre-flight) | ✅ 実装済み (code) |
 
 ### Pre-flight（WF開始前）
 
 deep系WF開始時に `/lightweight` を自動実行してクリーンな状態で開始する。
+
+**`/checkout` 専用**: Phase -1 でSWAPチェックを実行し、閾値超過時にmini-lightweightを自動実行。
 
 ### Mid-flight Health Check（Phase間）
 
@@ -358,6 +362,7 @@ fi
 
 - SWAP閾値のマシン別動的化（`sysctl hw.memsize` でRAM量を取得→比率ベースに）
 - 「不要プロセス」判定の厳密化（PID追跡ベースへ）
+
 
 ---
 

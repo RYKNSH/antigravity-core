@@ -91,6 +91,23 @@ Moderator は議論の状況を評価し、次を決定する。
 > `/debate deep` の場合、**最低3ラウンド**はどんなに良い案でも「あえてアラ探し」をして継続すること。
 > `/debate team` の場合、**全員の合意 (Consensus)** が取れるまで終わらせないこと。
 
+#### Health Check (Round 2+)
+
+Round 2以降の開始前に、SWAP圧迫を検知してクリーンアップを実行する。
+
+```bash
+# Round 2以降の開始前に実行
+swap_mb=$(sysctl vm.swapusage | awk '{print $7}' | sed 's/M//')
+echo "🏥 Health Check (Round $ROUND_NUM): SWAP ${swap_mb}MB"
+
+if [ $(echo "$swap_mb > 2048" | bc) -eq 1 ]; then
+  echo "⚠️ SWAP高負荷検知 — mini-lightweight 実行"
+  find ~/.gemini/antigravity/browser_recordings -type f -mmin +120 -delete 2>/dev/null
+  rm -rf ~/.npm/_logs 2>/dev/null
+  echo "✅ mini-lightweight 完了"
+fi
+```
+
 ---
 
 ### Step 3: Synthesis (Final Report)

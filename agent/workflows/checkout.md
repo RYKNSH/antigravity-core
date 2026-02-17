@@ -25,6 +25,26 @@ description: セッション終了時にデータを整理し、自己評価・�
 
 ---
 
+## Phase -1: Pre-flight SWAP Check
+
+セッション終了前にSWAP圧迫を検知し、必要に応じてクリーンアップを実行する。
+
+// turbo
+```bash
+swap_mb=$(sysctl vm.swapusage | awk '{print $7}' | sed 's/M//')
+echo "🏥 Pre-flight Check: SWAP ${swap_mb}MB"
+
+if [ $(echo "$swap_mb > 2048" | bc) -eq 1 ]; then
+  echo "⚠️ SWAP高負荷検知 (${swap_mb}MB > 2048MB) — mini-lightweight 実行"
+  # 安全な操作のみ:
+  find ~/.gemini/antigravity/browser_recordings -type f -mmin +120 -delete 2>/dev/null
+  rm -rf ~/.npm/_logs 2>/dev/null
+  echo "✅ mini-lightweight 完了"
+fi
+```
+
+---
+
 ## Phase 0: Social Knowledge (インテリジェント判定)
 
 ユーザーに「記事にしますか？」と聞く前に、**まず自動で「記事にする価値」をスコアリング**する。
@@ -37,22 +57,22 @@ description: セッション終了時にデータを整理し、自己評価・�
 echo "=== Social Knowledge Score ==="
 SCORE=0
 
-# 1. git diff 行数（変更量）
-# timeout 5s to prevent hang on large diffs
-DIFF_LINES=$(perl -e 'alarm 5; exec @ARGV' git diff --stat HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | tail -1 | grep -oE '[0-9]+ insertion|[0-9]+ deletion' | grep -oE '[0-9]+' | paste -sd+ - | bc 2>/dev/null || echo 0)
+# 1. git diff 行数(変更量)
+# timeout 30s (extended for large repos)
+DIFF_LINES=$(perl -e 'alarm 30; exec @ARGV' git diff --stat HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | tail -1 | grep -oE '[0-9]+ insertion|[0-9]+ deletion' | grep -oE '[0-9]+' | paste -sd+ - | bc 2>/dev/null || echo 0)
 echo "  変更行数: $DIFF_LINES"
 if [ "$DIFF_LINES" -gt 100 ] 2>/dev/null; then SCORE=$((SCORE + 3)); fi
 if [ "$DIFF_LINES" -gt 300 ] 2>/dev/null; then SCORE=$((SCORE + 2)); fi
 
 # 2. 新規ファイル数
-# timeout 5s
-NEW_FILES=$(perl -e 'alarm 5; exec @ARGV' git diff --name-status HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | grep '^A' | wc -l | tr -d ' ')
+# timeout 30s (extended for large repos)
+NEW_FILES=$(perl -e 'alarm 30; exec @ARGV' git diff --name-status HEAD~$(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ') 2>/dev/null | grep '^A' | wc -l | tr -d ' ')
 echo "  新規ファイル: $NEW_FILES"
 if [ "$NEW_FILES" -gt 3 ] 2>/dev/null; then SCORE=$((SCORE + 3)); fi
 
 # 3. コミット数
-# timeout 5s
-COMMIT_COUNT=$(perl -e 'alarm 5; exec @ARGV' git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ')
+# timeout 30s (extended for large repos)
+COMMIT_COUNT=$(perl -e 'alarm 30; exec @ARGV' git log --oneline --since='6 hours ago' 2>/dev/null | wc -l | tr -d ' ')
 echo "  コミット数: $COMMIT_COUNT"
 if [ "$COMMIT_COUNT" -gt 5 ] 2>/dev/null; then SCORE=$((SCORE + 2)); fi
 
