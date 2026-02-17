@@ -54,7 +54,7 @@ echo ""
 **Phase 6**: Self-Repair Loop  
 **Phase 7**: Completion Report
 
-詳細は [`/fbl`](file:///Volumes/PortableSSD/.antigravity/agent/workflows/fbl.md) を参照してください。
+詳細は `/fbl` ワークフローを参照してください。
 
 実装作業（`/work`）完了後に実行する検証フェーズ。
 

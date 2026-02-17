@@ -14,14 +14,13 @@ description: セッション終了時にデータを整理し、自己評価・�
   ├─ Phase 1-1.5: クリーンアップ
   ├─ Phase 2: 自己評価 + Vision OS 乖離チェック
   ├─ Phase 3: 改善実装
-  └─ Phase 4: NEXT_SESSION.md 生成 → SSDログ保存
+  └─ Phase 4: NEXT_SESSION.md 生成 → ブレインログ保存
 ```
 
 ## 実行タイミング
 
 - 1日の作業終了時
 - PC再起動/シャットダウン前
-- SSD取り外し前
 
 ---
 
@@ -207,11 +206,11 @@ GEMINI_LOCAL="$HOME/.gemini/GEMINI.md"
 GEMINI_MASTER="$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master"
 if [ -f "$GEMINI_MASTER" ]; then
     if ! diff -q "$GEMINI_LOCAL" "$GEMINI_MASTER" > /dev/null 2>&1; then
-        echo "⚠️  WARNING: GEMINI.md differs from SSD master!"
+        echo "⚠️  WARNING: GEMINI.md differs from master!"
         echo "    Run: cp ~/.gemini/GEMINI.md $ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master"
         echo "    Or review diff with: diff ~/.gemini/GEMINI.md $GEMINI_MASTER"
     else
-        echo "✅ GEMINI.md is in sync with SSD master"
+        echo "✅ GEMINI.md is in sync with master"
     fi
 else
     echo "📝 GEMINI.md.master not found, creating initial copy..."
@@ -276,160 +275,6 @@ echo "✅ 学習データ蓄積完了"
 - 次回セッションでの精度向上
 
 ---
-
-> [!CAUTION]
-> **DEPRECATED**: This phase is no longer needed with GitHub-First architecture.
-> Local cleanup is handled automatically. This section will be removed in v3.0.
-
-## Phase 1.5: SSD Dev Cleanup (再生可能ファイル削除)
-
-SSD上のプロジェクトから `node_modules`, `.venv`, `.next` 等の再生可能ファイルを検出・削除する。
-**デフォルトは「保護」。`.ssdclean` ファイルがプロジェクトルートにあるプロジェクトのみ削除対象**とする。
-
-> [!IMPORTANT]
-> `.ssdkeep` 方式（旧）→ `.ssdclean` 方式（新）に変更。
-> 開発中プロジェクトがデフォルトで保護されるため、`node_modules` の事故削除を防止。
-> 明示的にクリーンアップしたいプロジェクトにのみ `.ssdclean` を配置する。
-
-// turbo
-7. ローカル環境確認
-```bash
-echo "✅ Local environment: $(df -h . | tail -1)"
-```
-
-8. ⚠️ 稼働中プロジェクト検出（干渉警告）
-
-削除前に、**現在アクティブなプロジェクト**を検出して警告する。これらのプロジェクトは削除するとプロセスがクラッシュする可能性がある。
-
-```bash
-SSD="/Volumes/PortableSSD"
-echo "=== ⚠️ Active Project Detection ==="
-echo ""
-
-# 1. SSD上で動作中のプロセスを検出（dev server, node, python等）
-echo "🔴 SSD上で実行中のプロセス:"
-ACTIVE_PIDS=$(lsof +D "$SSD" 2>/dev/null | grep -v "^COMMAND" | awk '{print $1, $2, $9}' | sort -u)
-if [ -n "$ACTIVE_PIDS" ]; then
-  echo "$ACTIVE_PIDS" | head -20
-  echo ""
-  echo "  ⚠️  上記プロセスが使用中のプロジェクトは削除すると停止します！"
-else
-  echo "  ✅ なし"
-fi
-echo ""
-
-# 2. 直近1時間以内に変更されたプロジェクト（作業中の可能性）
-echo "🟡 直近1時間以内に変更されたプロジェクト:"
-find "$SSD/STUDIO/Apps" -maxdepth 2 \( -name "package.json" -o -name "pyproject.toml" \) -not -path "*/node_modules/*" 2>/dev/null | while read manifest; do
-  PROJECT_DIR=$(dirname "$manifest")
-  # プロジェクト内のソースファイルが直近1時間以内に変更されたか
-  RECENT=$(find "$PROJECT_DIR" -maxdepth 3 -name "*.ts" -o -name "*.tsx" -o -name "*.py" -o -name "*.js" -o -name "*.jsx" 2>/dev/null | xargs stat -f "%m %N" 2>/dev/null | awk -v cutoff=$(($(date +%s) - 3600)) '$1 > cutoff {print $2}' | head -1)
-  if [ -n "$RECENT" ]; then
-    echo "  ⚠️  $(basename $PROJECT_DIR) — 最近編集あり"
-  fi
-done
-echo ""
-
-# 3. ターミナルのCWDがSSD上にあるか
-echo "🟠 SSD上で作業中のターミナルセッション:"
-lsof -c zsh -c bash 2>/dev/null | grep "$SSD" | awk '{print $1, $9}' | sort -u | head -5
-echo ""
-echo "==============================="
-echo ""
-```
-
-**警告が出たプロジェクトがある場合、そのプロジェクトの削除についてユーザーに個別確認する。**
-
-9. ドライラン: 削除候補の検出とサイズ表示
-
-SSD接続時のみ実行。**`.ssdclean` があるプロジェクトのみ**削除候補として表示:
-
-```bash
-echo "=== SSD Dev Cleanup: Dry Run ==="
-echo "📋 方式: .ssdclean (opt-in削除 / デフォルト保護)"
-echo ""
-
-SSD="/Volumes/PortableSSD"
-DEV_DIR="$SSD/STUDIO/Apps"
-
-# node_modules 検出（.ssdclean があるプロジェクトのみ削除対象）
-echo "📦 node_modules:"
-find "$DEV_DIR" -maxdepth 4 -name "node_modules" -type d -not -path "*/.git/*" -not -path "*/.antigravity/*" 2>/dev/null | while read nm; do
-  PROJECT_ROOT=$(echo "$nm" | sed 's|/node_modules.*||')
-  if [ -f "$PROJECT_ROOT/.ssdclean" ]; then
-    SIZE=$(du -sh "$nm" 2>/dev/null | cut -f1)
-    echo "  🗑️  $SIZE  $nm"
-  else
-    echo "  🛡️  PROTECTED (no .ssdclean): $(basename $PROJECT_ROOT)"
-  fi
-done
-
-echo ""
-
-# .venv / venv 検出
-echo "🐍 .venv / venv:"
-find "$DEV_DIR" -maxdepth 4 \( -name ".venv" -o -name "venv" \) -type d -not -path "*/.git/*" -not -path "*/.antigravity/*" 2>/dev/null | while read venv; do
-  PROJECT_ROOT=$(echo "$venv" | sed "s|/\.venv$||;s|/venv$||")
-  if [ -f "$PROJECT_ROOT/.ssdclean" ]; then
-    SIZE=$(du -sh "$venv" 2>/dev/null | cut -f1)
-    echo "  🗑️  $SIZE  $venv"
-  else
-    echo "  🛡️  PROTECTED (no .ssdclean): $(basename $PROJECT_ROOT)"
-  fi
-done
-
-echo ""
-
-# .next, .turbo, __pycache__, __MACOSX 検出（.ssdclean があるプロジェクト配下のみ）
-echo "🏗️ Build caches (.next, .turbo, __pycache__, __MACOSX):"
-find "$DEV_DIR" -maxdepth 5 \( -name ".next" -o -name ".turbo" -o -name "__pycache__" -o -name "__MACOSX" \) -type d -not -path "*/.git/*" -not -path "*/.antigravity/*" 2>/dev/null | while read cache; do
-  SIZE=$(du -sh "$cache" 2>/dev/null | cut -f1)
-  echo "  🗑️  $SIZE  $cache"
-done
-
-echo ""
-
-# .DS_Store / ._* カウント（STUDIO/Apps 配下のみ）
-DS_COUNT=$(find "$DEV_DIR" -name ".DS_Store" -type f 2>/dev/null | wc -l | tr -d ' ')
-APPLE_COUNT=$(find "$DEV_DIR" -name "._*" -type f -not -path "*/.git/*" 2>/dev/null | wc -l | tr -d ' ')
-echo "🍎 macOS metadata (STUDIO/Apps only): .DS_Store ($DS_COUNT files), ._* ($APPLE_COUNT files)"
-
-echo ""
-echo "=== SSD Before ===" && df -h /Volumes/PortableSSD | tail -1
-```
-
-10. ユーザー確認後、削除を実行
-
-**上記のドライラン結果をユーザーに見せて「削除してよいか？」と確認する。** 承認後のみ以下を実行:
-
-```bash
-SSD="/Volumes/PortableSSD"
-DEV_DIR="$SSD/STUDIO/Apps"
-
-# node_modules 削除（.ssdclean ありのプロジェクトのみ）
-find "$DEV_DIR" -maxdepth 4 -name "node_modules" -type d -not -path "*/.git/*" -not -path "*/.antigravity/*" -prune 2>/dev/null | while read nm; do
-  PROJECT_ROOT=$(echo "$nm" | sed 's|/node_modules.*||')
-  [ -f "$PROJECT_ROOT/.ssdclean" ] && rm -rf "$nm" && echo "✅ Deleted: $nm"
-done
-
-# .venv / venv 削除（.ssdclean ありのプロジェクトのみ）
-find "$DEV_DIR" -maxdepth 4 \( -name ".venv" -o -name "venv" \) -type d -not -path "*/.git/*" -not -path "*/.antigravity/*" 2>/dev/null | while read venv; do
-  PROJECT_ROOT=$(echo "$venv" | sed "s|/\.venv$||;s|/venv$||")
-  [ -f "$PROJECT_ROOT/.ssdclean" ] && rm -rf "$venv" && echo "✅ Deleted: $venv"
-done
-
-# .next, .turbo, __pycache__, __MACOSX 削除（STUDIO/Apps配下のみ、.antigravity除外）
-find "$DEV_DIR" -maxdepth 5 \( -name ".next" -o -name ".turbo" -o -name "__pycache__" -o -name "__MACOSX" \) -type d -not -path "*/.git/*" -not -path "*/.antigravity/*" -exec rm -rf {} + 2>/dev/null
-echo "✅ Build caches cleared"
-
-# .DS_Store / ._* 削除（STUDIO/Apps配下のみ）
-find "$DEV_DIR" -name ".DS_Store" -type f -delete 2>/dev/null
-find "$DEV_DIR" -name "._*" -type f -not -path "*/.git/*" -delete 2>/dev/null
-echo "✅ macOS metadata cleared (STUDIO/Apps only)"
-
-echo ""
-echo "=== SSD After ===" && df -h /Volumes/PortableSSD | tail -1
-```
 
 ---
 
@@ -534,19 +379,19 @@ Generated: [日時]
 
 **出力先**: プロジェクトルートに `NEXT_SESSION.md` を生成
 
-### SSD ブレインログ保存
+### ブレインログ保存
 
-NEXT_SESSION.md を SSD にも保存し、セッション間の知識持続性を担保：
+NEXT_SESSION.md をブレインログにも保存し、セッション間の知識持続性を担保：
 
 ```bash
 LOG_DIR="$ANTIGRAVITY_DIR/brain_log"
 mkdir -p "$LOG_DIR" 2>/dev/null
 DATE=$(date +%Y-%m-%d_%H%M)
-cp NEXT_SESSION.md "$LOG_DIR/session_${DATE}.md" 2>/dev/null && echo "✅ SSDブレインログ保存: $LOG_DIR/session_${DATE}.md" || echo "⚠️ SSD未接続、ローカルのみ保存"
+cp NEXT_SESSION.md "$LOG_DIR/session_${DATE}.md" 2>/dev/null && echo "✅ ブレインログ保存: $LOG_DIR/session_${DATE}.md" || echo "⚠️ ブレインログ保存失敗"
 ```
 
 > [!TIP]
-> 次回の `/checkin` Phase 2.7 で `NEXT_SESSION.md` と SSD ブレインログが自動読み込まれる。
+> 次回の `/checkin` Phase 2.7 で `NEXT_SESSION.md` とブレインログが自動読み込まれる。
 
 ---
 
