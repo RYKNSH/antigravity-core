@@ -8,23 +8,27 @@ description: データを整理し自己評価を行いクリーンな状態で�
 ```bash
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 
+# macOS互換タイムアウト関数
+_t() { local d=$1; shift; "$@" & local p=$!; (sleep "$d" && kill "$p" 2>/dev/null) & local tp=$!; wait "$p" 2>/dev/null; local r=$?; kill "$tp" 2>/dev/null; wait "$tp" 2>/dev/null; return $r; }
+
 # 1. Scoring & Sync
-SCORE=$(( ( $(git diff --shortstat HEAD~1 2>/dev/null | grep -oE '[0-9]+' | head -1 || echo 0) / 100 ) + $(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l) ))
+SCORE=$(( ( $(_t 5 git diff --shortstat HEAD~1 2>/dev/null | grep -oE '[0-9]+' | head -1 || echo 0) / 100 ) + $(_t 5 git log --oneline --since='6 hours ago' 2>/dev/null | wc -l) ))
 echo "🎯 Score: $SCORE/10"
 
-if [ -d "$ANTIGRAVITY_DIR/.git" ] && [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-  cd "$ANTIGRAVITY_DIR" && git add -A && git commit -m "auto-sync: $(date +%m%d%H%M)" && git push origin main 2>/dev/null &
+if [ -d "$ANTIGRAVITY_DIR/.git" ] && [ -n "$(_t 5 git status --porcelain 2>/dev/null)" ]; then
+  (cd "$ANTIGRAVITY_DIR" && _t 5 git add -A && _t 5 git commit -m "auto-sync: $(date +%m%d%H%M)" && GIT_TERMINAL_PROMPT=0 _t 15 git push origin main 2>/dev/null) &
 fi
 
 # 2. Parallel Cleanup
-rm -rf ~/.gemini/antigravity/{browser_recordings,implicit}/* \
-       ~/Library/Application\ Support/{Google/Chrome/Default/Service\ Worker,Adobe/CoreSync,Notion/Partitions} \
-       ~/.npm/_{npx,logs,prebuilds,cacache} 2>/dev/null &
-find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null &
+pkill -f "next-server" || true
+pkill -f "next dev" || true
+
+_t 10 rm -rf ~/.gemini/antigravity/browser_recordings/* ~/.gemini/antigravity/implicit/* ~/Library/Application\ Support/Google/Chrome/Default/Service\ Worker ~/Library/Application\ Support/Adobe/CoreSync ~/Library/Application\ Support/Notion/Partitions ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null &
+_t 15 find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null &
 
 # 3. Session Info & State
 [ -f "NEXT_SESSION.md" ] && cp NEXT_SESSION.md "$ANTIGRAVITY_DIR/brain_log/session_$(date +%m%d%H%M).md" 2>/dev/null
-node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" snapshot 2>/dev/null
+_t 5 node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" snapshot 2>/dev/null
 
 wait && echo "✅ Checkout complete!" && df -h . | tail -1
 ```

@@ -28,3 +28,11 @@
 ### フィードバックサイクル
 - checkout の自己評価で課題が見つかったら、このセクションに経験則として追記を検討する
 - 経験則が肥大化したら、パターンをより抽象的な原則に統合する
+
+## Kinetic Operations Protocol
+- 全ての操作は **"Diagnosis → Action → Verification"** の3点セット（Kinetic Chain）で行うこと
+- ❌ `kill 1234` → ✅ `ps 1234 && kill 1234 && ! ps 1234`
+
+## Transparency (Honest Debugging)
+- エラーを隠蔽しない。内部エラーは即座にユーザーと共有
+- ユーザーを「共同デバッガー」として扱う

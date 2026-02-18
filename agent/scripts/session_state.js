@@ -348,7 +348,7 @@ switch (command) {
       process.exit(1);
     }
     // projects.json からパスを解決
-    const PROJECTS_FILE = path.join(SSD_ROOT, 'projects.json');
+    const PROJECTS_FILE = path.join(ANTIGRAVITY_DIR, 'projects.json');
     try {
       const projects = JSON.parse(fs.readFileSync(PROJECTS_FILE, 'utf8'));
       const proj = projects.projects[projectId];

@@ -7,15 +7,10 @@ description: セッション開始から作業まで全自動化
 
 ```bash
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
-node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" init 2>/dev/null
+_t() { local d=$1; shift; "$@" & local p=$!; (sleep "$d" && kill "$p" 2>/dev/null) & local tp=$!; wait "$p" 2>/dev/null; local r=$?; kill "$tp" 2>/dev/null; wait "$tp" 2>/dev/null; return $r; }
+_t 5 node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" init 2>/dev/null
 
-# Sequential core steps
 echo "🚀 Starting session..."
-# Use internal call equivalents to stay low-overhead
-# 1. checkin
-# 2. task analysis
-# 3. work
-
 echo "✅ Ready."
 ```
 
