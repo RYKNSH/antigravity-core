@@ -8,7 +8,7 @@
 | Workflow | Count | Last Used |
 |----------|-------|-----------|
 | /checkin | 14 | 2026-02-17 |
-| /checkout | 19 | 2026-02-14 |
+| /checkout | 20 | 2026-02-19 |
 | /checkpoint_to_blog | 0 | - |
 | /dev | 0 | - |
 | /test | 0 | - |

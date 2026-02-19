@@ -47,16 +47,38 @@ function main() {
         // Stash current changes to be safe (includes untracked)
         run('git stash push -m "Sync Stash" --include-untracked');
 
+<<<<<<< Updated upstream
         // 3. Checkout private-sync
         // Strategy: Always rebuild from private/main if available, to avoid divergence.
         let startPoint = 'main';
         try {
+=======
+        // Checkout private-sync or create it from main
+        // We always want it to be "Main + Personal Files".
+        // So maybe we should reset it to main first?
+
+        // Check if branch exists
+        let startPoint = 'main'; // Default start point
+        try {
+            // Check if private/main exists (fetch was done in step 1? No, we need to fetch)
+            // But main() doesn't fetch explicitly at start. Let's rely on what we have or fetch.
+>>>>>>> Stashed changes
             run('git fetch private');
             execSync('git rev-parse --verify private/main', { cwd: ANTIGRAVITY_DIR, stdio: 'ignore' });
             startPoint = 'private/main';
             console.log('ℹ️  Found private/main. Basing sync on remote history.');
         } catch (e) {
             console.log('ℹ️  private/main not found. Basing sync on local main.');
+<<<<<<< Updated upstream
+=======
+        }
+
+        if (startPoint === 'private/main') {
+            run(`git checkout -B private-sync private/main`);
+            run('git merge main --allow-unrelated-histories -m "Merge OSS main into private config" || true');
+        } else {
+            run('git checkout -B private-sync main');
+>>>>>>> Stashed changes
         }
 
         if (startPoint === 'private/main') {
@@ -88,6 +110,7 @@ function main() {
             run(`git add -f "${f}"`);
         });
 
+<<<<<<< Updated upstream
         // 6. Commit
         run('git commit -m "chore(sync): Update personal configuration" || true');
 
@@ -97,11 +120,36 @@ function main() {
 
         console.log('✅ Pushed to private repository.');
 
+=======
+
+
+        // 6. Commit and Push
+        run('git commit -m "chore(sync): Update personal configuration" || true');
+
+        console.log('⬆️  Pushing to private repository...');
+        run('git push private private-sync:main'); // Removed --force
+
+        console.log('✅ Pushed to private repository.');
+
+        // 6. Return to main
+        run('git checkout main');
+
+        // Restore personal files (because they might be removed when switching from tracked branch to untracked main)
+        console.log('🔄 Restoring personal files to working directory...');
+        availableFiles.forEach(f => {
+            run(`git checkout private-sync -- "${f}"`);
+            run(`git reset HEAD "${f}"`);
+        });
+
+        console.log('🔄 Sync complete. Back on main.');
+
+>>>>>>> Stashed changes
     } catch (e) {
         console.error('❌ Sync failed:', e);
     } finally {
         // 8. Return to main and Restore Files
         run('git checkout main');
+<<<<<<< Updated upstream
 
         console.log('🔄 Restoring personal files to working directory...');
         // We recover files from private-sync just in case switching to main stripped them
@@ -117,6 +165,16 @@ function main() {
         });
 
         console.log('🔄 Sync complete. Back on main.');
+=======
+        // Attempt restore in catch too
+        FILES_TO_SYNC.forEach(f => {
+            try {
+                if (fs.existsSync(path.join(ANTIGRAVITY_DIR, f))) return; // already there
+                execSync(`git checkout private-sync -- "${f}"`, { cwd: ANTIGRAVITY_DIR, stdio: 'ignore' });
+                execSync(`git reset HEAD "${f}"`, { cwd: ANTIGRAVITY_DIR, stdio: 'ignore' });
+            } catch (ex) { }
+        });
+>>>>>>> Stashed changes
     }
 }
 
