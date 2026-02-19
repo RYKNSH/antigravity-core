@@ -15,8 +15,21 @@ _t() { local d=$1; shift; "$@" & local p=$!; (sleep "$d" && kill "$p" 2>/dev/nul
 SCORE=$(( ( $(_t 5 git diff --shortstat HEAD~1 2>/dev/null | grep -oE '[0-9]+' | head -1 || echo 0) / 100 ) + $(_t 5 git log --oneline --since='6 hours ago' 2>/dev/null | wc -l) ))
 echo "🎯 Score: $SCORE/10"
 
-if [ -d "$ANTIGRAVITY_DIR/.git" ] && [ -n "$(_t 5 git status --porcelain 2>/dev/null)" ]; then
-  (cd "$ANTIGRAVITY_DIR" && _t 5 git add -A && _t 5 git commit -m "auto-sync: $(date +%m%d%H%M)" && GIT_TERMINAL_PROMPT=0 _t 15 git push origin main 2>/dev/null) &
+if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
+  (
+    cd "$ANTIGRAVITY_DIR"
+    # 1. Auto-commit
+    if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+      git add -A
+      git commit -m "auto-sync: $(date +%m%d%H%M)"
+    fi
+    # 2. Private Sync (Router)
+    if [ -f "agent/scripts/sync_private.js" ]; then
+       node agent/scripts/sync_private.js >> logs/sync.log 2>&1
+    fi
+    # 3. Public Push
+    GIT_TERMINAL_PROMPT=0 git push origin main 2>/dev/null
+  ) &
 fi
 
 # 2. Parallel Cleanup
