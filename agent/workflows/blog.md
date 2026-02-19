@@ -1,44 +1,58 @@
 ---
-description: 広報フェーズ (Blog) - プロジェクトの動きを把握し記事化する
+description: 広報フェーズ (Blog) - プロジェクトの動きを把握し、高品質な記事・レポートを作成する
 ---
 
 # /blog - Spokesperson Mode
 
-**役割**: プロジェクトの専属広報官。`PROJECT_STATE.md` や Gitログ、成果物を分析し、ブログ記事やリリースノートの下書きを作成する。
+**役割**: プロジェクトの専属広報官。`PROJECT_STATE.md` や Gitログを分析し、「働いた証」を「価値ある資産」に変える。
+
+> [!IMPORTANT]
+> **Quality Standard**: `checkpoint_to_blog` から継承された以下の厳格な基準を遵守すること。
+> 1. **Universal Value**: 個人的体験を普遍的な知恵に昇華する。
+> 2. **Narrative**: 読者の感情を動かす物語構成にする。
+> 3. **Brand Aligned**: ブランドコンセプトに合致させる。
 
 ## 動作フロー
 
-1. **Context Gathering**
-    - `PROJECT_STATE.md` (Active, Archive, Backlog)
-    - Recent `walkthrough.md`s
-    - Git Log (Last 24h / Since last post)
-
-2. **Drafting**
-    - `blogs/` ディレクトリに記事ドラフトを作成
-    - フォーマット: Tech Blog / Release Note / Daily Report
-
-3. **State Update**
-    - (Optional) `PROJECT_STATE.md` にログを残す
-
 ```bash
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
+BLOGS_DIR="$ANTIGRAVITY_DIR/blogs"
 
 # Session State
 node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" set-workflow "/blog" "reporting"
 
 echo "📢 Spokesperson Mode Started"
+echo "   Quality Standards: Loading from legacy checkpoint_to_blog..."
 
-# 1. Create blogs directory if not exists
-mkdir -p blogs
+# 1. Context Gathering
+# - PROJECT_STATE.md
+# - Recent Git Logs
+# - brand_concept.md (if exists)
 
-# 2. Gather Info & Generate Draft (using LLM or script helper)
-# ここではエージェントへの指示として記述
+# 2. Content Type Selection
+echo ""
+echo "📝 Select Content Type:"
+echo "  [A] Daily Log (Discord用, 3-5行)"
+echo "  [B] Evergreen Article (Notion用, 1500字+, Deep QA必須)"
+# (Agent should decide or ask user based on context)
 
 echo ""
 echo "🤖 SPOKESPERSON INSTRUCTIONS:"
-echo "1. Read 'PROJECT_STATE.md' to understand current status."
-echo "2. Read recent git logs to see what changed."
-echo "3. Create a new markdown file in 'blogs/' (e.g., 'blogs/status-report-$(date +%Y%m%d).md')."
-echo "4. Write a summary article about the progress."
-echo "5. Ask user for review."
+echo "1. Read 'PROJECT_STATE.md' & Git Log."
+echo "2. IF Daily Log:"
+echo "   - Create short summary."
+echo "   - Post to Discord (simulation)."
+echo "3. IF Evergreen Article:"
+echo "   - **Load Template**: $BLOGS_DIR/article_template.md"
+echo "   - **Load Brand**: $ANTIGRAVITY_DIR/brand_concept.md"
+echo "   - Draft the article in 'blogs/'."
+echo "   - **Run QA**: /debate deep --preset=social-knowledge (Self-Critique)"
+echo "   - **Check NG Words**: 'でもね、' -> 'ただ、'"
+echo "   - Ask user for review."
 ```
+
+## 🔍 Deep QA Checklist (For Evergreen)
+
+- [ ] **Universal Value**: 個人的な体験が普遍的な知恵に昇華されているか？
+- [ ] **Physical Metaphor**: 物理的・数学的なメタファーで本質を突いているか？
+- [ ] **Narrative Arc**: 問いかけ → 体験 → 洞察 → 解決 → 余韻 の構成になっているか？

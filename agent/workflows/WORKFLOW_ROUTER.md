@@ -40,12 +40,11 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 ### Internal / Advanced (直接呼び出し非推奨)
 | コマンド | WF | 備考 |
 |---------|-----|------|
-| `/fbl` | fbl.md | `/verify` パイプラインの一部 |
-| `/error-sweep` | error-sweep.md | `/verify` パイプラインの一部 |
 | `/ship` | ship.md | `/verify` 後のデプロイ |
 | `/debug-deep` | debug-deep.md | 検証失敗時のエスカレーション |
 | `/galileo` | galileo.md | Deep Verification |
 | `/debate` | debate.md | Review / Planning Support |
+| `/_checkpoint_to_blog` | (Deprecated) | -> `/blog` に統合されました |
 
 ---
 

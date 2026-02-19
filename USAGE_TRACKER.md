@@ -27,6 +27,7 @@
 | /cleanup-48h | 0 | - |
 | /lightweight | 0 | - |
 | /verification-loop | 0 | - |
+| /blog | 1 | 2026-02-19 |
 
 
 - **Most Used**: (auto-updated)
