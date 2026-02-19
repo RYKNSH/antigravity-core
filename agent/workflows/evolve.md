@@ -1,75 +1,35 @@
 ---
-description: 自己進化提案 - 使用データに基づく改善案を生成
+description: 自律的なシステム進化・改善提案を行うワークフロー
 ---
 
-# /evolve - 自己進化ワークフロー
+# /evolve
 
-観察→分析→提案→実装→検証のサイクルを実行し、システムの自己改善を促進する。
+システムの利用状況を分析し、改善案を提示します。
 
----
-
-## 1. 使用データ収集
+## 1. 分析実行
 
 ```bash
-echo "=== Usage Analysis ==="
-cat $ANTIGRAVITY_DIR/USAGE_TRACKER.md 2>/dev/null | grep -E "^\| /" | head -10
+node ~/.antigravity/agent/scripts/evolve.js
 ```
 
----
+## 2. 改善アクション
 
-## 2. エラーログ分析
+提示された改善案に基づき、以下のコマンドを使用して対応してください：
 
-```bash
-echo "=== Recent Errors ==="
-find $ANTIGRAVITY_DIR/logs -name "*.log" -mtime -7 -exec grep -l "error\|Error\|ERROR" {} \; 2>/dev/null | head -5
-```
+- **不要なワークフローの削除**:
+  ```bash
+  rm ~/.antigravity/agent/workflows/UNUSED_WORKFLOW.md
+  # USAGE_TRACKER.md からも削除
+  ```
 
----
+- **高頻度ワークフローの最適化**:
+  - ショートカットの作成
+  - 処理の並列化（`// turbo` 追加）
+  - 無駄なステップの削減
 
-## 3. ナレッジ鮮度チェック
+- **新しいパターンの学習**:
+  - `/learn_from_blog` を実行してナレッジを更新
 
-```bash
-echo "=== Stale Knowledge (14+ days) ==="
-find $ANTIGRAVITY_DIR/knowledge -name "metadata.json" -mtime +14 2>/dev/null | wc -l
-```
+## 3. 分析結果の記録
 
----
-
-## 4. 改善提案生成
-
-分析結果に基づき、以下のカテゴリで改善案を提案:
-
-| カテゴリ | チェック項目 |
-|---------|-------------|
-| **冗長性** | 類似機能を持つワークフロー/スキルはないか？ |
-| **未使用** | 30日以上使われていないリソースはないか？ |
-| **エラー頻発** | 同じエラーが繰り返されていないか？ |
-| **不足** | よく手動で行う操作をワークフロー化できないか？ |
-| **鮮度** | 古いナレッジは更新が必要か？ |
-
----
-
-## 5. Multi-Persona Debate
-
-提案に対して `/debate` を実行し、品質を担保:
-
-```
-/debate quick
-```
-
----
-
-## 6. 実装 & 記録
-
-ユーザー承認後:
-1. ワークフロー/スキル/ルールを更新
-2. SELF_EVOLUTION.md の進化履歴に記録
-3. GEMINI.md.master に同期
-
----
-
-## 完了メッセージ
-
-✅ Evolution cycle complete
-- [N]件の改善を実装
-- 次回の自動/evolve: 7日後
+分析結果を `SELF_EVOLUTION.md` の「進化履歴」に追記することを推奨します。

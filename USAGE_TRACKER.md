@@ -28,7 +28,6 @@
 | /lightweight | 0 | - |
 | /verification-loop | 0 | - |
 
-## Analytics
 
 - **Most Used**: (auto-updated)
 - **Unused (30+ days)**: (auto-updated)

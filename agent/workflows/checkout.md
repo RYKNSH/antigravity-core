@@ -29,6 +29,8 @@ _t 15 find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null &
 # 3. Session Info & State
 [ -f "NEXT_SESSION.md" ] && cp NEXT_SESSION.md "$ANTIGRAVITY_DIR/brain_log/session_$(date +%m%d%H%M).md" 2>/dev/null
 _t 5 node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" snapshot 2>/dev/null
+_t 5 "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" /checkout >/dev/null 2>&1 &
+_t 5 node "$ANTIGRAVITY_DIR/agent/scripts/evolve.js" --checkout &
 
 wait && echo "✅ Checkout complete!" && df -h . | tail -1
 ```

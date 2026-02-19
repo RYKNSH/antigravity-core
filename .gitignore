@@ -43,3 +43,5 @@ node_modules/
 # === Extensions (VSCode/IDE, too large for git) ===
 extensions/
 .bfg-report/
+
+worktrees/

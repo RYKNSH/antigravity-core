@@ -21,6 +21,8 @@ if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   (cd "$ANTIGRAVITY_DIR" && GIT_TERMINAL_PROMPT=0 _t 10 git pull origin main 2>/dev/null && echo "✅ Core synced") &
 fi
 
+_t 5 "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" /checkin >/dev/null 2>&1 &
+
 _t 10 rm -rf ~/.gemini/antigravity/browser_recordings/* ~/.gemini/antigravity/implicit/* ~/Library/Application\ Support/Google/Chrome/Default/Service\ Worker ~/Library/Application\ Support/Adobe/CoreSync ~/Library/Application\ Support/Notion/Partitions ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null &
 
 _t 10 find ~/.gemini/antigravity/conversations ~/.gemini/antigravity/brain -mindepth 1 -maxdepth 1 -mtime +1 -exec rm -rf {} + 2>/dev/null &
