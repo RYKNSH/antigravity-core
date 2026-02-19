@@ -22,7 +22,32 @@ BLOGS_DIR="$ANTIGRAVITY_DIR/blogs"
 node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" set-workflow "/blog" "reporting"
 
 echo "📢 Spokesperson Mode Started"
+
+# === 0. Setup Check (Personalization) ===
+BRAND_FILE="$ANTIGRAVITY_DIR/brand_concept.md"
+ENV_FILE="$ANTIGRAVITY_DIR/.env"
+
+# A. Brand Concept Check
+if [ ! -f "$BRAND_FILE" ]; then
+    echo "⚠️  Brand Concept not found!"
+    echo "    To use /blog, you need to define your 'Persona'."
+    echo "    Creating a template for you..."
+    cp "$ANTIGRAVITY_DIR/brand_concept.template.md" "$BRAND_FILE"
+    open "$BRAND_FILE"
+    echo "👉 Please edit '$BRAND_FILE' to define your style (e.g., 'Solo Production')."
+    read -p "Press Enter when you are done editing..."
+fi
+
+# B. Notion Integration Check
+if ! grep -q "NOTION_API_KEY=" "$ENV_FILE" 2>/dev/null; then
+    echo "⚠️  Notion Integration not configured!"
+    echo "    Starting Notion Setup Wizard..."
+    node "$ANTIGRAVITY_DIR/agent/scripts/auth_notion.js"
+    echo "✅ Setup complete. proceeding..."
+fi
+
 echo "   Quality Standards: Loading from legacy checkpoint_to_blog..."
+
 
 # 1. Context Gathering
 # - PROJECT_STATE.md
