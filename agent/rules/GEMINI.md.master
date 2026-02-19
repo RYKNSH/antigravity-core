@@ -1,0 +1,61 @@
+# Global Antigravity Rules
+
+## 🌐 言語設定
+- **全て日本語で対応** (返答・質問は日本語必須)
+- 英語はコード内のみ使用可
+
+## 🚫 禁止事項
+- 変更内容の要約禁止 / 謝罪禁止 / 既知情報の確認禁止 / 無関係なリファクタリング禁止
+
+## 🔄 コマンドエイリアス
+- **`/go`** ← 究極の1コマンド（セッション開始〜終了まで全自動）
+- 「終わり」「また明日」→ セッション終了（自然言語トリガー）
+- 従来コマンド: `/checkin`, `/work`, `/verify`, `/ship`, `/checkout` （内部で自動呼び出し）
+
+## 🤖 Proactive Triggers（常時アクティブ — 全セッションで適用）
+以下の条件に合致した場合、AIは**確認なしで対応WFを提案または実行**する:
+
+| トリガー | アクション |
+|---------|-----------|
+| 「おはよう」「始めよう」/ 6h+空白 | `/checkin` 自動実行 |
+| 「終わり」「疲れた」「また明日」 | `/checkout` 自動実行 |
+| 「バグ」「動かない」「エラー」 | `/bug-fix` 提案 |
+| 「新機能」「追加して」「実装して」 | `/spec` → `/new-feature` 提案 |
+| 「整理」「見直し」「リファクタ」 | `/refactor` 提案 |
+| 実装完了・テスト未実施 | `/verify` 自動提案 |
+| 「本番」「デプロイ」「公開」 | `/ship` 提案 |
+| 成果まとまり・ブログ価値あり | `/checkpoint_to_blog` 提案 |
+| 「つづけて」「go」「進めて」 | 次ステップを自律実行 |
+
+詳細: `~/.antigravity/AUTO_TRIGGERS.md`
+
+## 📚 ルール詳細
+- 技術標準: `~/.antigravity/agent/rules/code-standards.md`
+- 安全コマンド: `~/.antigravity/agent/rules/safe-commands.md`
+- Compaction: `~/.antigravity/agent/rules/compaction.md`
+
+## 🗺️ グローバルリソース (~/.antigravity/)
+
+### ワークフロー (41件) → `agent/workflows/`
+**Meta（セッション制御・ルーティング）**: `/go` `/work` `/checkin` `/checkout` `WORKFLOW_ROUTER` `WORKFLOW_CONTRACTS`
+**Core（開発サイクル）**: `/spec` `/new-feature` `/bug-fix` `/refactor` `/test` `/fbl` `/verify` `/error-sweep` `/debate` `/debug-deep` `/ship` `/build` `/deploy` `/db-migrate` `/dev`
+**Utility（環境・コンテンツ・進化）**: `/checkpoint_to_blog` `/publish` `/learn_from_blog` `/cleanup-48h` `/lightweight` `/project-init` `/evolve` `/evolve-wiz` `/vision-os` `/galileo` `/context-compression` `/level` `/l0` `/l1` `/l2` `/l3` `/trust-level`
+
+### スキル (12件) → `agent/skills/`
+`architecture` `autonomous-execution` `bottleneck-hunter` `code-review` `discord-best-practices` `docker-autonomous-ops` `first-principles` `homebrew-autonomous-ops` `llm-api-best-practices` `mcp-best-practices` `persona-orchestration` `workspace-config-audit` 
+
+### スクリプト (29件) → `agent/scripts/`
+**Notion連携**: `auth_notion.js` `fetch_notion_page.js` `notion_poster.js` 
+**Discord連携**: `discord_poster.js` `verify_discord_webhook.js` 
+**ソーシャル**: `check_social_keys.js` `gas_publisher.js` `generate_social_assets.js` `inspect_social_props.js` `social_prompts.js`
+**セッション管理**: `session_state.js` `collect_session_data.js` `extract_context.js`
+**その他**: `chaos_monkey.js` `skill_hunter.js` `review_board.js` `update_db_schema.js`
+
+### ナレッジ (19件) → `knowledge/`
+`ai_coding_assistant_best_practices` `antigravity_portable_dev_ecosystem` `artistory_studio` `autonomous_feedback_loop_fbl` `database_management_and_deployment` `debug_patterns` `developer_behavioral_patterns_and_audit` `discord_buddy_ecosystem` `galileo_log` `high_fidelity_ux_audit_patterns` `learning_store` `mcp_server_directory` `openclaw_autonomous_ai_architecture` `persona_orchestration_system` `portable_studio_app` `remote_mac_mini_vibe_coding` `social_knowledge` `soloprostudio_social_knowledge_ecosystem` `video_editing_pipeline_videdit`
+
+### ドキュメント → `~/.antigravity/`
+`QUICKSTART.md` `BACKUP_STRATEGY.md` `KNOWLEDGE_INDEX.md` `AUTO_TRIGGERS.md` `USAGE_TRACKER.md` `NEXT_SESSION.md`
+
+## ✓ 確認
+このルールを読んだ場合「✓ Antigravity Rules Loaded」と表示

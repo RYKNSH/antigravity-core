@@ -1,0 +1,18 @@
+{
+  "title": "AI Coding Assistant Best Practices & Global Rules",
+  "summary": "AI コーディングアシスタントの設定と運用に関する包括的フレームワーク。2026-02-06には、『Proactive Suggestion Patterns』を確立。コマンド主導（Passive）からコンテキスト主導（Active）へのパラダイムシフトを定義し、コードの複雑度、品質、経過時間に応じた非侵入的な提案ロジックを標準化しました。また、エージェントチームの思考モデルと自律提案を組み合わせることで、開発者の認知負荷を「実行」から「承認」へと転換させています。",
+  "references": [
+    {
+      "type": "file",
+      "value": "artifacts/proactive_suggestion_design_patterns.md"
+    },
+    {
+      "type": "conversation_id",
+      "value": "6dda58b2-082e-43a8-8964-52cd0fa896a8"
+    },
+    {
+      "type": "conversation_id",
+      "value": "videdit_project_archiving_20260207"
+    }
+  ]
+}

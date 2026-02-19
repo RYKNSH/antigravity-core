@@ -1,0 +1,11 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "ARTISTORY STUDIO",
+    "summary": "AI × 音楽クリエイターのためのコミュニティ基盤。Next.js 16.1.5 (App Router) と discord.js (Antigravity Agent) で構成。2026-01-28/29にかけてLMS（学習管理システム）をフル実装。Server Actions + Service Role によるセキュアな「Trusted Admin Pattern」、および管理画面のドラッグ＆ドロップ並び替えを完遂。Discord ロール連動型の「Moderated Progressive Access」を提唱し、生徒のプライバシーに配慮した非公開提出・承認フローの基盤を構築。動画、記事、ミッション形式のコンテンツ配信と進捗可視化（Progress Bars）を実現しています。",
+    "references": [
+        {
+            "type": "conversation_id",
+            "value": "bot-802389f7-aa4f-469d-85d5-107f34df6dc5"
+        }
+    ]
+}
