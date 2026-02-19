@@ -18,6 +18,10 @@ const TEMPLATE = `# Project State
 <!-- format: - [Status] Task Name (branch-name) - @Phase -->
 - [ ] Example Task (feat/example) - @Think
 
+## 🧠 Required Context
+<!-- format: - [Context Path] (Reason) -->
+- None
+
 ## 📋 Backlog
 <!-- format: - [ ] Task Name -->
 - [ ] Initial Setup
@@ -49,7 +53,8 @@ function parse() {
     const state = {
         active: [],
         backlog: [],
-        archive: []
+        archive: [],
+        requiredContext: []
     };
 
     let currentSection = null;
@@ -61,6 +66,8 @@ function parse() {
             currentSection = 'backlog';
         } else if (line.includes('## 📦 Archive')) {
             currentSection = 'archive';
+        } else if (line.includes('## 🧠 Required Context')) {
+            currentSection = 'context';
         } else if (line.trim().startsWith('- [')) {
             if (currentSection === 'active') {
                 // Parse: - [ ] Task Name (branch) - @Phase
@@ -78,6 +85,8 @@ function parse() {
                 state.backlog.push(line);
             } else if (currentSection === 'archive') {
                 state.archive.push(line);
+            } else if (currentSection === 'context') {
+                state.requiredContext.push(line);
             }
         }
     }
@@ -167,6 +176,60 @@ function completeTask(branch) {
 
     fs.writeFileSync(STATE_FILE, finalLines.join('\n'), 'utf8');
     console.log(`✅ Archived task: ${branch}`);
+    console.log(`✅ Archived task: ${branch}`);
+}
+
+/**
+ * Updates the Required Context section.
+ */
+function setRequiredContext(contextPath, reason = 'Protocol Requirement') {
+    if (!fs.existsSync(STATE_FILE)) return;
+
+    const content = fs.readFileSync(STATE_FILE, 'utf8');
+    const lines = content.split('\n');
+    const newLines = [];
+    let inContextSection = false;
+    let contextUpdated = false;
+
+    // We want to replace the entire content of the section with the new single context
+    // or clear it if contextPath is 'clear'
+
+    for (const line of lines) {
+        if (line.includes('## 🧠 Required Context')) {
+            newLines.push(line);
+            newLines.push('<!-- format: - [Context Path] (Reason) -->');
+            if (contextPath !== 'clear') {
+                newLines.push(`- [${contextPath}] (${reason})`);
+            } else {
+                newLines.push(`- None`);
+            }
+            inContextSection = true;
+            contextUpdated = true;
+        } else if (inContextSection) {
+            // Skip existing lines in context section until next section
+            if (line.startsWith('## ')) {
+                inContextSection = false;
+                newLines.push(line);
+            }
+        } else {
+            newLines.push(line);
+        }
+    }
+
+    if (!contextUpdated) {
+        // If section didn't exist, append it (for old files)
+        newLines.push('');
+        newLines.push('## 🧠 Required Context');
+        newLines.push('<!-- format: - [Context Path] (Reason) -->');
+        if (contextPath !== 'clear') {
+            newLines.push(`- [${contextPath}] (${reason})`);
+        } else {
+            newLines.push(`- None`);
+        }
+    }
+
+    fs.writeFileSync(STATE_FILE, newLines.join('\n'), 'utf8');
+    console.log(`✅ Set required context: ${contextPath}`);
 }
 
 // CLI Interface
@@ -181,6 +244,8 @@ if (command === 'init') {
     updatePhase(args[1], args[2]);
 } else if (command === 'done') {
     completeTask(args[1]);
+} else if (command === 'context') {
+    setRequiredContext(args[1], args[2]);
 } else if (command === 'list') {
     const state = parse();
     if (state) {
@@ -188,4 +253,4 @@ if (command === 'init') {
     }
 }
 
-module.exports = { init, parse, addActiveTask, updatePhase, completeTask };
+module.exports = { init, parse, addActiveTask, updatePhase, completeTask, setRequiredContext };
