@@ -90,14 +90,36 @@ async function main() {
         log(GREEN, `\n🎉 Verification Complete for ${branch}`);
 
         projectState.updatePhase(branch, "Verified");
+        // Update Project State Context to clear or move to next
+        // projectState.setRequiredContext('clear'); // Optional: clear context after verify
 
         log(BLUE, "📝 Updating PROJECT_STATE.md...");
-        // projectState.completeTask(branch); // Optional: Auto-archive? Maybe wait for user.
+
+        // Write structured result for Loop Engine
+        const result = {
+            success: true,
+            timestamp: new Date().toISOString(),
+            branch: branch
+        };
+        fs.writeFileSync(require('path').join(process.env.ANTIGRAVITY_DIR || require('os').homedir() + '/.antigravity', 'logs', 'verify_result.json'), JSON.stringify(result, null, 2));
 
         console.log("\n✅ Ready to ship! You can now merge/push.");
 
     } catch (e) {
         console.error(`\n${RED}🛑 Verification Failed: ${e.message}${RESET}`);
+
+        // Write failed result
+        const result = {
+            success: false,
+            timestamp: new Date().toISOString(),
+            error: e.message
+        };
+        // Ensure logs dir exists (handled by verify.md or strict think)
+        const logDir = require('path').join(process.env.ANTIGRAVITY_DIR || require('os').homedir() + '/.antigravity', 'logs');
+        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+
+        fs.writeFileSync(require('path').join(logDir, 'verify_result.json'), JSON.stringify(result, null, 2));
+
         process.exit(1);
     } finally {
         rl.close();

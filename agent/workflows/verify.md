@@ -19,7 +19,10 @@ echo "🔍 Inspector Mode Started"
 echo "   Branch: $CURRENT_BRANCH"
 
 # Run the High-Fidelity Verification Pipeline
-node "$ANTIGRAVITY_DIR/agent/scripts/verify_pipeline.js"
+# 2>&1 | tee ... ensures both stdout and stderr are captured and shown
+LOG_FILE="$ANTIGRAVITY_DIR/logs/verify_last_run.log"
+node "$ANTIGRAVITY_DIR/agent/scripts/verify_pipeline.js" 2>&1 | tee "$LOG_FILE"
+
 ```
 
 > [!IMPORTANT]
