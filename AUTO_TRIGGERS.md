@@ -24,6 +24,8 @@
 | 変更6ファイル以上 | `/verify --deep` |
 | verify通過+staging存在 | `/ship staging` 提案 |
 | 新APIエンドポイント | `/error-sweep` Contract重点チェック |
+| Git push/pull 失敗 | `env_healthcheck.sh` 実行 → 自動修復 |
+| 「タイムアウト」「接続できない」 | 環境ヘルスチェック実行 |
 
 ## 自律継続ルール
 

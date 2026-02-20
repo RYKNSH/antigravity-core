@@ -23,6 +23,9 @@ fi
 
 _t 5 "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" /checkin >/dev/null 2>&1 &
 
+# 1.5 Environment Health Check (Git設定・接続・ディスク等の自動診断・修復)
+_t 10 "$ANTIGRAVITY_DIR/agent/scripts/env_healthcheck.sh" --fix 2>/dev/null &
+
 _t 10 rm -rf ~/.gemini/antigravity/browser_recordings/* ~/.gemini/antigravity/implicit/* ~/Library/Application\ Support/Google/Chrome/Default/Service\ Worker ~/Library/Application\ Support/Adobe/CoreSync ~/Library/Application\ Support/Notion/Partitions ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null &
 
 _t 10 find ~/.gemini/antigravity/conversations ~/.gemini/antigravity/brain -mindepth 1 -maxdepth 1 -mtime +1 -exec rm -rf {} + 2>/dev/null &

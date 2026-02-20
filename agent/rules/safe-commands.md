@@ -49,3 +49,18 @@ Layer 3: write_to_file/view_file でAPI直接操作  (ターミナル全滅時)
 | rm -rf（ディレクトリ） | 高 | 2 |
 | 大量ファイルコピー | 中 | 1→2 |
 | ターミナル全滅 | 最高 | 3 |
+
+## 🏥 Environment Self-Healing
+
+環境問題（Git push失敗、接続タイムアウト等）に遭遇した場合、即座に対応:
+
+1. `env_healthcheck.sh` でフル診断
+2. 自動修正可能な項目は修正
+3. 修正不可の項目はユーザーに報告
+
+| 操作 | 確認 |
+|------|------|
+| .gitconfig設定（postBuffer, lowSpeed*, credential等） | 不要（自動修正OK） |
+| pack設定、user.name/email補完 | 不要（自動修正OK） |
+| DNS変更、プロセスkill | **必須** |
+| パッケージインストール | **必須** |
