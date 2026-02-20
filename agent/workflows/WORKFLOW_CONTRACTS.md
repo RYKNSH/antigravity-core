@@ -286,6 +286,29 @@ autonomy_level: 2  # L0-L3
 | `/debug-deep` がさらに3回失敗 | → **真のPAUSE**（エスカレーション） |
 | **SSD I/O ハング**（10s超過） | → 3-Layer Defense自動発動（`safe-commands.md` 参照）→ 全失敗時Deferred Tasks記録 |
 
+### 認知スタグネーション突破条件（全Loop系WF共通 — Cognitive Escape）
+
+> [!IMPORTANT]
+> ループを止めるのではなく「**推進方向を変える**」メカニズム。
+> 粘りは価値がある。問題は同じ思考パターンで回り続けること。
+
+| 条件 | 動作 |
+|------|------|
+| `/debate`: Stagnation Score ≥ 2（新論点・結論変化・新証拠が2ラウンド連続ゼロ） | → **Cognitive Escape Protocol** 発動（前提破壊→直交視座注入→ゼロベース再構築） |
+| `/fbl` `/error-sweep`: 同カテゴリ修正が2回連続失敗 | → **カテゴリ強制転換** + 5-Why実行で問題の次元を上げる |
+| `/debug-deep`: 試行3回目 | → **Assumption Inversion 強制**（全前提を洗い出し、最も疑わしい前提を逆転） |
+| 全Loop系: `/galileo` Phase 4 手法 | → ゼロベース再構築が必要な局面で発動可能（L1-L3証拠のみで再構築） |
+
+**Approach Category（`/debug-deep` `/fbl` 共通）**:
+
+| カテゴリ | 同カテゴリ再使用 |
+|---------|---------------|
+| Code-Level Fix | 禁止（次回は別カテゴリ必須） |
+| Architecture Shift | 禁止 |
+| Dependency Change | 禁止 |
+| Design Rethink | 禁止 |
+| Assumption Inversion | 試行3で強制 |
+
 ### セッション終了の扱い
 
 | 条件 | 動作 |

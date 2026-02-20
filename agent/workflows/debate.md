@@ -82,14 +82,63 @@ Moderator は議論の状況を評価し、次を決定する。
   → **Action**: 「論点Xについて深掘りします」と宣言し、Round N+1 へ進む。
 - **Continue (Deep Dive)**: 議論が発散している、重大なリスクが残っている、**品質が120%に達していない**。
   → **Action**: 「まだ品質が不十分です。論点Xについて深掘りします」と宣言し、Round N+1 へ進む。
-- **Stall (Parallel Detected)**: 議論が同じ場所を回っている場合。
-  → **Action**: 「議論が停滞しています。視点を変えるため、新たなペルソナ（例: The Heretic）を召喚します」と宣言し、Round N+1 へ進む。
+- **Stagnation Detected**: Stagnation Score ≥ 2（後述の検知ロジック参照）。
+  → **Action**: **Cognitive Escape Protocol を発動**（後述）。
 - **Conclude**: 全員の懸念が出尽くし、解決策が見えた。
   → **Action**: Step 3 (Synthesis) へ進む。
 
 > [!NOTE]
 > `/debate deep` の場合、**最低3ラウンド**はどんなに良い案でも「あえてアラ探し」をして継続すること。
 > `/debate team` の場合、**全員の合意 (Consensus)** が取れるまで終わらせないこと。
+
+#### Stagnation Detection（Round 2+）
+
+各ラウンド終了時に Moderator が3項目をチェック:
+
+| # | チェック項目 | 判定方法 |
+|---|-----------|---------|
+| 1 | **論点の新規性** | このラウンドで前ラウンドになかった論点が出たか？ |
+| 2 | **結論の変化** | 前ラウンドと結論/提案/方向性が変わったか？ |
+| 3 | **証拠の追加** | 新しい証拠（コード検索、Web検索、実行結果）が提示されたか？ |
+
+- 3つ全てが「No」→ **Stagnation Score +1**
+- いずれかが「Yes」→ Stagnation Score リセット
+
+#### Cognitive Escape Protocol（Stagnation Score ≥ 2 で発動）
+
+> [!IMPORTANT]
+> ここでの目的は「ループを止める」ことではなく「**推進方向を変える**」こと。
+> 同じ軌道でスピードを上げても脱出できない。方向を変えて脱出する。
+
+**Step E-1: Assumption Destruction（前提の破壊）**
+
+この議論で「全員が当然と思っている前提」を**3つ列挙**し、**明示的に否定**する。
+
+```markdown
+例:
+- 前提「このAPIはRESTで作るべき」→ 否定「もしAPIが不要だとしたら？」
+- 前提「既存のDB設計を維持する」→ 否定「DBを全て捨てたら？」
+- 前提「この機能はフロントで実装する」→ 否定「バックエンドのみで実現したら？」
+```
+
+**Step E-2: Orthogonal Perspective Injection（直交視座の注入）**
+
+完全に異なる分野の知見を `search_web` で検索し、議論に注入する:
+- ソフトウェア設計の議論 → 建築学・都市計画の設計原理
+- パフォーマンス問題 → 生物学の効率メカニズム・流体力学
+- UI/UX設計 → 認知心理学・行動経済学・映画演出論
+- データ設計 → 図書館学・分類学・情報理論
+
+**Step E-3: Zero-Based Reconstruction（ゼロベース再構築）**
+
+`/galileo` Phase 4 の手法を適用。これまでの議論を**全て忘れて**、以下のみで結論を再構築:
+1. L1-L3の高信頼証拠
+2. Step E-2 で得た直交視座
+3. Step E-1 で否定した前提の「逆」を出発点にする
+
+**Step E-4: 新ラウンド開始**
+
+再構築された結論を元に、通常の debate ラウンドを再開。Stagnation Score はリセット。
 
 #### Health Check (Round 2+)
 
