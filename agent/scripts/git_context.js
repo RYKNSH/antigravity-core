@@ -171,7 +171,7 @@ function snapshot() {
     fs.writeFileSync(CONTEXT_HEAD, yaml, 'utf8');
 
     // 3. Git commit
-    git('add context-log/');
+    git('add -f context-log/');
     const result = git(`commit -m "ctx: snapshot ${ts}" --no-verify`, { silent: true });
 
     if (result) {
@@ -208,7 +208,7 @@ function decide(ctx, decision, reason) {
     fs.writeFileSync(CONTEXT_HEAD, headContent + appendix, 'utf8');
 
     // Git commit
-    git('add context-log/');
+    git('add -f context-log/');
     git(`commit -m "ctx: ${ctx} → ${decision}" --no-verify`, { silent: true });
 
     console.log(`📝 Decision committed: ${ctx} → ${decision}`);
@@ -360,7 +360,7 @@ function prune(keepDays = 30) {
         });
     });
     if (removed > 0) {
-        git('add context-log/');
+        git('add -f context-log/');
         git(`commit -m "ctx: prune ${removed} entries (${keepDays}d+)" --no-verify`, { silent: true });
         console.log(`🗑️ Pruned ${removed} old entries (still in Git history)`);
     } else {
