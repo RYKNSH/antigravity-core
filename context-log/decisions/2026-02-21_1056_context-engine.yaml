@@ -1,0 +1,11 @@
+# Decision: Context Engine
+# 2026-02-21T01:56:53.145Z
+
+meta:
+  timestamp: 2026-02-21T01:56:53.124Z
+  commit: d479252
+  branch: main
+decision:
+  context: Context Engine
+  choice: Git-driven YAML
+  reason: append-only guarantees

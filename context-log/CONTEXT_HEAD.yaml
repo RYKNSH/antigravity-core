@@ -33,3 +33,9 @@ recent_commits:
   - hash: 40b3bb3
     message: security: heartbeat/ queue/ をPublicリポから除外
 next_session: none
+
+# Latest Decision (2026-02-21T01:56:53.145Z)
+last_decision:
+  context: Context Engine
+  choice: Git-driven YAML
+  reason: append-only guarantees
