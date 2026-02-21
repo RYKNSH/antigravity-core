@@ -3,120 +3,138 @@ const fs = require('fs');
 const path = require('path');
 
 const ANTIGRAVITY_DIR = process.env.ANTIGRAVITY_DIR || path.join(process.env.HOME, '.antigravity');
+const TIMEOUT_MS = 30000; // 30s max per git command
+const GIT_PUSH_TIMEOUT_MS = 60000; // 60s for push
 
-function run(command) {
+function run(command, opts = {}) {
+    const timeout = opts.timeout || TIMEOUT_MS;
     try {
-        execSync(command, { cwd: ANTIGRAVITY_DIR, stdio: 'inherit' });
+        execSync(command, {
+            cwd: ANTIGRAVITY_DIR,
+            stdio: 'pipe', // Capture output instead of inherit (prevents TTY hangs)
+            timeout,
+            env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } // Never prompt for credentials
+        });
+        return true;
     } catch (e) {
-        console.error(`❌ Command failed: ${command}`);
-        // Don't exit, try to continue
+        if (e.killed) {
+            console.error(`⏰ TIMEOUT (${timeout}ms): ${command}`);
+        } else {
+            console.error(`❌ Failed: ${command} → ${(e.stderr || e.message || '').toString().slice(0, 200)}`);
+        }
+        return false;
+    }
+}
+
+function runOutput(command) {
+    try {
+        return execSync(command, {
+            cwd: ANTIGRAVITY_DIR,
+            stdio: 'pipe',
+            timeout: TIMEOUT_MS,
+            env: { ...process.env, GIT_TERMINAL_PROMPT: '0' }
+        }).toString().trim();
+    } catch {
+        return null;
     }
 }
 
 function main() {
-    console.log('\n🔄 Starting Private Sync Routing...');
+    console.log('\n🔄 Starting Private Sync...');
 
     // 1. Check if private remote exists
-    try {
-        execSync('git remote get-url private', { cwd: ANTIGRAVITY_DIR, stdio: 'ignore' });
-    } catch (e) {
+    if (!runOutput('git remote get-url private')) {
         console.log('⚠️  Remote "private" not found. Skipping sync.');
-        return; // Exit if no private remote
+        return;
     }
 
-    // 2. Define files to sync (Personal Assets)
+    // 2. Remember current branch for safe return
+    const originalBranch = runOutput('git rev-parse --abbrev-ref HEAD') || 'main';
+
+    // 3. Define files to sync
     const FILES_TO_SYNC = [
         'brand_concept.md',
         'USAGE_TRACKER.md',
         '.session_state.json'
     ];
 
-    // Check availability
     const availableFiles = FILES_TO_SYNC.filter(f => fs.existsSync(path.join(ANTIGRAVITY_DIR, f)));
     if (availableFiles.length === 0) {
         console.log('ℹ️  No personal files to sync.');
-        // We still proceed to sync the branch just in case, or maybe return?
-        // If files are missing locally, we might want to pull them?
-        // But this script is mostly for pushing local state.
-        // Let's continue to ensure private-sync branch is up to date with main.
+        return;
     }
 
-    console.log(`📦 Syncing files to [private]: ${availableFiles.join(', ')}`);
+    console.log(`📦 Syncing: ${availableFiles.join(', ')}`);
+
+    // 4. Save copies of personal files BEFORE any git operations
+    const fileBackups = {};
+    availableFiles.forEach(f => {
+        const fp = path.join(ANTIGRAVITY_DIR, f);
+        try { fileBackups[f] = fs.readFileSync(fp); } catch { }
+    });
 
     try {
-        // Stash current changes to be safe (includes untracked)
-        run('git stash push -m "Sync Stash" --include-untracked');
+        // 5. Stash current changes
+        run('git stash push -m "sync-stash" --include-untracked');
 
-        // 3. Checkout private-sync
-        // Strategy: Always rebuild from private/main if available, to avoid divergence.
-        let startPoint = 'main';
-        try {
-            run('git fetch private');
-            execSync('git rev-parse --verify private/main', { cwd: ANTIGRAVITY_DIR, stdio: 'ignore' });
-            startPoint = 'private/main';
-            console.log('ℹ️  Found private/main. Basing sync on remote history.');
-        } catch (e) {
-            console.log('ℹ️  private/main not found. Basing sync on local main.');
+        // 6. Fetch private remote
+        if (!run('git fetch private', { timeout: 30000 })) {
+            console.log('⚠️  Cannot fetch private remote. Aborting sync.');
+            return;
         }
 
-        if (startPoint === 'private/main') {
-            run(`git checkout -B private-sync private/main`);
-            // Merge OSS main, favoring OSS versions for conflicts in shared files (like .gitignore)
-            // -X theirs means "changes from the merged branch (main) wins"
-            run('git merge main --allow-unrelated-histories -X theirs -m "Merge OSS main into private config" || true');
+        // 7. Create/reset private-sync branch
+        let hasPrivateMain = !!runOutput('git rev-parse --verify private/main');
+        if (hasPrivateMain) {
+            run('git checkout -B private-sync private/main');
+            // Merge OSS main, auto-resolve conflicts favoring main (theirs)
+            run('git merge main --no-edit --allow-unrelated-histories -X theirs');
         } else {
             run('git checkout -B private-sync main');
         }
 
-        // 4. Restore Stash (Local Changes)
-        // We want local changes to override whatever was in private/main or main.
-        // Because user said "Pull then Push", implies they want to merge.
-        // But stash pop conflict behavior is tricky.
-        // If we pop, and conflict, we likely want "Ours" (Stash) for personal files.
-        try {
-            execSync('git stash pop', { cwd: ANTIGRAVITY_DIR, stdio: 'inherit' });
-        } catch (e) {
-            console.log('⚠️  Stash pop had conflicts. Assuming local changes (stash) take precedence for personal files.');
-            // If conflict, git leaves markers. 
-            // We should probably just force checkout the files from stash if possible, or let user resolve?
-            // "Automatic" script should try its best.
-            // For now, assume it's okay or user will fix.
+        // 8. Force-apply personal files from backup (always use local versions)
+        availableFiles.forEach(f => {
+            if (fileBackups[f]) {
+                fs.writeFileSync(path.join(ANTIGRAVITY_DIR, f), fileBackups[f]);
+            }
+        });
+
+        // 9. Stage & commit
+        availableFiles.forEach(f => run(`git add -f "${f}"`));
+        run('git commit --no-verify -m "chore(sync): Update personal configuration" --allow-empty');
+
+        // 10. Push with timeout
+        console.log('⬆️  Pushing to private...');
+        if (run('git push private private-sync:main', { timeout: GIT_PUSH_TIMEOUT_MS })) {
+            console.log('✅ Pushed to private.');
+        } else {
+            console.log('⚠️  Push failed or timed out.');
         }
 
-        // 5. Add Personal Files
-        availableFiles.forEach(f => {
-            run(`git add -f "${f}"`);
-        });
-
-        // 6. Commit
-        run('git commit -m "chore(sync): Update personal configuration" || true');
-
-        // 7. Push
-        console.log('⬆️  Pushing to private repository...');
-        run('git push private private-sync:main');
-
-        console.log('✅ Pushed to private repository.');
-
     } catch (e) {
-        console.error('❌ Sync failed:', e);
+        console.error('❌ Sync error:', e.message);
     } finally {
-        // 8. Return to main and Restore Files
-        run('git checkout main');
+        // 11. ALWAYS return to original branch
+        run(`git checkout ${originalBranch}`);
 
-        console.log('🔄 Restoring personal files to working directory...');
-        // We recover files from private-sync just in case switching to main stripped them
-        FILES_TO_SYNC.forEach(f => {
+        // 12. Restore personal files from backup
+        Object.entries(fileBackups).forEach(([f, data]) => {
             try {
-                // Check if file exists in private-sync branch
-                execSync(`git show private-sync:"${f}"`, { cwd: ANTIGRAVITY_DIR, stdio: 'ignore' });
-                // If yes, checkout it
-                execSync(`git checkout private-sync -- "${f}"`, { cwd: ANTIGRAVITY_DIR, stdio: 'ignore' });
-                // Unstage
-                execSync(`git reset HEAD "${f}"`, { cwd: ANTIGRAVITY_DIR, stdio: 'ignore' });
-            } catch (ex) { }
+                fs.writeFileSync(path.join(ANTIGRAVITY_DIR, f), data);
+                run(`git reset HEAD "${f}"`);
+            } catch { }
         });
 
-        console.log('🔄 Sync complete. Back on main.');
+        // 13. Pop stash if exists
+        try {
+            const stashList = runOutput('git stash list');
+            if (stashList && stashList.includes('sync-stash')) {
+                run('git stash pop');
+            }
+        } catch { }
+
+        console.log('🔄 Sync complete. Back on ' + (runOutput('git rev-parse --abbrev-ref HEAD') || 'main'));
     }
 }
 
