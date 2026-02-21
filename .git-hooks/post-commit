@@ -1,0 +1,21 @@
+#!/bin/bash
+# post-commit hook: auto-update CONTEXT_HEAD with latest commit info
+# Skips ctx: commits to prevent infinite loop
+
+LAST_MSG=$(git log --format=%s -1)
+[[ "$LAST_MSG" == ctx:* ]] && exit 0
+
+HEAD_FILE="$HOME/.antigravity/context-log/CONTEXT_HEAD.yaml"
+[ -f "$HEAD_FILE" ] || exit 0
+
+HASH=$(git rev-parse --short HEAD)
+TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Append/update last_code_commit fields
+grep -q "^last_code_commit:" "$HEAD_FILE" 2>/dev/null \
+  && sed -i '' "s/^last_code_commit:.*/last_code_commit: $HASH/" "$HEAD_FILE" \
+  || echo "last_code_commit: $HASH" >> "$HEAD_FILE"
+
+grep -q "^last_code_commit_at:" "$HEAD_FILE" 2>/dev/null \
+  && sed -i '' "s/^last_code_commit_at:.*/last_code_commit_at: $TS/" "$HEAD_FILE" \
+  || echo "last_code_commit_at: $TS" >> "$HEAD_FILE"

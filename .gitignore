@@ -31,6 +31,9 @@ personal/*
 !personal/.gitkeep
 !personal/README.md
 
+# === CONTEXT LOG (PRIVATE ONLY) ===
+context-log/
+
 # === RUNTIME STATE (LOCAL ONLY) ===
 queue/
 heartbeat/

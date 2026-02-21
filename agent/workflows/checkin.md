@@ -36,7 +36,9 @@ _t 10 rsync -a --update --quiet "$ANTIGRAVITY_DIR/agent/skills/" .agent/skills/ 
 cp "$ANTIGRAVITY_DIR/mcp_config.json" ~/.gemini/antigravity/mcp_config.json 2>/dev/null
 [ -f "$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master" ] && cp "$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master" "$HOME/.gemini/GEMINI.md"
 
-# 4. Session Info
+# 4. Context Restore (Git-Driven)
+_t 5 node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" restore 2>/dev/null && echo "🧠 Context restored" &
+
 [ -f "./NEXT_SESSION.md" ] && echo "📋 NEXT:" && cat "./NEXT_SESSION.md"
 [ -f ".sweep_patterns.md" ] && echo "📚 Patterns loaded"
 
