@@ -1,17 +1,21 @@
 # Context Snapshot: 2026-02-21_1100
-# Commit: 2eaaa00
+# Commit: b471ec0
 
 meta:
   session_id: 2026-02-21_1100
-  timestamp: 2026-02-21T02:00:52.559Z
+  timestamp: 2026-02-21T02:00:52.847Z
   branch: main
-  commit: 2eaaa00
+  commit: b471ec0
   schema_version: 1.0
 session:
   note: no active session
 pending_tasks: []
 design_decisions: []
 recent_commits:
+  - hash: b471ec0
+    message: ctx: Benchmark Test → Option A
+  - hash: 89454e8
+    message: ctx: snapshot 2026-02-21_1100
   - hash: 2eaaa00
     message: feat: Git-driven context persistence engine — コンテキスト永続化システム
   - hash: 288122d
@@ -28,14 +32,4 @@ recent_commits:
     message: feat: Implement Private Sync Routing for personal config
   - hash: b172b5a
     message: feat(skills): Add railway-autonomous-ops skill
-  - hash: b2a9be2
-    message: chore: Decouple personal config from OSS core and add setup wizard
-  - hash: 9218edd
-    message: feat: Finalize Core Unified Upgrade (Solo Production Edition)
 next_session: none
-
-# Latest Decision (2026-02-21T02:00:52.652Z)
-last_decision:
-  context: Benchmark Test
-  choice: Option A
-  reason: Testing persistence
