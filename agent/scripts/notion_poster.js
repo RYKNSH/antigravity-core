@@ -4,8 +4,10 @@ const https = require('https');
 
 // Simple .env parser
 let envPath = path.join(process.cwd(), '.env');
+const os = require('os');
 if (!fs.existsSync(envPath)) {
-    envPath = path.join(process.env.HOME, '.antigravity', '.env');
+    // Fallback to global config
+    envPath = path.join(os.homedir(), '.antigravity', '.env');
 }
 if (!fs.existsSync(envPath)) {
     envPath = path.join(process.env.HOME, '.env');
@@ -14,11 +16,16 @@ if (!fs.existsSync(envPath)) {
 if (fs.existsSync(envPath)) {
     const envConfig = fs.readFileSync(envPath, 'utf8');
     envConfig.split('\n').forEach(line => {
-        const match = line.match(/^([^=]+)=(.*)$/);
+        // Remove trailing comments and whitespace
+        const cleanLine = line.split('#')[0].trim();
+        const match = cleanLine.match(/^([^=]+)=(.*)$/);
         if (match) {
             const key = match[1].trim();
+            // Remove surround quotes (single or double) if present
             const value = match[2].trim().replace(/^["'](.*)["']$/, '$1');
-            process.env[key] = value;
+            if (value !== '') {
+                process.env[key] = value;
+            }
         }
     });
 }
