@@ -1,0 +1,11 @@
+# Decision: V2 Architecture
+# 2026-02-21T02:06:23.111Z
+
+meta:
+  timestamp: 2026-02-21T02:06:23.090Z
+  commit: 64171a5
+  branch: main
+decision:
+  context: V2 Architecture
+  choice: Orphan branch
+  reason: Zero main pollution
