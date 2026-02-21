@@ -1,17 +1,21 @@
 # Context Snapshot: 2026-02-21_1101
-# Commit: 12223c3
+# Commit: 17ed032
 
 meta:
   session_id: 2026-02-21_1101
-  timestamp: 2026-02-21T02:01:41.837Z
+  timestamp: 2026-02-21T02:01:42.126Z
   branch: main
-  commit: 12223c3
+  commit: 17ed032
   schema_version: 1.0
 session:
   note: no active session
 pending_tasks: []
 design_decisions: []
 recent_commits:
+  - hash: 17ed032
+    message: ctx: Benchmark Test → Option A
+  - hash: e9d7830
+    message: ctx: snapshot 2026-02-21_1101
   - hash: 12223c3
     message: auto-sync: checkout 02211101
   - hash: 3ffc1a4
@@ -28,10 +32,6 @@ recent_commits:
     message: ctx: snapshot 2026-02-21_1100
   - hash: 2eaaa00
     message: feat: Git-driven context persistence engine — コンテキスト永続化システム
-  - hash: 288122d
-    message: ctx: Context Engine → Git-driven YAML
-  - hash: d479252
-    message: ctx: snapshot 2026-02-21_1056
 next_session: |
   # NEXT_SESSION.md
   
@@ -48,9 +48,3 @@ next_session: |
   
   ## ✅ 今回の成果
   - フリーズ原因6件を徹底修正（verify_pipeline.js, loop_engine.js, auth_notion.js, extract_context.js, _t()改善, daemon.js）
-
-# Latest Decision (2026-02-21T02:01:41.930Z)
-last_decision:
-  context: Benchmark Test
-  choice: Option A
-  reason: Testing persistence
