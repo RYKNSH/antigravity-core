@@ -1,0 +1,35 @@
+# Context Snapshot: 2026-02-21_1100
+# Commit: bf90fb5
+
+meta:
+  session_id: 2026-02-21_1100
+  timestamp: 2026-02-21T02:00:59.710Z
+  branch: main
+  commit: bf90fb5
+  schema_version: 1.0
+session:
+  note: no active session
+pending_tasks: []
+design_decisions: []
+recent_commits:
+  - hash: bf90fb5
+    message: ctx: Benchmark Test → Option A
+  - hash: a397bbc
+    message: ctx: snapshot 2026-02-21_1100
+  - hash: a029688
+    message: ctx: snapshot 2026-02-21_1100
+  - hash: b471ec0
+    message: ctx: Benchmark Test → Option A
+  - hash: 89454e8
+    message: ctx: snapshot 2026-02-21_1100
+  - hash: 2eaaa00
+    message: feat: Git-driven context persistence engine — コンテキスト永続化システム
+  - hash: 288122d
+    message: ctx: Context Engine → Git-driven YAML
+  - hash: d479252
+    message: ctx: snapshot 2026-02-21_1056
+  - hash: 0d56bf2
+    message: fix: sync_private.js merge conflict解消+全タイムアウト追加、checkout.mdのsync/pushにもタイムアウト追加
+  - hash: c2a5577
+    message: auto-sync: 02192324
+next_session: none
