@@ -1,0 +1,35 @@
+# Context Snapshot: 2026-02-21_1056
+# Commit: 0d56bf2
+
+meta:
+  session_id: 2026-02-21_1056
+  timestamp: 2026-02-21T01:56:47.475Z
+  branch: main
+  commit: 0d56bf2
+  schema_version: 1.0
+session:
+  note: no active session
+pending_tasks: []
+design_decisions: []
+recent_commits:
+  - hash: 0d56bf2
+    message: fix: sync_private.js merge conflict解消+全タイムアウト追加、checkout.mdのsync/pushにもタイムアウト追加
+  - hash: c2a5577
+    message: auto-sync: 02192324
+  - hash: 719e5f7
+    message: fix(sync): Robust private sync with merge strategy and file restoration
+  - hash: 5a5c122
+    message: feat: Implement Private Sync Routing for personal config
+  - hash: b172b5a
+    message: feat(skills): Add railway-autonomous-ops skill
+  - hash: b2a9be2
+    message: chore: Decouple personal config from OSS core and add setup wizard
+  - hash: 9218edd
+    message: feat: Finalize Core Unified Upgrade (Solo Production Edition)
+  - hash: 82c85e5
+    message: feat: Implement Antigravity Core Unified Upgrade (The Big Four + One)
+  - hash: aa98f83
+    message: perf: ルール統合・WF圧縮・ゴミ掃除で極限まで軽量化
+  - hash: 40b3bb3
+    message: security: heartbeat/ queue/ をPublicリポから除外
+next_session: none
