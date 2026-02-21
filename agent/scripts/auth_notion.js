@@ -4,10 +4,13 @@ const https = require('https');
 const { exec } = require('child_process');
 const readline = require('readline');
 
-const GLOBAL_ENV_PATH = '${process.env.ANTIGRAVITY_DIR || path.join(require("os").homedir(), ".antigravity")}/.env';
 let ENV_PATH = path.join(process.cwd(), '.env');
-if (!fs.existsSync(ENV_PATH) && fs.existsSync(GLOBAL_ENV_PATH)) {
-    ENV_PATH = GLOBAL_ENV_PATH;
+const ANTIGRAVITY_ENV = process.env.ANTIGRAVITY_DIR ? path.join(process.env.ANTIGRAVITY_DIR, '.env') : path.join(require("os").homedir(), ".antigravity", ".env");
+const GLOBAL_ENV = path.join(require("os").homedir(), '.env');
+
+if (!fs.existsSync(ENV_PATH)) {
+    if (fs.existsSync(ANTIGRAVITY_ENV)) ENV_PATH = ANTIGRAVITY_ENV;
+    else if (fs.existsSync(GLOBAL_ENV)) ENV_PATH = GLOBAL_ENV;
 }
 
 const rl = readline.createInterface({
@@ -71,19 +74,19 @@ async function main() {
 
     console.log('To connect Notion, we need an Integration Token.');
     console.log('Opening Notion Integrations page...');
-    
+
     // Open Notion Integrations page
     openBrowser('https://www.notion.so/my-integrations');
-    
+
     console.log('\n👉 Instructions:');
     console.log('1. Click "New integration"');
     console.log('2. Name it (e.g., "Social Knowledge Blog")');
     console.log('3. Select the workspace');
     console.log('4. Copy the "Internal Integration Secret"');
     console.log('5. IMPORTANT: Go to your target Database page, click "..." > logic/connections, and add this connection.');
-    
+
     const token = await question('\n🔑 Paste the Internal Integration Secret: ');
-    
+
     console.log('\nValidating token...');
     if (await validateToken(token.trim())) {
         console.log('✅ Token valid!');
@@ -96,14 +99,14 @@ async function main() {
 
     let newEnvContent = envContent;
     if (!envContent.endsWith('\n') && envContent.length > 0) newEnvContent += '\n';
-    
+
     if (!hasKey) newEnvContent += `NOTION_API_KEY=${token.trim()}\n`;
     if (!hasDb) newEnvContent += `NOTION_DATABASE_ID=${dbId.trim()}\n`;
 
     fs.writeFileSync(ENV_PATH, newEnvContent);
     console.log(`\n✅ Saved credentials to ${ENV_PATH}`);
     console.log('🎉 Setup complete!');
-    
+
     rl.close();
 }
 

@@ -7,6 +7,9 @@ let envPath = path.join(process.cwd(), '.env');
 if (!fs.existsSync(envPath)) {
     envPath = path.join(process.env.HOME, '.antigravity', '.env');
 }
+if (!fs.existsSync(envPath)) {
+    envPath = path.join(process.env.HOME, '.env');
+}
 
 if (fs.existsSync(envPath)) {
     const envConfig = fs.readFileSync(envPath, 'utf8');
