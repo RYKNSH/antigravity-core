@@ -133,6 +133,17 @@ critical 発見時は Phase 6 で Self-Repair 対象に含める。
 
 ---
 
+### Phase 5.75: Test Evolution 🧬
+**担当**: Test Quality Engine
+**目的**: テスト自体の品質・カバレッジ・耐障害性を検証し改善する
+
+> `/fbl deep` 実行時にのみ発動。`/fbl quick` では省略。
+
+`/test-evolve quick` を自動実行（Phase 0 + 3 + 4 + 6）。
+テスト品質スコアが C 以下の場合は Phase 6 で改善対象に含める。
+
+---
+
 ### Phase 6: Self-Repair Loop 🔄
 **目的**: 問題を発見したら即座に修正（Error Sweep の critical を含む）
 
@@ -178,8 +189,9 @@ echo "[$(date)] Fixed: $ISSUE" >> fbl_audit.log
 
 > 🏥 **Health Check Protocol 適用** — `WORKFLOW_CONTRACTS.md` 参照。Pre-flight + メジャーPhase間でswapチェック。
 
-1. **全Phase（0-7）を実行**
-2. **Phase 7 の前に `/debate quick`** を実行
+1. **全Phase（0-7）を実行**（Phase 5.5 + 5.75 含む）
+2. **Phase 5.75**: `/test-evolve quick` でテスト品質を検証
+3. **Phase 7 の前に `/debate quick`** を実行
    - Bug Hunter, Browser Inspector, UX Advocate, Full-Stack Verifier が批評
    - 見落としがないか最終確認
 

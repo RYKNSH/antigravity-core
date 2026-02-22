@@ -171,6 +171,21 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 4. プロセス改善で防げたか？
 ```
 
+#### テスト改善パターン蓄積（テスト進化ループ連携）
+
+Q2「テストで防げたか？」の回答を `.test_evolution_patterns.md` に蓄積:
+
+```markdown
+## Bug-Fix Learning
+
+### [BF-XXX] [Date] [バグ概要]
+- **テストで防げたか**: Yes/No
+- **必要だったテスト**: [具体的なテスト内容]
+- **カテゴリ**: [境界値/エラーパス/状態遷移/レースコンディション/セキュリティ]
+```
+
+> この蓄積が `/test-evolve` Phase 0 で参照され、次回以降のテスト設計に反映される。
+
 **出力**: 学びがあれば `docs/DECISIONS.md` または `docs/PRINCIPLES.md` に追記
 
 ---

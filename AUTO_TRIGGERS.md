@@ -24,6 +24,9 @@
 | 変更6ファイル以上 | `/verify --deep` |
 | verify通過+staging存在 | `/ship staging` 提案 |
 | 新APIエンドポイント | `/error-sweep` Contract重点チェック |
+| テスト品質スコア C以下 | `/test-evolve` 提案 |
+| `/fbl deep` 実行時 | `/test-evolve quick` 自動（Phase 5.75） |
+| リリース前チェック | `/test-evolve` full 提案 |
 
 ## 自律継続ルール
 

@@ -122,6 +122,14 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | **完了条件** | critical = 0（CLEAN or CONDITIONAL PASS）+ Phase 7 学習記録完了(該当時) |
 | **エラー時** | Self-Repair 5回失敗→`/debug-deep` 自動エスカレーション。タイムアウト(45分)→強制停止+レポート出力 |
 
+### `/test-evolve`
+| 項目 | 定義 |
+|------|------|
+| **入力** | なし（自動検出）, `quick`/`adversarial`(任意) |
+| **出力** | Test Quality Score Card, Mutation Report, Adversarial Report, `.test_evolution_patterns.md` 更新 |
+| **完了条件** | Phase 6 学習記録完了 + critical ギャップ解消（full時） |
+| **エラー時** | Phase 5 テスト追加3回失敗→`/debug-deep` 自動エスカレーション。ミューテーション適用後の復元失敗→git checkpointからrevert |
+
 ---
 
 ## 開発サイクル層

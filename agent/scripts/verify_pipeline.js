@@ -10,10 +10,12 @@ const fs = require('fs');
 const readline = require('readline');
 const projectState = require('./project_state');
 
-const rl = readline.createInterface({
+const IS_TTY = process.stdin.isTTY === true;
+
+const rl = IS_TTY ? readline.createInterface({
     input: process.stdin,
     output: process.stdout
-});
+}) : null;
 
 const BLUE = '\x1b[34m';
 const GREEN = '\x1b[32m';
@@ -26,6 +28,10 @@ function log(color, msg) {
 }
 
 async function ask(question) {
+    if (!IS_TTY) {
+        log(YELLOW, `[Auto-pass] ${question}`);
+        return true;
+    }
     return new Promise(resolve => {
         rl.question(`${YELLOW}${question} (y/n): ${RESET}`, answer => {
             resolve(answer.trim().toLowerCase() === 'y');
@@ -122,7 +128,7 @@ async function main() {
 
         process.exit(1);
     } finally {
-        rl.close();
+        if (rl) rl.close();
     }
 }
 
