@@ -1,4 +1,5 @@
 ---
+name: railway-autonomous-ops
 description: Railwayへのデプロイ・環境変数設定・Volume管理を自律的に行うスキル
 ---
 

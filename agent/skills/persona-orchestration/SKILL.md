@@ -1,4 +1,5 @@
 ---
+name: persona-orchestration
 description: マルチペルソナ・ディベートによる成果物品質向上と、自然淘汰型ペルソナ管理システム
 ---
 

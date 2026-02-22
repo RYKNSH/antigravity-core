@@ -50,6 +50,7 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 | `/ship` | ship.md | `/verify` 後のデプロイ |
 | `/debug-deep` | debug-deep.md | 検証失敗時のエスカレーション |
 | `/test-evolve` | test-evolve.md | テスト品質の自律進化ループ |
+| `/ux-audit` | ux-audit.md | Lighthouse + axe-core UX自動監査 |
 | `/galileo` | galileo.md | Deep Verification |
 | `/debate` | debate.md | Review / Planning Support |
 
