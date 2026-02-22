@@ -22,21 +22,22 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 
 ## メタワークフロー層
 
-### `/go`
+### `/go`（統合版）
 | 項目 | 定義 |
 |------|------|
-| **入力** | `[タスク文字列]` (任意), `--vision [ビジョン文字列]` (任意) |
-| **出力** | セッション完了レポート（checkout出力を継承） |
-| **完了条件** | `/checkout` が正常完了 |
-| **エラー時** | 各Phase独立。checkin失敗→再実行。work失敗→ユーザーに報告。checkout失敗→最低限git save |
+| **入力** | `[タスク文字列]` (任意) |
+| **出力** | 実装コード + 検証レポート + MS進捗更新（該当時） |
+| **完了条件** | Phase 0-5 全完了。THINK Gate Pass + 子WF完了 + Smart Verify Pass |
+| **フロー** | Phase 0: THINK Gate + Knowledge Preload + Context Recovery → Phase 1: ルーティング → Phase 2: Branch → Phase 3: 子WF実行 → Phase 4: Smart Verify → Phase 5: Completion |
+| **エラー時** | セルフリペア3回失敗→`/debug-deep`。debug-deep 3回失敗→PAUSE。子WF不明→ユーザーに確認 |
 
-### `/work`
+### `/work`（→ `/go` リダイレクト）
 | 項目 | 定義 |
 |------|------|
-| **入力** | タスク文字列（自然言語） |
-| **出力** | 選択されたWFの出力を継承 |
-| **完了条件** | 子WF + `/verify` が完了 |
-| **エラー時** | WF判定失敗→ユーザーに確認。子WF失敗→子WFのエラー処理に委譲 |
+| **入力** | タスク文字列 |
+| **出力** | `/go` の出力を継承 |
+| **完了条件** | `/go` の完了条件を継承 |
+| **エラー時** | `/go` のエラー処理を継承 |
 
 ---
 
@@ -57,6 +58,34 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | **出力** | `NEXT_SESSION.md`, SSDブレインログ, コミット |
 | **完了条件** | Phase 0-4 全完了, git変更が保存済み |
 | **エラー時** | Score計算失敗→スキップしてログ保存。git失敗→手動コミット提案。SSD未接続→ローカル保存のみ |
+
+---
+
+## 戦略層（Whitepaper-Driven Development）
+
+### `/whitepaper`
+| 項目 | 定義 |
+|------|------|
+| **入力** | プロジェクトビジョン文字列（自然言語） |
+| **出力** | `WHITEPAPER.md`（テスト戦略セクション必須）, `ROADMAP.md`, `MILESTONE.md`, `/xx-dev` ワークフローファイル |
+| **完了条件** | Phase 1-5 全完了。WHITEPAPER.md ユーザーロック（テスト戦略含む） + ROADMAP.md + MILESTONE.md debate quick パス + /xx-dev 生成 |
+| **エラー時** | ビジョン不明瞭（5ラウンド超）→PAUSE。曖昧さ検出（短答3連続）→具体的質問で深掘り。debate 3回Block→問題箇所を部分修正→再debate |
+
+### `/gen-dev`
+| 項目 | 定義 |
+|------|------|
+| **入力** | なし（WHITEPAPER.md + ROADMAP.md + MILESTONE.md を自動検出）, `--name` (任意) |
+| **出力** | `[project]/.agent/workflows/xx-dev.md` |
+| **完了条件** | ワークフローファイル生成完了 + ユーザー通知 |
+| **エラー時** | WHITEPAPER.md不在→`/whitepaper`実行を提案。コマンド名衝突→ユーザーに代替名確認 |
+
+### `/xx-dev`（プロジェクト固有・生成コマンド）
+| 項目 | 定義 |
+|------|------|
+| **入力** | なし（WHITEPAPER.md + ROADMAP.md + MILESTONE.md + PROJECT_STATE.md を自動読込） |
+| **出力** | コンテキストサマリー + タスク提案 → `/go` チェーンの出力を継承 |
+| **完了条件** | Phase 2 完了（タスク実装 + verify通過）。MS完了時は `/test-evolve full` Score ≥ A (85/100) |
+| **エラー時** | WHITEPAPER.md不在→`/whitepaper`提案。MILESTONE.md不在→`/whitepaper` Phase 3提案。MS品質ゲート不合格→テスト改善→再検証 |
 
 ---
 
@@ -98,12 +127,14 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | **完了条件** | Phase 5 Verdict 出力完了 + galileo_log 保存 |
 | **エラー時** | Web検索失敗→ナレッジベースのみで判定。証拠不足→CHALLENGE判定（CONFIRMもOVERTURNもしない）。OVERTURN判定→ユーザー確認必須（PAUSE） |
 
-### `/verify`
+### `/verify`（規模連動 Verify Chain）
 | 項目 | 定義 |
 |------|------|
 | **入力** | なし（カレントディレクトリの変更を自動検出）, `--quick`/`--deep` (任意) |
-| **出力** | 検証レポート（テスト結果, lint, typecheck, レビュー）, `ship可能` or `要修正` |
-| **完了条件** | Phase 1-3 全パス |
+| **出力** | 検証レポート（テスト結果, lint, typecheck）, `ship可能` or `要修正` |
+| **完了条件** | Quick: Pre-Flight + FBL quick Pass。Standard: + error-sweep critical=0。Deep: + test-evolve + debate合意 |
+| **Smart Dedup** | コンテンツハッシュ方式（Bazel/Turborepo準拠）: ソースハッシュが前回成功時と同一 → スキップ |
+| **規模判定** | Small(≤2ファイル)=quick, Medium(≤10)=standard, Large(11+)=deep |
 | **エラー時** | テスト失敗→失敗箇所を報告、呼出元に戻る。lint失敗→自動修正試行（最大1回） |
 
 ### `/fbl`

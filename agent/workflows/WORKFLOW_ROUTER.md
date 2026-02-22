@@ -24,9 +24,16 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 |---------|-----|----------------|
 | **`/setup`** | setup.md | 「プロジェクト開始」「初期化」<br>`PROJECT_STATE.md` 生成 |
 | **`/think`** | think.md | 「新しいタスク」「計画」「設計」 |
-| **`/go`** | go.md | 「実装」「続きをやる」「(タスク名)」<br>Worktree自動移動 |
-| **`/verify`** | verify.md | 「テスト」「検証」「確認」<br>完了としてマーク |
+| **`/go`** | go.md | 「実装」「続きをやる」「(タスク名)」<br>THINK Gate + ルーティング + Smart Verify 統合 |
+| **`/verify`** | verify.md | 「テスト」「検証」<br>規模連動 Verify Chain（Quick/Standard/Deep） |
 | **`/blog`** | blog.md | 「ブログ」「記事化」「広報」「レポート」 |
+
+### Strategy Commands (Whitepaper-Driven Development)
+| コマンド | WF | トリガー / 備考 |
+|---------|-----|----------------|
+| **`/whitepaper`** | whitepaper.md | 「ビジョン策定」「ホワイトペーパー」「戦略」<br>WHITEPAPER.md + ROADMAP.md 生成 |
+| **`/gen-dev`** | gen-dev.md | 「devコマンド生成」<br>`/whitepaper` Phase 5 で自動呼出し |
+| **`/xx-dev`** | [project]/.agent/workflows/ | プロジェクト固有。コンテキスト回帰 |
 
 ### Utility Commands
 | コマンド | WF | 役割 |
@@ -45,7 +52,6 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 | `/test-evolve` | test-evolve.md | テスト品質の自律進化ループ |
 | `/galileo` | galileo.md | Deep Verification |
 | `/debate` | debate.md | Review / Planning Support |
-| `/_checkpoint_to_blog` | (Deprecated) | -> `/blog` に統合されました |
 
 ---
 
@@ -53,22 +59,39 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 
 ```mermaid
 graph TD
-    Start((Start)) --> Setup[/setup]
-    Setup --> ProjectState[PROJECT_STATE.md]
-    
-    ProjectState --> Think[/think]
-    Think -->|Add Task| ProjectState
-    Think -->|New Branch| Go[/go]
-    
-    Go -->|Implement| Verify[/verify]
-    
-    Verify -->|Pass| Done(Complete/Merge)
-    Done -->|Update| ProjectState
-    
-    Verify -->|Fail| Fix[/go]
-    
-    Done --> Blog[/blog]
-    ProjectState --> Blog
+    L["/l0-l3"] -->|level設定| Go
+    Go["/go"] -->|Phase 0| TG["🧠 THINK Gate<br>+ Knowledge Preload"]
+    TG -->|Phase 1| Route{ルーティング}
+    Route --> NF["/new-feature"]
+    Route --> BF["/bug-fix"]
+    Route --> RF["/refactor"]
+    NF & BF & RF -->|Phase 4| SV["Smart Verify<br>規模連動"]
+    SV -->|Pass| Done(Complete)
+    SV -->|Fail x3| DD["/debug-deep"]
+    DD -->|Success| Route
+    DD -->|Fail x3| PAUSE[⛔ PAUSE]
+    Done --> CO["/checkout"]
+```
+
+### Whitepaper-Driven Flow（長期戦略型）
+
+```mermaid
+graph TD
+    WP["/whitepaper"] --> WPDoc[WHITEPAPER.md]
+    WPDoc --> RM[ROADMAP.md<br>MS + Tasks]
+    RM --> GenDev["/gen-dev"]
+    GenDev --> XXDev["/xx-dev<br>コンテキスト回帰"]
+    XXDev -->|Phase 0| Read["📖 Context Recovery"]
+    Read -->|Phase 1| Select[タスク選択]
+    Select -->|Phase 2| Go["/go → 実装"]
+    Go --> Verify["/verify"]
+    Verify -->|タスク完了| MSCheck{MS完了?}
+    MSCheck -->|No| Select
+    MSCheck -->|Yes| TEFull["/test-evolve full"]
+    TEFull -->|Pass| NextMS[次のMS]
+    TEFull -->|Fail| Fix2[テスト改善]
+    Fix2 --> TEFull
+    NextMS --> Select
 ```
 
 ## ⚡️ Parallel Execution

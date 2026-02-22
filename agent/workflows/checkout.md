@@ -60,6 +60,7 @@ _bg bash -c 'rm -rf ~/.gemini/antigravity/browser_recordings/* ~/.gemini/antigra
 _bg bash -c 'find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null'
 
 # 4. Context Snapshot (Git-Driven — NEVER LOSE CONTEXT)
+# 旧 /context-compression の機能を統合: セッションコンテキストを圧縮・永続化
 _t 10 node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" snapshot 2>/dev/null && echo "🧠 Context committed to Git"
 
 # 5. Session Info & State（直列・タイムアウト付き）
