@@ -127,7 +127,7 @@ echo "🔍 Verify Chain: $SIZE (${FILE_COUNT} files changed)"
 |--------|---------|
 | Quick | Pre-Flight Pass + FBL quick Pass |
 | Standard | Quick + Error Sweep critical = 0 |
-| Deep | Standard + Test Quality ≥ B + Debate 合意 |
+| Deep | Standard + Test Quality ≥ B + UX Audit ≥ B + Debate 合意 |
 
 ## エラー時
 

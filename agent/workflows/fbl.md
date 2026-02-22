@@ -43,6 +43,7 @@ FBLは実装後に自動で品質を検証し、問題があれば自己修正�
 |---------|-------------|------|
 | 🐛 **Bug Hunter** | Phase 0 | エラー検出・デバッグ |
 | 🌐 **Browser Inspector** | Phase 3 | 視覚検証・レスポンシブ |
+| 📊 **UX Metrics Analyst** | Phase 3.5 | Lighthouse/a11y/CWV定量測定 |
 | 👤 **UX Advocate** | Phase 5 | ユーザー体験・120%品質 |
 | ⚡ **Full-Stack Verifier** | Phase 1, 2, 4 | DB・API・E2E横断検証 |
 
@@ -94,6 +95,19 @@ pnpm lint && pnpm typecheck && pnpm test
 - レスポンシブデザインの確認（Mobile / Tablet / Desktop）
 
 **発見した問題があれば即座に修正**
+
+---
+
+### Phase 3.5: UX Performance Audit 📊
+**担当**: UX Metrics Analyst
+**目的**: 自動化ツールによるUX品質の定量測定
+
+> `/fbl` 通常時: `/ux-audit quick`（スコア確認のみ）
+> `/fbl deep` 時: `/ux-audit`（フル実行 + Auto-Fix）
+> フロントエンドプロジェクトでない場合はスキップ。
+
+`/ux-audit` を自動実行。
+Grade C以下の場合は Phase 6 で改善対象に含める。
 
 ---
 
