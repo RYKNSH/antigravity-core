@@ -191,6 +191,11 @@ Phase 4 の検証結果に基づき:
 
 ### 5-2. セマンティックコミット＋プッシュ
 
+> [!IMPORTANT]
+> **NON-NEGOTIABLE**: このフェーズは**絶対にスキップしてはならない**。
+> Phase 4 が Pass した時点で、以下のコミット＋プッシュを**必ず実行する**。
+> ユーザーに「コミットしますか？」と聞く必要はない。L0-L3 全レベルで自動実行。
+
 **目的**: 将来AIがgit履歴を読んで開発日誌を書けるよう、セマンティックな境界で意味のあるコミットを作る。
 
 #### コミットタイミング（3境界）
@@ -219,8 +224,9 @@ git commit -m "fix: トークン検証でexpiry未チェックだったため期
 
 #### 自動実行
 
+// turbo
 ```bash
-# タスク完了時（Phase 4 Pass 後に自動実行）
+# タスク完了時（Phase 4 Pass 後に自動実行 — スキップ禁止）
 COMMIT_TYPE=$(echo "$CHILD_WF" | sed 's/new-feature/impl/;s/bug-fix/fix/;s/refactor/refactor/')
 git add -A
 git commit -m "${COMMIT_TYPE}: [タスク名]
@@ -230,6 +236,10 @@ git commit -m "${COMMIT_TYPE}: [タスク名]
 - テスト: [追加/修正テスト概要]"
 git push origin HEAD
 ```
+
+> [!CAUTION]
+> `git push` 失敗時（認証エラー等）はユーザーに報告する。
+> コミット自体は成功している場合、プッシュのリトライは1回のみ。
 
 ### 5-3. MS進捗チェック（ROADMAP存在時）
 
