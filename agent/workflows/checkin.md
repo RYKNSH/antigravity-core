@@ -32,6 +32,16 @@ mkdir -p .agent/skills .agent/workflows
 _t 10 rsync -a --update --quiet "$ANTIGRAVITY_DIR/agent/workflows/"*.md .agent/workflows/ 2>/dev/null &
 _t 10 rsync -a --update --quiet "$ANTIGRAVITY_DIR/agent/skills/" .agent/skills/ 2>/dev/null &
 
+# 2.5. Git Hooks Auto-Setup
+if [ -d ".git" ]; then
+  CURRENT_HOOKS=$(git config --get core.hooksPath 2>/dev/null || echo "")
+  if [ -z "$CURRENT_HOOKS" ] && [ -d "$ANTIGRAVITY_DIR/.git-hooks" ]; then
+    git config core.hooksPath "$ANTIGRAVITY_DIR/.git-hooks"
+    chmod +x "$ANTIGRAVITY_DIR/.git-hooks/"* 2>/dev/null
+    echo "🪝 Git hooks activated"
+  fi
+fi
+
 # 3. Configs & GEMINI.md
 cp "$ANTIGRAVITY_DIR/mcp_config.json" ~/.gemini/antigravity/mcp_config.json 2>/dev/null
 [ -f "$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master" ] && cp "$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master" "$HOME/.gemini/GEMINI.md"
