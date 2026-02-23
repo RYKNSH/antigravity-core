@@ -21,15 +21,41 @@
 ### フェーズ3: 代替手段マトリクス
 
 | ハング原因 | 代替手段 |
-|-----------|---------|
+|-----------|----------|
 | git push がブロック | `GIT_TERMINAL_PROMPT=0 git push` で再実行（prompt待ちを排除）|
 | git push が通らない | GitHub MCP `mcp_github_push_files` で API 経由プッシュ |
 | MCP が `Bad credentials` | ローカル git に切り替え。`mcp_config.json` のトークンを後で別途更新 |
 | ネットワーク全断 | `write_to_file` でファイル編集だけ完了させ、push は後回し |
-| ターミナル全滅 | `view_file` / `write_to_file` のみで完結させる（Layer 3）|
+| ターミナル全滅 | `view_file` / `write_to_file` / GitHub MCP のみで完結させる（Layer 3）|
 
 > [!NOTE]
 > **視野を広く保つ原則**: ハングしたツール1本に固執しない。「別のツールで同じゴールに到達できるか？」を常に問え。
+
+---
+
+## 🌐 ブラウザサブエージェント専用ルール（H-03対策）
+
+> [!IMPORTANT]
+> **ブラウザサブエージェントはターミナルと異なり watchdog が存在しない。以下のルールを必ず守れ。**
+
+### 失敗検知ルール
+| 条件 | アクション |
+|------|----------|
+| 同じ操作を **3回** 試みて失敗 | **即座に別アプローチに切り替える** |
+| MFA壁 / ログイン要求に遭遇 | ブラウザを諦め、API/MCP/CLI に切り替える |
+| ページ構造変化で要素が見つからない | Raw APIエディタ / curlへ切り替える |
+| 30秒以上ページが応答しない | サブエージェントをキャンセルして報告する |
+
+### 禁止パターン
+```
+❌ 同じXPathやセレクタを4回以上リトライする
+❌ 「少し待てば読み込まれるかも」と5秒以上待機を繰り返す
+❌ ブラウザスタックを incidents.md に報告せず黙って諦める
+```
+
+### インシデント記録義務
+- ブラウザサブエージェントが3回失敗した場合 → 必ず `incidents.md` に記録する
+- 記録フォーマット: `INC-XXX [OPEN] ブラウザ: [サービス名] で [操作] がスタック`
 
 ---
 
@@ -52,7 +78,7 @@ cd ~/.antigravity && git add ... && git push ...
 
 ### 根本原因2: `2>&1 | tail -N` パイプが stdout をバッファして完了シグナルを隠した
 
-git push の出力を `| tail -3` に流すと、push が完了してもパイプバッファが flush されるまで `tail` がブロックし続ける。バックグラウンド実行では `No output` に見え、ハングと誤判断した。
+git push の出力を `| tail -3` に流すと、push が完了してもパイプバッファが flush されるまで `tail` がブロックし続ける。
 
 **禁止**:
 ```bash
@@ -62,29 +88,24 @@ GIT_TERMINAL_PROMPT=0 git push origin main 2>&1 | tail -3
 
 **正解**:
 ```bash
-# ✅ 出力はそのまま流す。見たくなければリダイレクトで捨てる
+# ✅ 出力はそのまま流す
 GIT_TERMINAL_PROMPT=0 git push origin main --no-verify 2>&1
 ```
 
 ### 根本原因3: terminate 後に git lock が残ったまま次の git 操作を実行した
 
-バックグラウンドコマンドを `Terminate=true` で強制終了した場合、`.git/index.lock` が残る。その直後に次の git 操作を走らせると lock 競合でブロックされる。
-
 **必須手順**: git 操作の前に lock クリーンアップを挟む
 ```bash
-# ✅ terminate 後の次回 git 操作の前に必ず実行
 rm -f ~/.antigravity/.git/index.lock 2>/dev/null
 ```
 
 ---
-
 
 ## 🛡️ Kinetic Command Rules
 単発の静的コマンドは禁止。必ず連鎖コマンドを使用。
 
 | ルール | ❌ 禁止 | ✅ 正解 |
 |--------|---------|--------|
-| 静的cd禁止 | `cd backend` | `cd /full/path && echo "$PWD"` |
 | Self-Healing | `python main.py` | `(lsof -ti:8000 \| xargs kill -9 2>/dev/null \|\| true) && python main.py` |
 | 検証付き | `rm file.txt` | `rm file.txt && ! ls file.txt` |
 
@@ -105,32 +126,30 @@ git rev-parse --show-toplevel 2>&1  # このディレクトリがgit管理下か
 git remote -v 2>&1                  # remoteが存在するか確認
 ```
 
-remoteが存在しない → push禁止。`~/.antigravity/incidents.md` を参照して正しいパスを確認すること。
+remoteが存在しない → push禁止。`ENVIRONMENTS.md` を参照して正しいパスを確認すること。
 
 **git push は必ず以下の形式で実行する（省略禁止）**:
 ```bash
 GIT_TERMINAL_PROMPT=0 git push origin [branch] --no-verify
 ```
-`GIT_TERMINAL_PROMPT=0` を省略すると、バックグラウンドでの実行時に credential prompt 待ちでハングする。
 
 | ルール | 説明 |
 |--------|------|
 | プロジェクトバウンダリ | `git add/commit/push` 前に上記Grounding確認を必須実行 |
 | 1タスク=1プロジェクト | 複数プロジェクトにまたがるgit操作禁止 |
-| remote未設定 = push禁止 | `git remote -v` が空 → pushしない、正しいパスを探す |
+| remote未設定 = push禁止 | `git remote -v` が空 → pushしない、`ENVIRONMENTS.md` で正しいパスを探す |
 
 ## 禁止コマンド
 - `--dangerously-skip-permissions`
 - `rm -rf /` 系
 - 本番への直接デプロイ（`/deploy` WF経由必須）
-- 相対パスへの `cd`（トラブル時）
 
 ## ⏱️ Timeout Guard (3-Layer Defense)
 
 ```
 Layer 1: GIT_TERMINAL_PROMPT=0 付き実行  (credential prompt ハング対策)
 Layer 2: run_command(WaitMsBeforeAsync=500) → Background → 30s無出力→Terminate
-Layer 3: write_to_file/view_file/MCP でターミナル迂回
+Layer 3: write_to_file/view_file/GitHub MCP でターミナル迂回
 ```
 
 | 操作 | リスク | Layer |
@@ -141,4 +160,6 @@ Layer 3: write_to_file/view_file/MCP でターミナル迂回
 | 大量ファイルコピー | 中 | 1→2 |
 | ターミナル全滅 | 最高 | 3 |
 
+## 📂 環境参照
 
+4種ディレクトリの役割・禁止操作 → [`ENVIRONMENTS.md`](../ENVIRONMENTS.md) を参照

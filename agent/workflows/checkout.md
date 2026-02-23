@@ -38,7 +38,6 @@ _smart_run() {
         stall_count=$((stall_count + 1))
         if [ $stall_count -ge $stall ]; then
           echo "⚠️ [$label] stalled ${stall}s — diagnosing..."
-          # Layer 2で診断（この診断自体はブロックしない）
           if [[ " $* " == *" git "* ]]; then
             _check_net github.com 443 \
               && echo "🔧 [$label] network OK, stuck process → retry" \
@@ -79,20 +78,18 @@ fi
 
 # ─── 2. Antigravity auto-commit + push ──────────────────
 if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
-  # commit（bash -c不使用・クォート地獄回避）
   _do_commit() {
     cd "$ANTIGRAVITY_DIR" || return 1
-    GIT_TERMINAL_PROMPT=0 git add agent/workflows/ agent/skills/ agent/scripts/ agent/rules/ *.md 2>/dev/null
+    GIT_TERMINAL_PROMPT=0 git add agent/workflows/ agent/skills/ agent/scripts/ agent/rules/ \
+      README.md QUICKSTART.md BACKUP_STRATEGY.md KNOWLEDGE_INDEX.md AUTO_TRIGGERS.md ENVIRONMENTS.md 2>/dev/null
     GIT_TERMINAL_PROMPT=0 git diff --cached --quiet 2>/dev/null || \
       GIT_TERMINAL_PROMPT=0 git commit -m "auto-sync: $(date +%m%d%H%M)" 2>/dev/null
   }
   _smart_run 20 0 "auto-commit" _do_commit
 
-  # push（30秒ストール→診断→リトライ1回）
   _smart_run 30 1 "git-push" git -C "$ANTIGRAVITY_DIR" push origin main --no-verify &
   PUSH_PID=$!
 
-  # private sync（Layer 2でpre-check）
   if git -C "$ANTIGRAVITY_DIR" remote get-url private &>/dev/null; then
     if _check_net github.com 443; then
       _smart_run 20 1 "sync-private" node "$ANTIGRAVITY_DIR/agent/scripts/sync_private.js" &
@@ -107,6 +104,13 @@ fi
 rm -rf ~/.gemini/antigravity/browser_recordings/* ~/.gemini/antigravity/implicit/* \
   ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null &
 find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null &
+
+# ─── 3.5. スクリプト存在チェック（P-01 Hallucinated API 対策） ─────
+# 実行前に必ず存在を確認。なければ silent give-up でなく明示的警告を出す
+for _script in git_context.js session_state.js evolve.js; do
+  [ ! -f "$ANTIGRAVITY_DIR/agent/scripts/$_script" ] && \
+    echo "⚠️ Script missing: $_script — 依存ステップがスキップされます"
+done
 
 # ─── 4. Context Snapshot ──────────────────────────────
 _smart_run 15 1 "context-snapshot" node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" snapshot
