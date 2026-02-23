@@ -9,9 +9,9 @@ description: 環境を最新化して軽量状態で開始
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 SCRIPT_PID=$$
 
-# ═══ LAYER 3: Global Watchdog（全体60秒タイムアウト） ════════════
+# ═══ LAYER 3: Global Watchdog（全体60秒タイムアウト・macOS互換） ════════════
 ( sleep 60 && echo "💀 WATCHDOG: checkin hung >60s — force-killing" \
-  && ps -o pid --ppid "$SCRIPT_PID" --noheaders 2>/dev/null | xargs kill -9 2>/dev/null \
+  && pgrep -P "$SCRIPT_PID" 2>/dev/null | xargs kill -9 2>/dev/null \
   && kill -TERM "$SCRIPT_PID" 2>/dev/null ) &
 WD_PID=$!
 trap 'kill "$WD_PID" 2>/dev/null' EXIT

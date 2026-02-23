@@ -9,9 +9,9 @@ description: データを整理し自己評価を行いクリーンな状態で�
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 SCRIPT_PID=$$
 
-# ═══ LAYER 3: Global Watchdog（全体90秒タイムアウト） ════════════
+# ═══ LAYER 3: Global Watchdog（全体90秒タイムアウト・macOS互換） ════════════
 ( sleep 90 && echo "💀 WATCHDOG: checkout hung >90s — force-killing" \
-  && ps -o pid --ppid "$SCRIPT_PID" --noheaders 2>/dev/null | xargs kill -9 2>/dev/null \
+  && pgrep -P "$SCRIPT_PID" 2>/dev/null | xargs kill -9 2>/dev/null \
   && kill -TERM "$SCRIPT_PID" 2>/dev/null ) &
 WD_PID=$!
 trap 'kill "$WD_PID" 2>/dev/null' EXIT
@@ -79,13 +79,14 @@ fi
 
 # ─── 2. Antigravity auto-commit + push ──────────────────
 if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
-  # commit（監視付き）
-  _smart_run 20 0 "auto-commit" bash -c "
-    cd '$ANTIGRAVITY_DIR' &&
-    export GIT_TERMINAL_PROMPT=0 &&
-    git add agent/workflows/ agent/skills/ agent/scripts/ agent/rules/ *.md 2>/dev/null &&
-    git diff --cached --quiet 2>/dev/null || git commit -m 'auto-sync: \$(date +%m%d%H%M)' 2>/dev/null
-  "
+  # commit（bash -c不使用・クォート地獄回避）
+  _do_commit() {
+    cd "$ANTIGRAVITY_DIR" || return 1
+    GIT_TERMINAL_PROMPT=0 git add agent/workflows/ agent/skills/ agent/scripts/ agent/rules/ *.md 2>/dev/null
+    GIT_TERMINAL_PROMPT=0 git diff --cached --quiet 2>/dev/null || \
+      GIT_TERMINAL_PROMPT=0 git commit -m "auto-sync: $(date +%m%d%H%M)" 2>/dev/null
+  }
+  _smart_run 20 0 "auto-commit" _do_commit
 
   # push（30秒ストール→診断→リトライ1回）
   _smart_run 30 1 "git-push" git -C "$ANTIGRAVITY_DIR" push origin main --no-verify &
