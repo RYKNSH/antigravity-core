@@ -1,12 +1,16 @@
 ---
-description: プロジェクト固有の /xx-dev コマンドを自動生成するメタワークフロー
+description: プロジェクトのWHITEPAPERからROADMAP→MILESTONES→TASKSを自動生成する。新規子会社セットアップ時や大幅な計画変更時に使用。
 ---
 
 # /gen-dev - Dev Command Generator
 
-**Concept**: プロジェクトのWHITEPAPER.md + ROADMAP.md を読み込み、
-そのプロジェクト専用の `/xx-dev` コマンドを自動生成する。
-生成されたコマンドは**コンテキスト回帰**の起点として機能する。
+**Concept**: ディベートが完了した後に実行する。以下を**全て自動生成**する：
+
+1. **WHITEPAPER.md** — ディベート成果を統合した経営設計書
+2. **ROADMAP.md** — Phase構成と時系列
+3. **MILESTONES.md** — 各Phaseの検証可能な完了条件（Mermaid依存関係図付き）
+4. **TASKS.md** — マイルストーンを1セッション以内の粒度に分解
+5. **`/xx-dev` ワークフロー** — そのプロジェクト専用の開発セッション開始コマンド
 
 ## Cross-Reference
 
@@ -57,153 +61,44 @@ description: {{PROJECT_NAME}}開発セッション開始時の定型フロー。
 
 # /{{COMMAND_NAME}} — {{PROJECT_NAME}} Dev Session
 
-**役割**: {{PROJECT_NAME}}の開発セッションを開始するコマンド。
-WHITEPAPER → ROADMAP → マイルストーン → タスクの順でコンテキストを回復し、
-正しい方向で実装に入る。
-
-## Cross-Reference
-
-```
-/{{COMMAND_NAME}} → WHITEPAPER.md 参照 → ROADMAP.md 参照 → /go "タスク"
-/whitepaper で生成された Whitepaper-Driven Development の実行コマンド
-```
-
----
-
-## Phase 0: Context Recovery（コンテキスト回帰）
-
-**目的**: プロジェクトの全体像を把握し、正しい方向で作業開始する。
-
 // turbo-all
 
-### 0-1. WHITEPAPER.md 熟読
-```bash
-cat WHITEPAPER.md
-```
+## 1. 前回のコンテキスト復元
+- `~/.antigravity/NEXT_SESSION.md` があれば読み込む
+- `git log -n 5 --oneline`
 
-以下を把握:
-- プロジェクトのビジョン・存在意義
-- アーキテクチャ設計原則
-- 技術スタック
-- 差別化ポイント
+## 2. プロジェクトの現在地を把握
+- `[親プロジェクトの company_directory.md]` — 全社の最新ステータス（子会社の場合）
 
-### 0-2. ROADMAP.md 精読
-```bash
-cat ROADMAP.md
-```
+## 3. 判断の軸をロード
+- `{{PROJECT_ROOT}}/WHITEPAPER.md` — ビジョン・ミッション・アーキテクチャの確認
 
-以下を把握:
-- 全マイルストーンの一覧と進捗
-- 現在のマイルストーンと完了条件
+## 4. 今のPhaseと進行中のマイルストーン確認
+- `{{PROJECT_ROOT}}/docs/ROADMAP.md` — 現在のPhaseと責務を確認
+- `{{PROJECT_ROOT}}/docs/MILESTONES.md` — 進行中(🔶)のマイルストーンと完了条件を特定
 
-### 0-2.5. MILESTONE.md 確認
-```bash
-cat MILESTONE.md
-```
+## 5. 今日のタスク選定
+- `{{PROJECT_ROOT}}/docs/TASKS.md` の「今すぐ着手可能なタスク」から優先度の高いタスクを提案する
 
-以下を把握:
-- 現在MSの詳細タスクリスト
-- タスクの依存関係
+選択基準（優先順）:
+1. **前回の継続タスク**（NEXT_SESSION.md）
+2. **依存関係が解消済みのタスク**
+3. **工数「小」のタスク**（モメンタム確保）
 
-### 0-3. PROJECT_STATE.md 確認（存在する場合）
-```bash
-cat PROJECT_STATE.md 2>/dev/null || echo "PROJECT_STATE.md not found"
-```
+## 6. Boundary Protocol 確認
+- ✅ 担当ディレクトリ: `{{PROJECT_ROOT}}/`
+- ❌ 禁止: 他コンポーネントのコード修正 / 共有基盤の変更
 
-以下を把握:
-- 現在のブランチ・Worktree状態
-- 前回セッションの継続タスク
-
-### 0-4. コンテキストサマリー出力
-
-```markdown
-📋 {{PROJECT_NAME}} Context Recovery
-
-**ビジョン**: [WHITEPAPER要約1行]
-**設計原則**: [Priority Weights等]
-**現在のMS**: MS[N.M] — [名前]（戦闘力 X→Y）
-**MS完了条件**: [条件]
-**残タスク**: [N]件
-**前回の作業**: [最後のコミット or NEXT_SESSION.md]
-```
+## 7. 実行開始
+ユーザーの承認を得たら `/go` で実行開始。
 
 ---
 
-## Phase 1: Task Selection（タスク選択）
-
-**目的**: 次に取り組むべきタスクを特定し、ユーザーに提案する。
-
-### 選択基準（優先順）
-
-1. **前回の継続タスク**（NEXT_SESSION.md / PROJECT_STATE.md）
-2. **依存関係が解消済みのタスク**（ROADMAP.md の依存列参照）
-3. **工数「小」のタスク**を優先（モメンタム確保）
-4. **ブロッカーがないタスク**
-
-### 提案フォーマット
-
-```markdown
-🎯 推奨タスク
-
-1. **[タスクID] [タスク名]** — 工数: [小/中/大], 依存: [なし/解消済]
-   理由: [選択理由]
-
-2. **[タスクID] [タスク名]** — 工数: [小/中/大]
-   理由: [選択理由]
-
-どのタスクに取り組みますか？（番号 or 自由入力）
-```
-
----
-
-## Phase 2: Implementation（→ /go chain）
-
-ユーザーが選択したタスクで実装開始:
-
-```
-/go "タスク名"
-  → /work → /new-feature or /bug-fix or /refactor
-  → /verify --quick
-```
-
----
-
-## Phase 3: Milestone Check（MS品質ゲート）
-
-タスク完了時にマイルストーン完了条件をチェック:
-
-### 3-1. 完了条件確認
-ROADMAP.md のMS完了条件と照合。全条件を満たしているか？
-
-### 3-2. MS品質ゲート（全条件満たした場合）
-
-```
-/test-evolve full
-```
-
-| チェック | 合格条件 |
+### 参照用ドキュメント（必要な時のみ）
+| ファイル | いつ読む |
 |---------|---------|
-| Test Quality Score | **≥ A (85/100)** |
-| ミュータント殺傷率 | **≥ 90%** |
-| Critical ギャップ | = 0 |
-
-### 3-3. ROADMAP.md 更新
-
-MS完了時:
-- ROADMAP.md のタスクに ✅ マークを付ける
-- 戦闘力スコアを更新
-- 次のMSへの遷移を記録
-
-```markdown
-✅ MS[N.M] 完了 — [日時]
-戦闘力: X → Y
-Test Quality Score: [Grade] ([Score]/100)
-```
-
-### 3-4. 次のMSへ
-
-未完了MSがあれば Phase 1 に戻る。
-全MS完了 → `/ship` を提案。
+| `WHITEPAPER.md` | 戦略の根拠を確認したい時 |
+| Architecture系ドキュメント | システム設計に触る時 |
 ````
 
 ---
