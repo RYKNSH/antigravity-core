@@ -72,7 +72,8 @@ fi
 1. Phase 1: Pre-Flight
 2. `/fbl`（全Phase 0-7）
 3. `/error-sweep`（コードレベル不整合検出）
-4. 完了レポート
+4. `/test-evolve quick`（テスト品質検証）
+5. 完了レポート
 
 ### Deep（Large タスク向け）
 **対象**: 複数ファイル横断、アーキテクチャ変更、リリース前

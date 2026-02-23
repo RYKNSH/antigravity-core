@@ -151,7 +151,7 @@ node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" set-workflow "/go" "imple
 | サイズ | チェック内容 | 目安時間 |
 |--------|------------|---------|
 | **Small** | `--quick`: lint + typecheck + test + fbl quick | ~1分 |
-| **Medium** | `--standard`: quick + error-sweep | ~3分 |
+| **Medium** | `--standard`: quick + error-sweep + test-evolve quick | ~5分 |
 | **Large** | `--deep`: standard + test-evolve quick + debate quick | ~10分 |
 
 ```markdown

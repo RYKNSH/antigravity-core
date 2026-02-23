@@ -189,8 +189,15 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 > 🧠 **THINK GATE — 検証フェーズ**: `WORKFLOW_CONTRACTS.md` の Core Engagement Matrix を参照。
 > Small: K(参照) | Medium: K + N(quick) | Large: K + N(deep) + T
 
-実装完了後、`/verify --quick` を自動実行。
-直接呼び出し時も `/work` 経由時も同じ品質保証を担保。
+> [!IMPORTANT]
+> **`/go` 経由時**: `/go` Phase 4 の Smart Verify（規模連動）に検証を委譲する。
+> このステップでは `/verify` を**呼び出さない**（二重実行防止）。
+> **直接呼び出し時のみ**: `/verify`（規模自動判定）を実行する。
+
+| 呼び出し元 | 検証方法 |
+|-----------|---------|
+| `/go` 経由 | → `/go` Phase 4 に委譲（規模連動: quick/standard/deep） |
+| 直接呼び出し | → `/verify`（規模自動判定 — `--quick` 固定しない） |
 
 - テスト全パス → `/ship` 可能
 - テスト失敗 → Step 6 に戻って修正
