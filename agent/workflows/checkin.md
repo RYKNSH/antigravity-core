@@ -7,8 +7,22 @@ description: 環境を最新化して軽量状態で開始
 
 ```bash
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
+SCRIPT_PID=$$
 
-# 「進捗なし→診断→自己修正→リトライ」ラッパー（checkout.mdと共通）
+# ═══ LAYER 3: Global Watchdog（全体60秒タイムアウト） ════════════
+( sleep 60 && echo "💀 WATCHDOG: checkin hung >60s — force-killing" \
+  && ps -o pid --ppid "$SCRIPT_PID" --noheaders 2>/dev/null | xargs kill -9 2>/dev/null \
+  && kill -TERM "$SCRIPT_PID" 2>/dev/null ) &
+WD_PID=$!
+trap 'kill "$WD_PID" 2>/dev/null' EXIT
+
+# ═══ LAYER 2: 診断ツール（/dev/tcpで3秒以内接続テスト） ══════════
+_check_net() {
+  local host="${1:-github.com}" port="${2:-443}"
+  ( timeout 3 bash -c "exec 3<>/dev/tcp/$host/$port && echo OK" ) &>/dev/null
+}
+
+# ═══ LAYER 1: 進捗監視+診断+リトライラッパー ════════════════════
 _smart_run() {
   local stall=$1 retries=$2 label=$3; shift 3
   local attempt=0
@@ -16,23 +30,20 @@ _smart_run() {
     local tmpout; tmpout=$(mktemp)
     "$@" >"$tmpout" 2>&1 &
     local pid=$!
-    local last_size=-1 stall_count=0 stalled=0
+    local last_size=-1 stall_count=0
     while kill -0 "$pid" 2>/dev/null; do
       sleep 1
       local cur_size; cur_size=$(wc -c < "$tmpout" 2>/dev/null || echo 0)
       if [ "$cur_size" -eq "$last_size" ]; then
         stall_count=$((stall_count + 1))
         if [ $stall_count -ge $stall ]; then
-          stalled=1
-          echo "⚠️ [$label] stalled (${stall}s no progress) — diagnosing..."
-          if [[ " $* " == *" git pull "* ]] || [[ " $* " == *" git push "* ]]; then
-            if ! GIT_TERMINAL_PROMPT=0 git ls-remote --exit-code origin HEAD &>/dev/null; then
-              echo "🔧 [$label] Remote unreachable → skip and continue"
-            else
-              echo "🔧 [$label] Network OK but stuck → killing for retry"
-            fi
+          echo "⚠️ [$label] stalled ${stall}s — diagnosing..."
+          if [[ " $* " == *" git "* ]]; then
+            _check_net github.com 443 \
+              && echo "🔧 [$label] network OK, stuck → retry" \
+              || echo "🔧 [$label] network unreachable → skip"
           elif [[ " $* " == *" node "* ]]; then
-            echo "🔧 [$label] Node script stalled → killing for retry"
+            echo "🔧 [$label] node stalled → retry"
           fi
           kill -9 "$pid" 2>/dev/null; stall_count=0; break
         fi
@@ -45,9 +56,9 @@ _smart_run() {
     cat "$tmpout"; rm -f "$tmpout"
     if [ $rc -eq 0 ]; then echo "✅ [$label] done"; return 0; fi
     attempt=$((attempt + 1))
-    [ $attempt -le $retries ] && echo "🔄 [$label] Retry $attempt/$retries..."
+    [ $attempt -le $retries ] && echo "🔄 [$label] retry $attempt/$retries..."
   done
-  echo "⚠️ [$label] gave up after $retries retries"; return 1
+  echo "⚠️ [$label] gave up"; return 1
 }
 
 # 1. Sync & Cleanup
