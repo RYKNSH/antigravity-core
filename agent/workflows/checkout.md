@@ -32,16 +32,23 @@ _bg() { "$@" & PIDS+=($!); }
 SCORE=$(( ( $(git diff --shortstat HEAD~1 2>/dev/null | grep -oE '[0-9]+' | head -1 || echo 0) / 100 ) + $(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l) ))
 echo "🎯 Score: $SCORE/10"
 
-# 2. Git Sync（サブシェル全体を30秒タイムアウトで保護）
+# 1.5. Session Branch Merge (Project-side)
+if [ -d ".git" ]; then
+  CURRENT=$(git branch --show-current 2>/dev/null)
+  if [[ "$CURRENT" == session/* ]]; then
+    DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@.*/@@' || echo "main")
+    git checkout "$DEFAULT" 2>/dev/null
+    git merge "$CURRENT" --ff-only 2>/dev/null && git branch -d "$CURRENT" 2>/dev/null && echo "🔀 Merged: $CURRENT → $DEFAULT" || echo "⚠️ FF merge failed. Branch kept: $CURRENT"
+  fi
+fi
+
 if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   _t 30 bash -c '
     cd "'"$ANTIGRAVITY_DIR"'"
     export GIT_TERMINAL_PROMPT=0
-    # Auto-commit
-    if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-      git add -A
-      git commit -m "auto-sync: $(date +%m%d%H%M)" 2>/dev/null
-    fi
+    # Auto-commit (explicit paths only — no volatile state)
+    git add agent/workflows/ agent/skills/ agent/scripts/ agent/rules/ *.md 2>/dev/null
+    git diff --cached --quiet 2>/dev/null || git commit -m "auto-sync: $(date +%m%d%H%M)" 2>/dev/null
     # Private Sync
     if [ -f "agent/scripts/sync_private.js" ]; then
       timeout 20 node agent/scripts/sync_private.js >> logs/sync.log 2>&1 || true
@@ -52,9 +59,12 @@ if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   PIDS+=($!)
 fi
 
-# 3. Parallel Cleanup
-pkill -f "next-server" 2>/dev/null || true
-pkill -f "next dev" 2>/dev/null || true
+# 3. Parallel Cleanup (opt-in server kill to avoid affecting other sessions)
+if [ "${KILL_SERVERS:-}" = "1" ]; then
+  pkill -f "next-server" 2>/dev/null || true
+  pkill -f "next dev" 2>/dev/null || true
+  echo "🔪 Dev servers killed"
+fi
 
 _bg bash -c 'rm -rf ~/.gemini/antigravity/browser_recordings/* ~/.gemini/antigravity/implicit/* "$HOME/Library/Application Support/Google/Chrome/Default/Service Worker" "$HOME/Library/Application Support/Adobe/CoreSync" "$HOME/Library/Application Support/Notion/Partitions" ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null'
 _bg bash -c 'find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null'

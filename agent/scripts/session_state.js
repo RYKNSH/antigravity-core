@@ -5,20 +5,22 @@
  * 
  * 使い方:
  *   node session_state.js read                     # 現在の状態を読み込み
- *   node session_state.js write '{"key":"value"}'  # 状態を書き込み
- *   node session_state.js init                     # 新規セッション初期化
- *   node session_state.js update-field <field> '{"data":"value"}'  # フィールド更新
- *   node session_state.js add-task '<task>' <priority>  # タスク追加
- *   node session_state.js complete-task '<task>'   # タスク完了
- *   node session_state.js set-workflow '<wf>' '<phase>'  # ワークフロー設定
- *   node session_state.js set-project '<project_id>'    # プロジェクト設定
- *   node session_state.js snapshot                 # checkout用スナップショット
+ *   node session_state.js init                     # 新規セッション作成
+ *   node session_state.js write '{"key": "value"}'  # 状態を直接書き込み
+ *   node session_state.js update-field "key" "val"  # 特定フィールドを更新
+ *   node session_state.js set-workflow "wf" "phase" # ワークフロー設定
+ *   node session_state.js set-level 2              # autonomy level
+ *   node session_state.js add-task "task"           # タスク追加
+ *   node session_state.js complete-task "task"      # タスク完了
+ *   node session_state.js add-decision "ctx" "dec" "reason"
+ *   node session_state.js snapshot                 # checkout用アーカイブ
+ *   node session_state.js summary                  # サマリー表示
  */
 
 const fs = require('fs');
 const path = require('path');
+const { atomicWrite, safeReadJSON, atomicWriteJSON } = require('./file_utils');
 
-// パス構成の決定
 const ANTIGRAVITY_DIR = process.env.ANTIGRAVITY_DIR || path.join(process.env.HOME, '.antigravity');
 const STATE_FILE = path.join(ANTIGRAVITY_DIR, '.session_state.json');
 const ARCHIVE_DIR = path.join(ANTIGRAVITY_DIR, 'brain_log', 'states');
@@ -80,29 +82,19 @@ function createDefaultState() {
 }
 
 /**
- * 状態ファイルの読み込み
+ * 状態ファイルの読み込み（crash-safe）
  */
 function readState() {
-  try {
-    if (!fs.existsSync(STATE_FILE)) {
-      return null;
-    }
-    const raw = fs.readFileSync(STATE_FILE, 'utf8');
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error(`⚠️ State file read error: ${err.message}`);
-    return null;
-  }
+  return safeReadJSON(STATE_FILE);
 }
 
 /**
- * 状態ファイルの書き込み
+ * 状態ファイルの書き込み（atomic — crash-safe）
  */
 function writeState(state) {
   try {
     state.updated_at = new Date().toISOString();
-    fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
-    fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), 'utf8');
+    atomicWriteJSON(STATE_FILE, state);
     console.log(`✅ Session state saved: ${STATE_FILE}`);
     return true;
   } catch (err) {
@@ -112,14 +104,14 @@ function writeState(state) {
 }
 
 /**
- * 状態のアーカイブ（checkout時）
+ * 状態のアーカイブ（checkout時）— atomic write
  */
 function archiveState(state) {
   try {
     fs.mkdirSync(ARCHIVE_DIR, { recursive: true });
     const timestamp = new Date().toISOString().slice(0, 16).replace(/:/g, '');
     const archivePath = path.join(ARCHIVE_DIR, `state_${timestamp}.json`);
-    fs.writeFileSync(archivePath, JSON.stringify(state, null, 2), 'utf8');
+    atomicWriteJSON(archivePath, state);
     console.log(`📦 State archived: ${archivePath}`);
 
     // 古いアーカイブの削除（30個以上なら古い方を削除）

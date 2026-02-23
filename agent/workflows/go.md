@@ -146,13 +146,19 @@ node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" set-workflow "/go" "imple
 子WF完了後、タスクサイズに応じた品質チェックを実行。
 **Smart Dedup**（Bazel/Turborepo方式）: ソースファイルのハッシュが前回成功時と同一ならスキップ。
 
-### Verify Chain（規模自動判定）
+### Verify Chain（Risk-Based 判定）
 
-| サイズ | チェック内容 | 目安時間 |
-|--------|------------|---------|
-| **Small** | `--quick`: lint + typecheck + test + fbl quick | ~1分 |
-| **Medium** | `--standard`: quick + error-sweep + test-evolve quick | ~5分 |
-| **Large** | `--deep`: standard + test-evolve quick + debate quick | ~10分 |
+| Risk Level | チェック内容 | 目安時間 |
+|------------|------------|---------|
+| **Quick** (Low Risk) | lint + typecheck + test + fbl quick + **test-evolve scoring** | ~2分 |
+| **Standard** (Medium Risk) | quick + error-sweep + **test-evolve quick** | ~8分 |
+| **Deep** (High Risk) | standard + **test-evolve standard**(ミューテーション含む) + debate quick | ~20分 |
+
+> [!IMPORTANT]
+> **AI-Driven前提**: リソース制約なし。全コミットで品質スコア計測（scoring）。
+> Risk Score = max(ファイル数, 変更種別, コンテキスト)。
+> DB/認証/決済/新API → 自動Deep。ship前 → 強制Deep。品質B未満3連続 → Auto-Escalation。
+> 詳細は `/verify` の Risk-Based 判定ロジックを参照。
 
 ```markdown
 # ユーザーが明示的に指定した場合はそちらを優先
@@ -187,7 +193,7 @@ fi
 ### 5-1. 自動品質保証
 Phase 4 の検証結果に基づき:
 - **Pass** → 5-2 へ
-- **Fail** → セルフリペア(最大3回) → 3回失敗で `/debug-deep`
+- **Fail** → セルフリペア → プログレッシブ拡張（3回→/debug-deep→5回→First Principles→5回 = 最大13回）
 
 ### 5-2. セマンティックコミット＋プッシュ
 

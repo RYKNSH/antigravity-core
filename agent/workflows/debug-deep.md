@@ -5,7 +5,7 @@ description: エラー上限・タイムアウト到達時にディープリサ�
 # /debug-deep - 本質的デバッグ
 
 > [!IMPORTANT]
-> このWFは `/fbl` や `/verify` でエラー上限（3回）またはタイムアウト（30分）に到達した時に**自動発動**する。
+> このWFは `/fbl` や `/verify` でプログレッシブ拡張1st round（3回）に到達した時、または「進捗なし10分」で**自動発動**する。
 > 付け焼き刃ではなくディープリサーチ + First Principlesで根本原因に到達し、自律的に突破する。
 
 > 🏥 **Health Check Protocol 適用** — `WORKFLOW_CONTRACTS.md` 参照。Step間でswapチェック。
@@ -13,12 +13,12 @@ description: エラー上限・タイムアウト到達時にディープリサ�
 ## Cross-Reference
 
 ```
-/fbl エラー3回 or タイムアウト → /debug-deep（自動発動）
-/verify 修正ループ上限 → /debug-deep（自動発動）
+/fbl 1st round 3回失敗 or 進捗なし10分 → /debug-deep（自動発動）
+/verify 修正ループ1st round → /debug-deep（自動発動）
 /vision-os debate 3回Block → /debug-deep（自動発動）
-/error-sweep Self-Repair 5回失敗 → /debug-deep（自動エスカレーション）
+/error-sweep 1st round 3回失敗 → /debug-deep（自動エスカレーション）
 /debug-deep 成功 → 元のWFに復帰 + Step 6: 強化学習
-/debug-deep 失敗（さらに3回）→ PAUSE（真のエスカレーション）
+/debug-deep 2nd+3rd round 合計10回失敗 → PAUSE（真のエスカレーション）
 ```
 
 ---
@@ -150,8 +150,9 @@ git add -A && git commit -m "debug-deep: checkpoint before approach change"
 ```
 
 - 成功 → git commit → 元のWFに復帰 + **Step 6: 強化学習**
-- 失敗 → git revert でロールバック → 別アプローチで再試行
-- 失敗（さらに3回） → **真のPAUSE**（ユーザーにエスカレーション）
+- 失敗 → git revert でロールバック → 別アプローチで再試行（2nd round: 5回）
+- さらに失敗 → First Principlesからアプローチ全面転換 → 3rd round: 5回
+- 全段階失敗（合計13回） → **真のPAUSE**（ユーザーにエスカレーション）
   - このとき `.session_state` の Debug Context + Research Findings が完全な報告書になる
 
 ---
@@ -210,11 +211,11 @@ SSD/.antigravity/knowledge/debug_patterns/
 
 | トリガー | 発動元 |
 |---------|--------|
-| `/fbl` Self-Repair 3回失敗 | 自動 |
-| `/fbl` タイムアウト 30分 | 自動 |
-| `/verify` 修正ループ上限 | 自動 |
+| `/fbl` 1st round 3回失敗 | 自動 |
+| `/fbl` 進捗なし10分 | 自動 |
+| `/verify` 1st round 失敗 | 自動 |
 | `/vision-os` debate 3回Block | 自動 |
 | `/evolve-wiz` debate 3回拒否 | 自動 |
-| `/error-sweep` Self-Repair 5回失敗 | 自動 |
+| `/error-sweep` 1st round 3回失敗 | 自動 |
 
-**真のPAUSE（ユーザーエスカレーション）は `/debug-deep` がさらに3回失敗 + ディープリサーチでも情報不足の時のみ。**
+**真のPAUSE（ユーザーエスカレーション）はプログレッシブ拡張全段階（合計13回）失敗 + ディープリサーチでも情報不足の時のみ。**

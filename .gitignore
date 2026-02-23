@@ -38,6 +38,7 @@ context-log/
 queue/
 heartbeat/
 logs/
+.session_pids/
 
 # === Node ===
 node_modules/

@@ -174,7 +174,8 @@ function commitToCtx(filePairs, message) {
 
         script += ` && TREE=$(git write-tree)`;
         script += ` && COMMIT=$(git commit-tree $TREE -p ${ctxRef.out} -F ${esc(tmpMsg)})`;
-        script += ` && git update-ref refs/heads/${CTX_BRANCH} $COMMIT`;
+        // Compare-and-swap: fail if another process updated ctx/log since we read it
+        script += ` && git update-ref refs/heads/${CTX_BRANCH} $COMMIT ${ctxRef.out}`;
         script += ` && echo $COMMIT`;
 
         const result = execSync(script, {

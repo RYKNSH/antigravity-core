@@ -10,10 +10,13 @@ DBマイグレーション、最終テスト、デプロイを連鎖実行。
 ## Cross-Reference
 
 ```
-/verify → /ship → /build + /db-migrate + /deploy
+/verify --deep → Pass → /ship → /build + /db-migrate + /deploy
 /go Phase 3 → /ship（任意）
 /new-feature, /bug-fix → /verify → /ship
 ```
+
+> [!CAUTION]
+> **Ship前に `/verify --deep` が必須。** Deep検証をPassしていないコードはリリースできない。
 
 > [!NOTE]
 > `/deploy` は `/ship` の内部 Phase 4 として実行される。
@@ -33,19 +36,23 @@ DBマイグレーション、最終テスト、デプロイを連鎖実行。
 
 ## 自動連鎖プロセス
 
-### Phase 1: プリフライトチェック
-// turbo
+### Phase 1: プリフライトチェック + Deep検証
+
+> [!IMPORTANT]
+> **Ship前 Deep検証必須**: `/verify --deep` を強制実行する。
+> これにより `/test-evolve quick` + `/debate quick` + `/error-sweep` が自動的に実行される。
 
 ```bash
 # git_guard: CWDとプロジェクトの一致を検証
 $ANTIGRAVITY_DIR/agent/scripts/git_guard.sh --check
 ```
 
-```bash
-pnpm build
+```markdown
+🔍 Deep検証実行中...
+→ /verify --deep（CONTEXT_SCORE=3 — ship前強制Deep）
 ```
 
-ビルド失敗時 → 即座に中止
+Deep検証失敗時 → 即座に中止。修正後に再実行。
 
 ---
 
@@ -64,12 +71,14 @@ pnpm build
 
 ---
 
-### Phase 3: 最終テスト
+### Phase 3: ビルド
 // turbo
 
 ```bash
-pnpm test
+pnpm build
 ```
+
+ビルド失敗時 → 即座に中止
 
 ---
 

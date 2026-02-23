@@ -18,14 +18,15 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const os = require('os');
+const { safeReadJSON, atomicWriteJSON } = require('./file_utils');
 
 // Constants
 const PROJECT_ROOT = process.env.PROJECT_ROOT || process.cwd();
 const ANTIGRAVITY_DIR = process.env.ANTIGRAVITY_DIR || path.join(os.homedir(), '.antigravity');
 const LOCK_FILE = path.join(PROJECT_ROOT, '.antigravity', 'loop.lock');
-const LOGS_DIR = path.join(ANTIGRAVITY_DIR, 'logs'); // Global logs
+const LOGS_DIR = path.join(ANTIGRAVITY_DIR, 'logs');
 const VERIFY_RESULT = path.join(LOGS_DIR, 'verify_result.json');
-const os = require('os');
 
 // Colors
 const RED = '\x1b[31m';
@@ -50,13 +51,12 @@ function git(cmd) {
 }
 
 function loadState() {
-    if (!fs.existsSync(LOCK_FILE)) return null;
-    return JSON.parse(fs.readFileSync(LOCK_FILE, 'utf8'));
+    return safeReadJSON(LOCK_FILE);
 }
 
 function saveState(state) {
     ensureDir(path.dirname(LOCK_FILE));
-    fs.writeFileSync(LOCK_FILE, JSON.stringify(state, null, 2));
+    atomicWriteJSON(LOCK_FILE, state);
 }
 
 // --- Commands ---
@@ -127,12 +127,11 @@ function cmdVerify() {
     if (!state) { log(RED, "No active loop."); process.exit(1); }
 
     // Read verify result
-    if (!fs.existsSync(VERIFY_RESULT)) {
-        log(RED, "No verification result found.");
-        process.exit(1); // Treat as fatal error or fail?
+    const result = safeReadJSON(VERIFY_RESULT);
+    if (!result) {
+        log(RED, "Verification result missing or corrupted.");
+        process.exit(1);
     }
-
-    const result = JSON.parse(fs.readFileSync(VERIFY_RESULT, 'utf8'));
 
     // Check timestamp (must be recent? for now trust the file)
 

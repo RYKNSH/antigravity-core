@@ -52,5 +52,25 @@ _t 5 node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" restore 2>/dev/null &&
 [ -f "./NEXT_SESSION.md" ] && echo "📋 NEXT:" && cat "./NEXT_SESSION.md"
 [ -f ".sweep_patterns.md" ] && echo "📚 Patterns loaded"
 
+# 5. Session Branch (Project-side — isolate concurrent sessions)
+if [ -d ".git" ]; then
+  CURRENT=$(git branch --show-current 2>/dev/null)
+  if [ "$CURRENT" = "main" ] || [ "$CURRENT" = "master" ]; then
+    SESSION_BRANCH="session/$(basename $(pwd))-$(date +%m%d%H%M)"
+    git checkout -b "$SESSION_BRANCH" 2>/dev/null && echo "🌿 Branch: $SESSION_BRANCH"
+  else
+    echo "🌿 Branch: $CURRENT (already on non-default branch)"
+  fi
+  # Cleanup stale session branches (>7 days)
+  git branch --list 'session/*' | while read b; do
+    b=$(echo "$b" | xargs)  # trim whitespace
+    LAST_COMMIT=$(git log -1 --format=%ct "$b" 2>/dev/null || echo 0)
+    NOW=$(date +%s)
+    if [ $((NOW - LAST_COMMIT)) -gt 604800 ]; then
+      git branch -D "$b" 2>/dev/null && echo "🗑️ Pruned: $b"
+    fi
+  done
+fi
+
 wait && echo "✅ Check-in complete!" && df -h . | tail -1
 ```

@@ -24,11 +24,13 @@ description: テスト自体を進化させる自律型フィードバックル�
 
 ## バリエーション
 
-| コマンド | 動作 | 用途 |
-|---------|------|------|
-| `/test-evolve` | フル実行（全Phase） | リリース前・大規模機能完了後 |
-| `/test-evolve quick` | Phase 0 + 3 + 4 のみ | `/fbl deep` 組み込み・日常品質チェック |
-| `/test-evolve adversarial` | Phase 0 + 1 + 2 | セキュリティ重視・攻撃者視点特化 |
+| コマンド | Phase | 用途 |
+|---------|-------|------|
+| `/test-evolve scoring` | **4 のみ** | 全コミット品質計測（Quick verify用。記録のみ、修正なし） |
+| `/test-evolve quick` | 0 + 3 + 4 + 6 | Standard verify用。カバレッジ+スコア+学習 |
+| `/test-evolve standard` | 0 + 1 + 3 + 4 + 5 + 6 | Deep verify用。ミューテーション含む（Adversarial以外全部） |
+| `/test-evolve` | 全Phase | ship前/MS完了用。フル実行 |
+| `/test-evolve adversarial` | 0 + 1 + 2 | セキュリティ特化 |
 
 ---
 
@@ -307,7 +309,7 @@ Phase 5 で追加したテストが既存テストを壊した場合:
 ```
 
 **セーフティ機構**:
-- ループ上限: **3回まで**
+- ループ: **プログレッシブ拡張**（3回→/debug-deep→5回→First Principles→5回 = 最大13回）
 - 3回失敗 → `/debug-deep` に自動エスカレーション
 - 各修正前に `git add -A && git commit -m "test-evolve: checkpoint"`
 
@@ -344,7 +346,7 @@ Phase 1-3 で発見した盲点を以下の3問で抽象化:
    - [ ] 開発者がエッジケースを想像できなかった
    - [ ] テスト対象の仕様が曖昧だった
    - [ ] テスト困難な設計になっていた（DI不足等）
-   - [ ] 時間的制約で省略された
+   - [ ] AI-Driven Principleに反する省略がないか
 
 3. **原則化**: 一文で防止ルールを書けるか？
    → 書けたら Principle として記録
@@ -408,16 +410,42 @@ Phase 6 (出口): 具象→抽象 → .test_evolution_patterns.md 追記
 
 ---
 
+## `/test-evolve scoring` フロー
+
+最軽量版。全コミットで品質スコアを計測・記録する。修正は行わない。
+
+1. **Phase 4**: Test Quality Scoring（6次元スコアリング）
+2. **品質History記録**: `.test_quality_history.md` に追記
+
+所要時間目安: 1-2分
+
+---
+
 ## `/test-evolve quick` フロー
 
-高速版。`/fbl deep` Phase 5.75 に組み込み。
+Standard verify用。カバレッジ分析+スコアリング+学習。
 
 1. **Phase 0**: Test Inventory（Step 0-0 パターン参照 + テスト分布確認）
 2. **Phase 3**: Coverage Gap Analysis（ブランチ/エッジカバレッジ精査）
 3. **Phase 4**: Test Quality Scoring（6次元スコアリング）
-4. **Phase 6**: Reinforcement Learning（スコア記録のみ。パターン昇華は省略）
+4. **Phase 6**: Reinforcement Learning（スコア記録 + 品質History記録）
 
 所要時間目安: 5-10分
+
+---
+
+## `/test-evolve standard` フロー
+
+Deep verify用。quick + ミューテーションテスト + テスト進化実行。
+
+1. **Phase 0**: Test Inventory
+2. **Phase 1**: Mutation Testing（変異テスト — テストが本当にバグを検出できるか検証）
+3. **Phase 3**: Coverage Gap Analysis
+4. **Phase 4**: Test Quality Scoring
+5. **Phase 5**: Evolution Execution（テスト追加・改善実行）
+6. **Phase 6**: Reinforcement Learning（スコア記録 + パターン昇華 + 品質History記録）
+
+所要時間目安: 10-20分
 
 ---
 
@@ -438,11 +466,39 @@ Phase 6 (出口): 具象→抽象 → .test_evolution_patterns.md 追記
 
 | トリガー | 発動元 | モード |
 |---------|--------|--------|
+| `/verify Quick`（全コミット） | 自動 | `scoring` |
+| `/verify Standard` (Risk ≥ 2) | 自動 | `quick` |
+| `/verify Deep` (Risk = 3) | 自動 | `standard` |
 | `/fbl deep` Phase 5.75 | 自動 | `quick` |
-| `/verify --deep` Phase 3 後 | 自動 | `quick` |
+| `/ship` Phase 1（強制Deep） | 自動 | `standard` |
+| Auto-Escalation（B未満3連続） | 自動 | `standard` |
+| MS完了時 品質ゲート | 自動 | `full` |
 | 直接呼出し `/test-evolve` | 手動 | `full` |
 | `/test-evolve adversarial` | 手動 | `adversarial` |
-| リリース前チェック | `/ship` 提案 | `full` |
+
+> [!NOTE]
+> **AI-Driven前提**: リソース制約なし。全コミットでscoring、Standard以上でquick以上、Deepでミューテーション含むstandardが実行される。
+
+---
+
+## 品質Historyトレンド記録
+
+全モードでPhase 4実行後、`.test_quality_history.md` に自動追記:
+
+```markdown
+# .test_quality_history.md
+# コミットごとの品質History。Auto-Escalationがこのファイルを読む。
+
+| Date | Commit | Score | Grade | Mode | 変更概要 |
+|------|--------|-------|-------|------|----------|
+| 2026-02-23 | abc1234 | 87/100 | A | scoring | CSS修正 |
+| 2026-02-23 | def5678 | 72/100 | B | quick | API追加 |
+| 2026-02-23 | ghi9012 | 58/100 | D | standard | DB schema変更 |
+```
+
+> [!IMPORTANT]
+> **Auto-Escalation連動**: GradeがB未満（C/D）が3行連続した場合、`/verify` が次回自動的にDeepにエスカレーションする。
+> `/checkout` 時にトレンドサマリーを出力する。
 
 ---
 

@@ -300,8 +300,8 @@ Phase 6 で `BLOCKED` 判定の場合、以下のループを実行:
 ```
 
 **セーフティ機構**:
-- ループ上限: **5回まで**（通常WFの3回より厳しく、粘り強く修正）
-- タイムアウト: **45分で強制停止**
+- ループ: **プログレッシブ拡張**（3回→/debug-deep→5回→First Principles→5回 = 最处13回）
+- タイムアウト: **進捗なょ10分 → /debug-deep エスカレーション**（進捗あれば無制限）
 - **各修正前に git checkpoint を作成**:
   ```bash
   git add -A && git commit -m "error-sweep: checkpoint before fix N"

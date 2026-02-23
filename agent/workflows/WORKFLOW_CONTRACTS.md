@@ -127,23 +127,24 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | **完了条件** | Phase 5 Verdict 出力完了 + galileo_log 保存 |
 | **エラー時** | Web検索失敗→ナレッジベースのみで判定。証拠不足→CHALLENGE判定（CONFIRMもOVERTURNもしない）。OVERTURN判定→ユーザー確認必須（PAUSE） |
 
-### `/verify`（規模連動 Verify Chain）
+### `/verify`（Risk-Based Verify Chain + Always-On Quality Scoring）
 | 項目 | 定義 |
 |------|------|
 | **入力** | なし（カレントディレクトリの変更を自動検出）, `--quick`/`--deep` (任意) |
-| **出力** | 検証レポート（テスト結果, lint, typecheck）, `ship可能` or `要修正` |
-| **完了条件** | Quick: Pre-Flight + FBL quick Pass。Standard: + error-sweep critical=0 + test-evolve quick。Deep: + debate合意 |
-| **Smart Dedup** | コンテンツハッシュ方式（Bazel/Turborepo準拠）: ソースハッシュが前回成功時と同一 → スキップ |
-| **規模判定** | Small(≤2ファイル)=quick, Medium(≤10)=standard, Large(11+)=deep |
-| **エラー時** | テスト失敗→失敗箇所を報告、呼出元に戻る。lint失敗→自動修正試行（最大1回） |
+| **出力** | 検証レポート + 品質History記録, `ship可能` or `要修正` |
+| **完了条件** | Quick: Pre-Flight + FBL + test-evolve scoring記録。Standard: + error-sweep + test-evolve quick。Deep: + test-evolve standard + debate合意 |
+| **Always-On** | 全コミットでtest-evolve scoring（Phase 4）を実行。品質Historyに記録 |
+| **Auto-Escalation** | 品質B未満3コミット連続 → 次回自動Deep |
+| **Risk-Based判定** | Risk Score = max(ファイル数, 変更種別, コンテキスト)。DB/認証/決済→強制Deep。ship前→強制Deep |
+| **エラー時** | テスト失敗→失敗箇所を報告、呼出元に戻る。lint失敗→自動修正試行（最大5回） |
 
 ### `/fbl`
 | 項目 | 定義 |
 |------|------|
 | **入力** | なし（自動検出）, `quick`/`deep` (任意), verify経由フラグ(内部) |
 | **出力** | 検証レポート, 修正リスト, 監査ログ(`fbl_audit.log`) |
-| **完了条件** | Phase 7 完了 or Self-Repair ループ上限(3回)到達 |
-| **エラー時** | 3回修正失敗→強制停止+ユーザー報告。タイムアウト(30分)→強制停止 |
+| **完了条件** | Phase 7 完了 or Self-Repair プログレッシブ拡張上限到達 |
+| **エラー時** | プログレッシブ拡張(3→debug-deep→5→First Principles→5)全段階失敗→強制停止+ユーザー報告。「進捗なょ10分」→debug-deepエスカレーション |
 
 ### `/ux-audit`
 | 項目 | 定義 |
@@ -160,15 +161,18 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | **入力** | 変更ファイルリスト(自動検出), `quick`/`full`(任意), `--changed-only`(任意) |
 | **出力** | Sweep Report(severity別), 修正リスト, Verdict, `.sweep_patterns.md` 更新(Self-Repair 2回以上時) |
 | **完了条件** | critical = 0（CLEAN or CONDITIONAL PASS）+ Phase 7 学習記録完了(該当時) |
-| **エラー時** | Self-Repair 5回失敗→`/debug-deep` 自動エスカレーション。タイムアウト(45分)→強制停止+レポート出力 |
+| **エラー時** | Self-Repair プログレッシブ拡張全段階失敗→`/debug-deep` 自動エスカレーション。「進捗なょ10分」→強制停止+レポート出力 |
 
-### `/test-evolve`
+### `/test-evolve`（AI-Driven Test Evolution）
 | 項目 | 定義 |
 |------|------|
-| **入力** | なし（自動検出）, `quick`/`adversarial`(任意) |
-| **出力** | Test Quality Score Card, Mutation Report, Adversarial Report, `.test_evolution_patterns.md` 更新 |
-| **完了条件** | Phase 6 学習記録完了 + critical ギャップ解消（full時） |
-| **エラー時** | Phase 5 テスト追加3回失敗→`/debug-deep` 自動エスカレーション。ミューテーション適用後の復元失敗→git checkpointからrevert |
+| **入力** | なし, `scoring`/`quick`/`standard`/`full`/`adversarial` |
+| **出力** | 品質History記録(`.test_quality_history.md`), Test Quality Score Card, テスト追加/改善 |
+| **モード** | scoring(Ph4のみ), quick(0+3+4+6), standard(0+1+3+4+5+6), full(全), adversarial(0+1+2) |
+| **完了条件** | scoring: スコア記録完了。quick/standard: Score ≥ B。full: Score ≥ A(85/100) |
+| **品質History** | 全モードで`.test_quality_history.md`にコミットごとのスコアを自動追記 |
+| **Auto-Escalation連動** | B未満3連続→`/verify`が次回自動Deep |
+| **エラー時** | Phase 5 テスト追加3回失敗→`/debug-deep` 自動エスカレーション |
 
 ---
 
@@ -215,8 +219,9 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 |------|------|
 | **入力** | `staging`/`production` (任意, デフォルト: staging) |
 | **出力** | デプロイURL, リリースレポート |
-| **完了条件** | Phase 4 デプロイ成功 + ヘルスチェック通過 |
-| **エラー時** | ビルド失敗→即中止+報告。デプロイ失敗→ロールバック手順提示。**production は常にユーザー確認必須** |
+| **前提条件** | `/verify --deep` Pass 必須（Phase 1 で強制実行） |
+| **完了条件** | Phase 1 verify deep Pass + Phase 3 ビルド成功 + Phase 4 デプロイ成功 + ヘルスチェック通過 |
+| **エラー時** | Deep検証失敗→即中止+修正指示。ビルド失敗→即中止+報告。デプロイ失敗→ロールバック手順提示。**production は常にユーザー確認必須** |
 
 ### `/deploy`
 | 項目 | 定義 |
@@ -324,14 +329,14 @@ autonomy_level: 2  # L0-L3
 - DB schema変更 → 設計レビュー（PAUSE）
 - 上記以外 → AI自己レビュー（`/debate quick`）で代替（自動続行）
 
-### 自動突破条件（全Level共通 — PAUSEしない → `/debug-deep` で突破）
+### 自動突破条件（全Level共通 — AI-Driven プログレッシブ拡張）
 
 | 条件 | 動作 |
 |------|------|
-| エラー上限到達（fbl 3回, debate 3回Block） | → `/debug-deep` 自動発動（First Principles突破） |
-| タイムアウト（fbl 30分） | → `/debug-deep` 自動発動（アプローチ転換） |
-| `/error-sweep` Self-Repair 5回失敗 | → `/debug-deep` 自動エスカレーション |
-| `/debug-deep` がさらに3回失敗 | → **真のPAUSE**（エスカレーション） |
+| 1st round: リトライ3回失敗 | → `/debug-deep` 自動発動（First Principles突破） |
+| 2nd round: リトライ5回失敗 | → First Principlesからアプローチ転換→5回 |
+| 3rd round: さらに5回失敗（合訓13回） | → **真のPAUSE**（エスカレーション） |
+| 「進捗なょ10分」 | → `/debug-deep` 自動発動（アプローチ転換） |
 | **SSD I/O ハング**（10s超過） | → 3-Layer Defense自動発動（`safe-commands.md` 参照）→ 全失敗時Deferred Tasks記録 |
 
 ### セッション終了の扱い
