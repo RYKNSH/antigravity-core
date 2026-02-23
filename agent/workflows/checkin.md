@@ -107,6 +107,22 @@ _smart_run 10 1 "context-restore" node "$ANTIGRAVITY_DIR/agent/scripts/git_conte
 [ -f "./NEXT_SESSION.md" ] && echo "📋 NEXT:" && cat "./NEXT_SESSION.md"
 [ -f ".sweep_patterns.md" ] && echo "📚 Patterns loaded"
 
+# 4.5. Incident Registry & Workspace Grounding
+echo "🔍 Loading incident registry..."
+[ -f "$ANTIGRAVITY_DIR/incidents.md" ] && {
+  OPEN_COUNT=$(grep -c "\[OPEN\]" "$ANTIGRAVITY_DIR/incidents.md" 2>/dev/null || echo 0)
+  echo "⚠️  Open incidents: $OPEN_COUNT (see ~/.antigravity/incidents.md)"
+  [ "$OPEN_COUNT" -gt 0 ] && grep "\[OPEN\]" "$ANTIGRAVITY_DIR/incidents.md"
+}
+
+echo "🗺️  Workspace grounding scan..."
+find "$HOME/Desktop/AntigravityWork" "$HOME/.antigravity" -maxdepth 3 -name ".git" -type d 2>/dev/null | while read gitdir; do
+  repo=$(dirname "$gitdir")
+  remote=$(git -C "$repo" remote get-url origin 2>/dev/null || echo "NO_REMOTE")
+  echo "  📁 $repo → $remote"
+done
+
+
 # 5. Session Branch
 if [ -d ".git" ]; then
   CURRENT=$(git branch --show-current 2>/dev/null)

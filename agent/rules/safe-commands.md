@@ -17,12 +17,23 @@
 **ビルド・テスト**: `pnpm lint/test`, `vitest`, `tsc --noEmit`
 **パッケージ確認**: `pnpm list`, `npm list`
 
-## 🔒 Git Safety Rules
+## 🔒 Git Safety Rules（Grounding原則）
+
+**git操作前に必ず以下を実行する（省略禁止）**:
+
+```bash
+# git操作の前に必ず実行
+git rev-parse --show-toplevel 2>&1  # このディレクトリがgit管理下か確認
+git remote -v 2>&1                  # remoteが存在するか確認
+```
+
+remoteが存在しない → push禁止。`~/.antigravity/incidents.md` を参照して正しいパスを確認すること。
 
 | ルール | 説明 |
 |--------|------|
-| プロジェクトバウンダリ | `git add/commit/push` 前に `git rev-parse --show-toplevel` 確認 |
+| プロジェクトバウンダリ | `git add/commit/push` 前に上記Grounding確認を必須実行 |
 | 1タスク=1プロジェクト | 複数プロジェクトにまたがるgit操作禁止 |
+| remote未設定 = push禁止 | `git remote -v` が空 → pushしない、正しいパスを探す |
 
 ## 禁止コマンド
 - `--dangerously-skip-permissions`
@@ -34,6 +45,8 @@
 - 広範囲スキャンはスコープを絞る
 - ネットワーク依存はフォールバックを考慮
 - 長時間コマンドが返らない → 別アプローチを試す
+- **ハング/フリーズ/承認待ちが起きたら → `/incident` を実行して記録・自己修正する**
+- 過去の失敗パターンは `~/.antigravity/incidents.md` を参照
 
 ## ⏱️ Timeout Guard (3-Layer Defense)
 
