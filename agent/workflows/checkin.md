@@ -9,6 +9,15 @@ description: 環境を最新化して軽量状態で開始
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 
 # ══════════════════════════════════════════════════════
+# ZERO ZONE — git 操作より前に必ず実行（ハング根本対策）
+# 前セッションの強制終了で残った stale lock を除去する
+# index.lock が残っていると全 git 操作が永続ハングする（safe-commands.md 根本原因3）
+# ══════════════════════════════════════════════════════
+rm -f "$ANTIGRAVITY_DIR/.git/index.lock" 2>/dev/null
+rm -f "$ANTIGRAVITY_DIR/.git/MERGE_HEAD" 2>/dev/null   # 中断マージも除去
+[ -d ".git" ] && rm -f ".git/index.lock" 2>/dev/null   # カレントプロジェクトも
+
+# ══════════════════════════════════════════════════════
 # SLOW ZONE — ネットワーク/重いgit操作
 # disown で完全切り離し → waitしない → ブロックしない
 # ══════════════════════════════════════════════════════
@@ -91,11 +100,14 @@ if [ -d ".git" ]; then
   fi
 fi
 
-# コンテキスト復元（ディスク読み取りのみ → 高速）
-node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" restore 2>/dev/null &
-
 # FAST ZONE の全ジョブを待つ
+# （disownされたSLOW ZONEジョブはwait対象外）
 wait
+
+# コンテキスト復元（ディスクのみ参照、git操作なし → 高速）
+# ZERO ZONE で stale lock を除去済みのため、ハングしない
+node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" restore 2>/dev/null &
+disown $!
 
 # ══════════════════════════════════════════════════════
 # 結果表示
@@ -156,12 +168,16 @@ echo "  Private [secrets, non-git]: $HOME/.antigravity-private"
 echo ""
 
 # 各gitリポジトリのremote確認（Grounding原則）
-find "$HOME/Desktop/AntigravityWork" "$HOME/.antigravity" \
-  -maxdepth 3 -name ".git" -type d 2>/dev/null | while read gitdir; do
-  repo=$(dirname "$gitdir")
-  remote=$(git -C "$repo" remote get-url origin 2>/dev/null || echo "⚠️ NO_REMOTE")
-  echo "  📁 $repo → $remote"
-done
+# タイムアウト5秒・maxdepth 2に制限してハング防止
+(
+  find "$HOME/Desktop/AntigravityWork" "$HOME/.antigravity" \
+    -maxdepth 2 -name ".git" -type d 2>/dev/null | head -20 | while read gitdir; do
+    repo=$(dirname "$gitdir")
+    remote=$(timeout 3 git -C "$repo" remote get-url origin 2>/dev/null || echo "⚠️ NO_REMOTE")
+    echo "  📁 $(basename "$repo") → $remote"
+  done
+) &
+disown $!
 
 # ENVIRONMENTS.md 存在確認（なければ警告）
 [ ! -f "$ANTIGRAVITY_DIR/ENVIRONMENTS.md" ] && \
