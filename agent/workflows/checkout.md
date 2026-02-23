@@ -7,32 +7,58 @@ description: データを整理し自己評価を行いクリーンな状態で�
 
 ```bash
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
-PIDS=()  # バックグラウンドPID追跡用
-MAX_WAIT=45  # 全体の最大待機秒数
 
-# 安全なタイムアウト関数（プロセスグループ単位kill + 確実クリーンアップ）
-_t() {
-  local d=$1; shift
-  ( "$@" ) &
-  local p=$!
-  PIDS+=($p)
-  ( sleep "$d" && kill -TERM "$p" 2>/dev/null && sleep 2 && kill -9 "$p" 2>/dev/null ) &
-  local tp=$!
-  wait "$p" 2>/dev/null
-  local r=$?
-  kill "$tp" 2>/dev/null
-  wait "$tp" 2>/dev/null
-  return $r
+# ─── ユーティリティ ───────────────────────────────────────
+# 「進捗なし → 原因診断 → 自己修正 → リトライ」ラッパー
+# Usage: _smart_run <stall_sec> <max_retries> <label> <cmd...>
+_smart_run() {
+  local stall=$1 retries=$2 label=$3; shift 3
+  local attempt=0
+  while [ $attempt -le $retries ]; do
+    local tmpout; tmpout=$(mktemp)
+    "$@" >"$tmpout" 2>&1 &
+    local pid=$!
+    local last_size=-1 stall_count=0 stalled=0
+    while kill -0 "$pid" 2>/dev/null; do
+      sleep 1   # ← 1秒固定ポーリング（高速検知）
+      local cur_size; cur_size=$(wc -c < "$tmpout" 2>/dev/null || echo 0)
+      if [ "$cur_size" -eq "$last_size" ]; then
+        stall_count=$((stall_count + 1))
+        if [ $stall_count -ge $stall ]; then          # stall秒間進捗なしでstallと判定
+          stalled=1
+          echo "⚠️ [$label] stalled (${stall}s no progress) — diagnosing..."
+          if [[ " $* " == *" git push "* ]] || [[ " $* " == *" git fetch "* ]]; then
+            if ! GIT_TERMINAL_PROMPT=0 git ls-remote --exit-code origin HEAD &>/dev/null; then
+              echo "🔧 [$label] Remote unreachable → killing"
+            else
+              echo "🔧 [$label] Network OK but stuck → killing for retry"
+            fi
+          elif [[ " $* " == *" node "* ]]; then
+            echo "🔧 [$label] Node script stalled → killing for retry"
+          fi
+          kill -9 "$pid" 2>/dev/null
+          stall_count=0
+          break
+        fi
+      else
+        stall_count=0   # 進捗があればリセット
+      fi
+      last_size=$cur_size
+    done
+    wait "$pid" 2>/dev/null; local rc=$?
+    cat "$tmpout"; rm -f "$tmpout"
+    if [ $rc -eq 0 ]; then echo "✅ [$label] done"; return 0; fi
+    attempt=$((attempt + 1))
+    [ $attempt -le $retries ] && echo "🔄 [$label] Retry $attempt/$retries..."
+  done
+  echo "⚠️ [$label] gave up after $retries retries"; return 1
 }
 
-# バックグラウンドジョブを安全に起動（PID追跡）
-_bg() { "$@" & PIDS+=($!); }
-
-# 1. Scoring (同期・短時間)
+# ─── 1. Score ────────────────────────────────────────────
 SCORE=$(( ( $(git diff --shortstat HEAD~1 2>/dev/null | grep -oE '[0-9]+' | head -1 || echo 0) / 100 ) + $(git log --oneline --since='6 hours ago' 2>/dev/null | wc -l) ))
 echo "🎯 Score: $SCORE/10"
 
-# 1.5. Session Branch Merge (Project-side)
+# ─── 1.5. Session Branch Merge ───────────────────────────
 if [ -d ".git" ]; then
   CURRENT=$(git branch --show-current 2>/dev/null)
   if [[ "$CURRENT" == session/* ]]; then
@@ -42,62 +68,51 @@ if [ -d ".git" ]; then
   fi
 fi
 
+# ─── 2. Antigravity auto-commit ──────────────────────────
 if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
-  _t 30 bash -c '
-    cd "'"$ANTIGRAVITY_DIR"'"
+  (
+    cd "$ANTIGRAVITY_DIR"
     export GIT_TERMINAL_PROMPT=0
-    # Auto-commit (explicit paths only — no volatile state)
     git add agent/workflows/ agent/skills/ agent/scripts/ agent/rules/ *.md 2>/dev/null
     git diff --cached --quiet 2>/dev/null || git commit -m "auto-sync: $(date +%m%d%H%M)" 2>/dev/null
-    # Private Sync
-    if [ -f "agent/scripts/sync_private.js" ]; then
-      timeout 20 node agent/scripts/sync_private.js >> logs/sync.log 2>&1 || true
+  )
+
+  # git push: 30秒進捗なしで診断→リトライ（最大1回）
+  (
+    cd "$ANTIGRAVITY_DIR"
+    export GIT_TERMINAL_PROMPT=0
+    _smart_run 30 1 "git-push" git push origin main --no-verify
+  ) &
+
+  # Private sync: privateリモートの疎通確認→問題あれば自動スキップ
+  (
+    cd "$ANTIGRAVITY_DIR"
+    if git remote get-url private &>/dev/null; then
+      if git ls-remote --quiet private main &>/dev/null; then
+        _smart_run 20 1 "sync-private" node "$ANTIGRAVITY_DIR/agent/scripts/sync_private.js"
+      else
+        echo "⚠️ private remote unreachable — skipping sync_private"
+      fi
     fi
-    # Public Push
-    timeout 15 git push origin main 2>/dev/null || true
-  ' &
-  PIDS+=($!)
+  ) &
 fi
 
-# 3. Parallel Cleanup (opt-in server kill to avoid affecting other sessions)
-if [ "${KILL_SERVERS:-}" = "1" ]; then
-  pkill -f "next-server" 2>/dev/null || true
-  pkill -f "next dev" 2>/dev/null || true
-  echo "🔪 Dev servers killed"
-fi
+# ─── 3. Cleanup ──────────────────────────────────────────
+rm -rf ~/.gemini/antigravity/browser_recordings/* ~/.gemini/antigravity/implicit/* \
+  ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null &
+find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null &
 
-_bg bash -c 'rm -rf ~/.gemini/antigravity/browser_recordings/* ~/.gemini/antigravity/implicit/* "$HOME/Library/Application Support/Google/Chrome/Default/Service Worker" "$HOME/Library/Application Support/Adobe/CoreSync" "$HOME/Library/Application Support/Notion/Partitions" ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null'
-_bg bash -c 'find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null'
+# ─── 4. Context Snapshot ─────────────────────────────────
+_smart_run 15 1 "context-snapshot" node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" snapshot
 
-# 4. Context Snapshot (Git-Driven — NEVER LOSE CONTEXT)
-# 旧 /context-compression の機能を統合: セッションコンテキストを圧縮・永続化
-_t 10 node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" snapshot 2>/dev/null && echo "🧠 Context committed to Git"
-
-# 5. Session Info & State（直列・タイムアウト付き）
+# ─── 5. Session State & Evolve ───────────────────────────
 [ -f "NEXT_SESSION.md" ] && cp NEXT_SESSION.md "$ANTIGRAVITY_DIR/brain_log/session_$(date +%m%d%H%M).md" 2>/dev/null
-_t 5 node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" snapshot 2>/dev/null
-_t 5 bash -c '"$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" /checkout >/dev/null 2>&1'
-_t 5 node "$ANTIGRAVITY_DIR/agent/scripts/evolve.js" --checkout 2>/dev/null
+_smart_run 10 1 "session-state"   node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" snapshot
+_smart_run 10 1 "usage-tracker"   bash -c '"$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" /checkout >/dev/null 2>&1'
+_smart_run 10 1 "evolve"          node "$ANTIGRAVITY_DIR/agent/scripts/evolve.js" --checkout
 
-# 6. 全バックグラウンドジョブの安全な待機（最大MAX_WAIT秒）
-DEADLINE=$((SECONDS + MAX_WAIT))
-for pid in "${PIDS[@]}"; do
-  REMAINING=$((DEADLINE - SECONDS))
-  if [ "$REMAINING" -le 0 ]; then
-    echo "⏰ Timeout: killing remaining jobs"
-    kill -9 "$pid" 2>/dev/null
-    continue
-  fi
-  # タイムアウト付きwait（bashビルトインwait -t未対応のためループ）
-  while kill -0 "$pid" 2>/dev/null; do
-    if [ "$((SECONDS))" -ge "$DEADLINE" ]; then
-      echo "⏰ Timeout: killing PID $pid"
-      kill -9 "$pid" 2>/dev/null
-      break
-    fi
-    sleep 0.5
-  done
-done 2>/dev/null
+# ─── 6. 全ジョブ待機 ─────────────────────────────────────
+wait
 
 echo "✅ Checkout complete!" && df -h . | tail -1
 ```
