@@ -52,7 +52,8 @@ description: AIエージェントの自律駆動用ルーティングテーブ�
 | `/test-evolve` | test-evolve.md | テスト品質の自律進化ループ |
 | `/ux-audit` | ux-audit.md | Lighthouse + axe-core UX自動監査 |
 | `/galileo` | galileo.md | Deep Verification |
-| `/debate` | debate.md | Review / Planning Support |
+| `/debate` | debate.md | Review / Planning Support（実装まで進む）|
+| `/refine` | refine.md | **純粋議論専用**。実装禁止ガード付きディベートラウンドでプロジェクトを詰める |
 
 ---
 

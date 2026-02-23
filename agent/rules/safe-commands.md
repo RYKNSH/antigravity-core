@@ -33,6 +33,52 @@
 
 ---
 
+## 🔬 checkout ハング根本原因（/debate deep で確定済み）
+
+> [!CAUTION]
+> 以下の3つが今回のハングの真因。同じパターンを絶対に繰り返すな。
+
+### 根本原因1: checkout.md を使わずに独自コマンドを再実装した（最重要）
+
+`checkout.md` には 90秒 watchdog・stall 検知・リトライロジックが内蔵されている。これを使わずに自前でチェーンコマンドを書いた結果、これらの保護が全て消えた。
+
+**禁止**:
+```bash
+# ❌ checkout ロジックを自前で再実装してはいけない
+cd ~/.antigravity && git add ... && git push ...
+```
+
+**正解**: checkout.md の bash スクリプトを `bash checkout.md` で実行するか、それが難しければ個別ステップを分離して実行する。
+
+### 根本原因2: `2>&1 | tail -N` パイプが stdout をバッファして完了シグナルを隠した
+
+git push の出力を `| tail -3` に流すと、push が完了してもパイプバッファが flush されるまで `tail` がブロックし続ける。バックグラウンド実行では `No output` に見え、ハングと誤判断した。
+
+**禁止**:
+```bash
+# ❌ git push の出力をパイプで飲み込むな
+GIT_TERMINAL_PROMPT=0 git push origin main 2>&1 | tail -3
+```
+
+**正解**:
+```bash
+# ✅ 出力はそのまま流す。見たくなければリダイレクトで捨てる
+GIT_TERMINAL_PROMPT=0 git push origin main --no-verify 2>&1
+```
+
+### 根本原因3: terminate 後に git lock が残ったまま次の git 操作を実行した
+
+バックグラウンドコマンドを `Terminate=true` で強制終了した場合、`.git/index.lock` が残る。その直後に次の git 操作を走らせると lock 競合でブロックされる。
+
+**必須手順**: git 操作の前に lock クリーンアップを挟む
+```bash
+# ✅ terminate 後の次回 git 操作の前に必ず実行
+rm -f ~/.antigravity/.git/index.lock 2>/dev/null
+```
+
+---
+
+
 ## 🛡️ Kinetic Command Rules
 単発の静的コマンドは禁止。必ず連鎖コマンドを使用。
 
