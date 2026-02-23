@@ -1,8 +1,8 @@
 # Incident Registry
-> セッション中に発生した失敗・ハング・フリーズ・承認待ちの記録。揮発させず結晶化する。
+> セッション中に発生した失敗・ハング・フリーズ・承認待ち・**ブラウザスタック**の記録。揮発させず結晶化する。
 
 **Last Updated**: 2026-02-23
-**Total Incidents**: 1
+**Total Incidents**: 3
 
 ---
 
@@ -45,6 +45,49 @@
 
 ---
 
-## INC-002〜 [未記録]
+## INC-002 [FIXED] update_usage_tracker.sh 慢性ハング
 
-次のインシデントは `/incident` を実行して記録する。
+**発生日**: 2026-02-17（初回確認）〜 2026-02-23（継続）
+**セッション**: 複数セッションの checkout 時に継続発生
+**症状**: checkout の usage-tracker ステップが毎回ハング → `_smart_run` が10秒後にkillして続行
+
+### 再現条件
+- `checkout.md` の `_smart_run 10 1 "usage-tracker"` でスクリプト実行
+- 複数のバックグラウンドジョブが同時に `USAGE_TRACKER.md` を `sed -i ''` で編集
+
+### 根本原因
+1. **`flock` 欠如による並列書き込み競合**: checkout.mdが複数ジョブを `&` で並列実行。`USAGE_TRACKER.md` への同時 `sed -i ''` がfd競合を起こし待機状態に
+2. **`set -euo pipefail` 不在**: エラーが無視されていた（Silent Failure = P-02）
+3. **watchdog の隠蔽効果**: 10s kill → give-up→続行 で問題が invisible になり incidents.md へ記録されなかった（P-04 Memory Loss の構造的誘発）
+
+### 対処（適用済）
+1. `update_usage_tracker.sh` に `set -euo pipefail` を追加
+2. `flock -w 10 200` で排他ロックを実装
+3. checkout.md にスクリプト存在チェックを追加
+
+### 教訓
+> watchdog の "サイレントgive-up" がインシデントを invisible にする逆説的構造が存在する。watchdog は "救助" であると同時に "隠蔽" になりうる。
+
+---
+
+## INC-003 [OPEN] ブラウザサブエージェント慢性スタック
+
+**発生日**: 2026-02-23（複数セッション）
+**セッション**: Lumina デプロイ、ARTISTORY Studio 等
+**症状**: ブラウザサブエージェントが Supabase/Railway UI で何度もスタック → 効率スコア 2/5
+
+### 再現条件
+- ブラウザサブエージェントを外部SaaS（Supabase/Railway/Vercel等）のUI操作に使用
+- MFA壁・ページ構造変化・ネットワーク遅延でセレクタが見つからない場合
+
+### 根本原因
+1. **ブラウザサブエージェントが safe-commands.md の保護圏外**: ターミナル向けルールしか存在しなかった
+2. **"N回失敗→切り替え" ルールの不在**: brain_log に「3回失敗→別アプローチ」と書かれたが core に反映されなかった（P-04 Memory Loss）
+3. **インシデントとして記録されなかった**: brain_log のみに記録 → 揮発
+
+### 対処（部分適用済 / 継続調査）
+1. `safe-commands.md` にブラウザサブエージェント専用ルール（3回失敗→切り替え）を追加
+2. incidents.md の対象範囲をブラウザ操作まで拡張
+3. **未解決**: MFA壁・UI変化への自動対処メカニズムが未実装
+
+---
