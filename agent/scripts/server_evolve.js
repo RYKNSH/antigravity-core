@@ -53,6 +53,7 @@ const VALUE_HIERARCHY = `
 - MR-05: ミッションは変えず器を変える判断がある
 - MR-07: AIは99%の判断を担う。人間の仕事は理念・ビジョン・ミッションの番人のみ
 - MR-08: 間違えることより前に進む。早く間違えて早くリカバリー
+- MR-09: 記録だけでは学習ループは閉じない。次のセッションへの能動的引き渡しが必要
 `;
 
 // ══════════════════════════════════════════
@@ -119,6 +120,34 @@ function collectBrainLogIncidents() {
 }
 
 // ══════════════════════════════════════════
+// 2b. NEXT_SESSION.md から警告を収集（MR-09）
+// ══════════════════════════════════════════
+function collectNextSessionWarnings() {
+    const warnings = [];
+    const candidates = [
+        path.join(ANTIGRAVITY_DIR, 'NEXT_SESSION.md'),
+        path.join(os.homedir(), 'Desktop', 'AntigravityWork', 'NEXT_SESSION.md'),
+    ];
+
+    for (const filePath of candidates) {
+        if (!fs.existsSync(filePath)) continue;
+        try {
+            const content = fs.readFileSync(filePath, 'utf8');
+            // 警告・注意点を抽出
+            const warningLines = content.split('\n').filter(line =>
+                /⚠️|警告|注意|ゾンビ|ハング|ブロック|I\/Oブロック|残って/.test(line)
+            );
+            if (warningLines.length > 0) {
+                warnings.push({ source: filePath, lines: warningLines });
+            }
+        } catch (e) {
+            // スキップ
+        }
+    }
+    return warnings;
+}
+
+// ══════════════════════════════════════════
 // 3. パターン分析
 // ══════════════════════════════════════════
 function analyzePatterns(brainLogIncidents) {
@@ -132,7 +161,6 @@ function analyzePatterns(brainLogIncidents) {
 
         componentFreq[inc.component] = (componentFreq[inc.component] || 0) + 1;
 
-        // トリガーを記録（MR-03: 根本原因の構造を理解するため）
         if (!triggerMap[inc.component]) triggerMap[inc.component] = [];
         if (inc.trigger) triggerMap[inc.component].push(inc.trigger);
 
@@ -151,18 +179,45 @@ function analyzePatterns(brainLogIncidents) {
 // ══════════════════════════════════════════
 // 4. 改善提案を生成（MR-01: ハードコード閾値なし）
 // ══════════════════════════════════════════
-function generateProposals(openIncidents, patterns) {
+function generateProposals(openIncidents, patterns, nextSessionWarnings) {
     const proposals = [];
     const { componentFreq, wfFreq, triggerMap } = patterns;
 
-    // コンポーネント別提案（MR-01: count >= 2 の閾値を撤廃、1件でも提案）
+    // NEXT_SESSION.md の警告から Issue を生成（MR-09）
+    for (const warningGroup of nextSessionWarnings) {
+        const warningText = warningGroup.lines.join('\n');
+        proposals.push({
+            title: `alert: NEXT_SESSION.md からの未解決警告を検出`,
+            body: `## 📋 NEXT_SESSION.md 警告（MR-09: 能動的引き渡し）
+
+> 前セッションが記録した警告が未処理のまま次のセッションに持ち越されています。
+
+**ソース**: \`${warningGroup.source}\`
+
+**警告内容**:
+\`\`\`
+${warningText}
+\`\`\`
+
+## 🔍 確認事項
+
+- [ ] 警告に記載のゾンビプロセスが残存していないか確認
+- [ ] 根本原因を特定してincidents.mdに記録
+- [ ] 再発防止策を safe-commands.md に追加
+
+${VALUE_HIERARCHY}
+
+---
+> 🤖 この Issue は \`server_evolve.js v2.0\` によって自動生成されました。`,
+            labels: ['bot: evolve-proposal', 'priority: next-session-warning'],
+        });
+    }
+
+    // コンポーネント別提案（MR-01: count >= 2 の閾値を撤廃）
     for (const [component, count] of Object.entries(componentFreq).sort((a, b) => b[1] - a[1])) {
         const triggers = (triggerMap[component] || []).join(' / ') || '不明';
         const affectedWfs = Object.entries(wfFreq).map(([k]) => k).join(', ') || 'なし';
 
-        // MR-03: 根本原因（trigger）を提案に含め、構造理解を促す
-        // MR-07: Issue本文に価値階層を埋め込み、人間が理念の番人として評価できる形に
-        // MR-08: 提案は防止より早期発見・リカバリー設計
         proposals.push({
             title: `fix: [${component}] ハング発生 (${count}件) — 根本原因の特定と改善`,
             body: `## 📊 インシデント概要
@@ -213,8 +268,6 @@ ${VALUE_HIERARCHY}
 - **ステータス**: OPEN（未解決）
 
 ## 🔍 メタルール評価（人間による確認ポイント）
-
-> **MR-07**: AIが検出しました。人間（あなた）が以下を確認してください。
 
 | 評価軸 | 確認事項 |
 |--------|---------|
@@ -303,9 +356,20 @@ async function createIssue(proposal) {
 // ══════════════════════════════════════════
 async function main() {
     console.log('\n🤖 server_evolve.js v2.0 — 自律改善エンジン起動');
-    console.log('   MR適用: MR-01(脱ハードコード) MR-07(理念番人) MR-08(早期発見・リカバリー)');
+    console.log('   MR適用: MR-01 MR-07 MR-08 MR-09');
     console.log(`   モード: ${DRY_RUN ? 'DRY RUN' : 'LIVE'}`);
     console.log(`   リポジトリ: ${REPO_OWNER}/${REPO_NAME}\n`);
+
+    // MR-09: NEXT_SESSION.md の警告を先に確認（能動的引き渡し）
+    const nextSessionWarnings = collectNextSessionWarnings();
+    if (nextSessionWarnings.length > 0) {
+        console.log('🚨 NEXT_SESSION.md 警告を検出:');
+        nextSessionWarnings.forEach(w => {
+            console.log(`   ソース: ${w.source}`);
+            w.lines.forEach(l => console.log(`   ${l}`));
+        });
+        console.log('');
+    }
 
     const openIncidents = collectOpenIncidents();
     console.log(`📋 incidents.md OPEN: ${openIncidents.length}件`);
@@ -322,7 +386,7 @@ async function main() {
         .sort((a, b) => b[1] - a[1])
         .forEach(([k, v]) => console.log(`   ${k}: ${v}件（トリガー: ${(patterns.triggerMap[k] || []).join(' / ')}）`));
 
-    const proposals = generateProposals(openIncidents, patterns);
+    const proposals = generateProposals(openIncidents, patterns, nextSessionWarnings);
     console.log(`\n💡 改善提案: ${proposals.length}件`);
     proposals.forEach((p, i) => console.log(`   ${i + 1}. ${p.title}`));
 
