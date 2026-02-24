@@ -21,7 +21,7 @@
 ### フェーズ3: 代替手段マトリクス
 
 | ハング原因 | 代替手段 |
-|-----------|----------|
+|-----------|-----------|
 | git push がブロック | `GIT_TERMINAL_PROMPT=0 git push` で再実行（prompt待ちを排除）|
 | git push が通らない | GitHub MCP `mcp_github_push_files` で API 経由プッシュ |
 | MCP が `Bad credentials` | ローカル git に切り替え。`mcp_config.json` のトークンを後で別途更新 |
@@ -69,6 +69,31 @@
 - ブラウザサブエージェントが3回失敗した場合 → 必ず `incidents.md` に記録する
 - 記録フォーマット: `INC-XXX [OPEN] ブラウザ: [サービス名] で [操作] がスタック`
 
+### C型ハング専用対処（Notion / Railway SaaS UIスタック）
+
+> [!CAUTION]
+> **C型ハング = 外部API依存型**。watchdogがkillしてもSaaS側のセッションは生き続ける。再試行すると二重操作になる。
+
+| サービス | よくあるC型ハング | 対処手段 |
+|---------|---------------|---------|
+| **Notion** | ページUI描画が30秒以上ブロック / ブロック追加が反応しない | ブラウザSA諦め → `auth_notion.js` + Notion API (`fetch_notion_page.js`) で直接操作 |
+| **Railway** | デプロイ画面でspinnerが止まらない / ログストリームが詰まる | ブラウザSA諦め → `railway up --detach` CLIで非同期デプロイ |
+| **Vercel** | Build logsが固まる | `vercel deploy --prod` CLIで実行 |
+| **Supabase** | SQL editorが応答しない | Supabase MCP `mcp_supabase_*` で直接クエリ実行 |
+
+**再試行禁止パターン**:
+```
+❌ 画面が固まったままリロードして同一操作を再実行（二重操作リスク）
+❌ 「少し待てば描画されるかも」と60秒以上の無操作待機
+❌ browser_subagentを連続2回投入（同じUIスタックで詰まり続ける）
+```
+
+**APIフォールバック手順**:
+1. ブラウザSA 30秒無反応 → キャンセル
+2. 対象サービスのAPI/CLI代替を確認（上表）
+3. API/CLI代替で同じ操作を実行
+4. `incidents.md` に `INC-XXX [OPEN] C型ハング: [サービス名] UIスタック` で記録
+
 ---
 
 ## 🔬 checkout ハング根本原因（/debate deep で確定済み）
@@ -110,39 +135,6 @@ GIT_TERMINAL_PROMPT=0 git push origin main --no-verify 2>&1
 ```bash
 rm -f ~/.antigravity/.git/index.lock 2>/dev/null
 ```
-
----
-
-## 🚫 I/O ハング禁止パターン（D状態 uninterruptible sleep 対策）
-
-> [!CAUTION]
-> 以下の操作は macOS APFS の I/O スケジューリングと競合し、`kill -9` でも終了できない **D状態** に入る可能性がある。
-
-### 禁止: 大量ファイルディレクトリへの rsync
-
-```bash
-# ❌ 禁止 — skillsディレクトリは大量ファイルを含み D状態ハングを引き起こす
-rsync -a "$ANTIGRAVITY_DIR/agent/skills/" .agent/skills/
-
-# ✅ 正解 — Skills は Core-A を直接参照する（コピー不要）
-# スキルのパス: ~/.antigravity/agent/skills/[skill-name]/SKILL.md
-```
-
-### 禁止: ループ内での mkdir + rsync の組み合わせ
-
-```bash
-# ❌ 禁止 — 複数ディレクトリへの連続rsyncは I/Oキューを詰まらせる
-for proj in ...; do
-  rsync -a "$ANTIGRAVITY_DIR/agent/skills/" "$dir/.agent/skills/"
-done
-
-# ✅ 正解 — 必要なファイルのみ個別にコピーする（ディレクトリ丸ごとは使わない）
-cp "$ANTIGRAVITY_DIR/agent/workflows/checkin.md" "$dir/.agent/workflows/"
-```
-
-> [!NOTE]
-> D状態プロセスは `kill -9` も効かない。回避策は「そもそもD状態を引き起こす操作をしない」こと。
-> 大量I/Oが必要な場合は `write_to_file` で個別ファイルを直接書き込む（Layer 3）。
 
 ---
 
@@ -202,7 +194,7 @@ Layer 3: write_to_file/view_file/GitHub MCP でターミナル迂回
 | git push (HTTPS) | 中（credential待ちハング） | 1 |
 | 小ファイルcp/mv | 低 | 1 |
 | rm -rf（ディレクトリ） | 高 | 2 |
-| 大量ファイルコピー（rsync skills等） | **最高（D状態）** | **3（write_to_fileのみ）** |
+| 大量ファイルコピー | 中 | 1→2 |
 | ターミナル全滅 | 最高 | 3 |
 
 ## 📂 環境参照
