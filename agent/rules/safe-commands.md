@@ -113,6 +113,39 @@ rm -f ~/.antigravity/.git/index.lock 2>/dev/null
 
 ---
 
+## 🚫 I/O ハング禁止パターン（D状態 uninterruptible sleep 対策）
+
+> [!CAUTION]
+> 以下の操作は macOS APFS の I/O スケジューリングと競合し、`kill -9` でも終了できない **D状態** に入る可能性がある。
+
+### 禁止: 大量ファイルディレクトリへの rsync
+
+```bash
+# ❌ 禁止 — skillsディレクトリは大量ファイルを含み D状態ハングを引き起こす
+rsync -a "$ANTIGRAVITY_DIR/agent/skills/" .agent/skills/
+
+# ✅ 正解 — Skills は Core-A を直接参照する（コピー不要）
+# スキルのパス: ~/.antigravity/agent/skills/[skill-name]/SKILL.md
+```
+
+### 禁止: ループ内での mkdir + rsync の組み合わせ
+
+```bash
+# ❌ 禁止 — 複数ディレクトリへの連続rsyncは I/Oキューを詰まらせる
+for proj in ...; do
+  rsync -a "$ANTIGRAVITY_DIR/agent/skills/" "$dir/.agent/skills/"
+done
+
+# ✅ 正解 — 必要なファイルのみ個別にコピーする（ディレクトリ丸ごとは使わない）
+cp "$ANTIGRAVITY_DIR/agent/workflows/checkin.md" "$dir/.agent/workflows/"
+```
+
+> [!NOTE]
+> D状態プロセスは `kill -9` も効かない。回避策は「そもそもD状態を引き起こす操作をしない」こと。
+> 大量I/Oが必要な場合は `write_to_file` で個別ファイルを直接書き込む（Layer 3）。
+
+---
+
 ## 🛡️ Kinetic Command Rules
 単発の静的コマンドは禁止。必ず連鎖コマンドを使用。
 
@@ -169,7 +202,7 @@ Layer 3: write_to_file/view_file/GitHub MCP でターミナル迂回
 | git push (HTTPS) | 中（credential待ちハング） | 1 |
 | 小ファイルcp/mv | 低 | 1 |
 | rm -rf（ディレクトリ） | 高 | 2 |
-| 大量ファイルコピー | 中 | 1→2 |
+| 大量ファイルコピー（rsync skills等） | **最高（D状態）** | **3（write_to_fileのみ）** |
 | ターミナル全滅 | 最高 | 3 |
 
 ## 📂 環境参照
