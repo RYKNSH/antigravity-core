@@ -111,3 +111,35 @@ jobs:
           echo "::group::Server Evolve"
           node agent/scripts/server_evolve.js $DRY_FLAG
           echo "::endgroup::"
+
+  pipeline-chaos:
+    name: Pipeline Chaos — Hang Scenario Tests
+    runs-on: ubuntu-latest
+    # PR時と手動実行時に必ず実行（ハング脆弱性の早期検知）
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set ANTIGRAVITY_DIR for CI
+        run: echo "ANTIGRAVITY_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+
+      - name: Run Pipeline Chaos Tests (C1-C4)
+        run: |
+          echo "::group::Pipeline Chaos"
+          node agent/scripts/pipeline_chaos.js
+          echo "::endgroup::"
+
+      - name: Upload chaos_log if present
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chaos-log
+          path: /tmp/antigravity_chaos_test/chaos_log.md
+          if-no-files-found: ignore
