@@ -24,7 +24,7 @@
 | 「整理」「見直し」「リファクタ」 | `/refactor` 提案 |
 | 実装完了・テスト未実施 | `/verify` 自動提案 |
 | 「本番」「デプロイ」「公開」 | `/ship` 提案 |
-| 成果まとまり・ブログ価値あり | `/checkpoint_to_blog` 提案 |
+| 成果まとまり・ブログ価値あり | `/blog` 提案 |
 | 「つづけて」「go」「進めて」 | 次ステップを自律実行 |
 
 詳細: `~/.antigravity/AUTO_TRIGGERS.md`
@@ -39,7 +39,7 @@
 ### ワークフロー (41件) → `agent/workflows/`
 **Meta（セッション制御・ルーティング）**: `/go` `/work` `/checkin` `/checkout` `WORKFLOW_ROUTER` `WORKFLOW_CONTRACTS`
 **Core（開発サイクル）**: `/spec` `/new-feature` `/bug-fix` `/refactor` `/test` `/fbl` `/verify` `/error-sweep` `/debate` `/debug-deep` `/ship` `/build` `/deploy` `/db-migrate` `/dev`
-**Utility（環境・コンテンツ・進化）**: `/checkpoint_to_blog` `/publish` `/learn_from_blog` `/cleanup-48h` `/lightweight` `/project-init` `/evolve` `/evolve-wiz` `/vision-os` `/galileo` `/context-compression` `/level` `/l0` `/l1` `/l2` `/l3` `/trust-level`
+**Utility（環境・コンテンツ・進化）**: `/blog` `/publish` `/learn_from_blog` `/cleanup-48h` `/lightweight` `/project-init` `/evolve` `/evolve-wiz` `/vision-os` `/galileo` `/context-compression` `/level` `/l0` `/l1` `/l2` `/l3` `/trust-level`
 
 ### スキル (12件) → `agent/skills/`
 `architecture` `autonomous-execution` `bottleneck-hunter` `code-review` `discord-best-practices` `docker-autonomous-ops` `first-principles` `homebrew-autonomous-ops` `llm-api-best-practices` `mcp-best-practices` `persona-orchestration` `workspace-config-audit` 

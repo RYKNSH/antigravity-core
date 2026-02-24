@@ -13,10 +13,10 @@ When a user says "X is provided" or "X is at path Y":
 3. **No Redundant Confirmation**: Avoid re-asking for information already present in the context or filesystem.
 
 ### B. Autonomous Restoration & Integration
-- **Root-of-Trust Fallback**: Automatically check global settings (e.g., `/Volumes/PortableSSD/.antigravity/.env`) if local project config is missing.
+- **Root-of-Trust Fallback**: Automatically check global settings (e.g., `$ANTIGRAVITY_DIR/.env` or `~/.antigravity/.env`) if local project config is missing.
 - **Service Integration Integrity**:
     - **Notion**: Title normalization (stripping `#` headers) is mandatory to prevent broken search keys.
-    - **Scripts**: Prefer calling scripts from the global SSD path (`/Volumes/PortableSSD/.antigravity/agent/scripts/`) to ensure the latest logic is used.
+    - **Scripts**: Prefer calling scripts from the global path (`$ANTIGRAVITY_DIR/agent/scripts/`) to ensure the latest logic is used.
 - **Self-Correction**: If a discrepancy exists (e.g., "7 articles expected, 1 found"), dump the internal state to the user and identify causes (e.g., Status filter: `Ready`).
 
 ## 2. Workspace Hygiene (Brain Clutter Management)

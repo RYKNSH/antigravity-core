@@ -9,11 +9,11 @@ description: Notionで手動修正された記事から「正解データ」を�
 ## Cross-Reference
 
 ```
-/checkpoint_to_blog = コンテンツ生成（作業→記事）
+/blog = コンテンツ生成（作業→記事）
 /publish = 配信実行（昇格・予約）
 /learn_from_blog = フィードバック（人間の修正から学習）
 
-典型フロー: /checkpoint_to_blog → /publish → ユーザーが手直し → /learn_from_blog
+典型フロー: /blog → /publish → ユーザーが手直し → /learn_from_blog
 ```
 
 ## 手順

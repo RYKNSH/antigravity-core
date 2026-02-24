@@ -33,10 +33,10 @@ const calculateSocialScore = (sessionData) => {
 const extractTitle = (sessionData) => {
   // 最新のコミットメッセージから抽出
   const latestCommit = sessionData.git.commitMessages[0] || '';
-  
+
   // "feat: " などのプレフィックスを削除
   const title = latestCommit.replace(/^(feat|fix|docs|style|refactor|test|chore):\s*/i, '');
-  
+
   return title || 'セッションサマリー';
 };
 
@@ -72,7 +72,7 @@ const extractPendingTasks = (sessionData) => {
   const score = calculateSocialScore(sessionData);
   if (score >= 5) {
     tasks.push({
-      task: 'checkpoint_to_blog',
+      task: 'blog',
       reason: `Social Knowledge Score: ${score}`,
       context_preserved: true,
       source_artifacts: sessionData.artifacts.map(a => a.path)
@@ -86,7 +86,7 @@ const extractPendingTasks = (sessionData) => {
 const main = () => {
   // 標準入力からセッションデータを読み取り
   let inputData = '';
-  
+
   process.stdin.on('data', chunk => {
     inputData += chunk;
   });

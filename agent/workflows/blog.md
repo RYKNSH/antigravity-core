@@ -7,7 +7,7 @@ description: 広報フェーズ (Blog) - プロジェクトの動きを把握し
 **役割**: プロジェクトの専属広報官。`PROJECT_STATE.md` や Gitログを分析し、「働いた証」を「価値ある資産」に変える。
 
 > [!IMPORTANT]
-> **Quality Standard**: `checkpoint_to_blog` から継承された以下の厳格な基準を遵守すること。
+> **Quality Standard**: 以下の厳格な基準を遵守すること。
 > 1. **Universal Value**: 個人的体験を普遍的な知恵に昇華する。
 > 2. **Narrative**: 読者の感情を動かす物語構成にする。
 > 3. **Brand Aligned**: ブランドコンセプトに合致させる。
@@ -46,7 +46,7 @@ if ! grep -q "NOTION_API_KEY=" "$ENV_FILE" 2>/dev/null; then
     echo "✅ Setup complete. proceeding..."
 fi
 
-echo "   Quality Standards: Loading from legacy checkpoint_to_blog..."
+echo "   Quality Standards: Loaded"
 
 
 # 1. Context Gathering

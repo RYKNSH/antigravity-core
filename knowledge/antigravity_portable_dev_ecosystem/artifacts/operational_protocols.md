@@ -14,9 +14,9 @@
 - **Artifact Hygiene**: 24h以上前の brain artifacts (`~/.gemini/antigravity/brain/*`) を削除。
 
 ### 1.2 環境最新化 (Update & Sync)
-- **SSD-to-Local Sync**: SSD (`/Volumes/PortableSSD/.antigravity/agent/`) の最新 Workflows と Skills をワークベースの `.agent/` へコピー。
-    - `cp /Volumes/PortableSSD/.antigravity/agent/workflows/*.md .agent/workflows/`
-    - `cp -R /Volumes/PortableSSD/.antigravity/agent/skills/* .agent/skills/`
+- **Global-to-Local Sync**: `$ANTIGRAVITY_DIR`（`~/.antigravity`）の最新 Workflows と Skills をワークベースの `.agent/` へコピー。
+    - `cp $ANTIGRAVITY_DIR/agent/workflows/*.md .agent/workflows/`
+    - `cp -R $ANTIGRAVITY_DIR/agent/skills/* .agent/skills/`
 - **Dynamic Resource Discovery**: `GEMINI.md` に環境内のリソース一覧を自動反映。
 - **Usage Statistics Boot**: セッション開始を記録。
 - **Port Recovery**: 未開放ポートの強制クリア (`lsof -ti:{port} | xargs kill -9`)。特に `8000` (FastAPI) と `3000` (Next.js) が主なターゲットです。
@@ -40,7 +40,7 @@
 ### 2.4 自動化と同期の検証 (Final Sync & Log)
 - **Usage Logging**: `update_usage_tracker.sh /checkout` を実行。
 - **Session Continuity**: `NEXT_SESSION.md` を生成。最優先タスク、未完了項目、注意点、関連ファイルを記録し、次回の `/checkin` 時のコンテキスト復元を支援。
-- **Master Consistency Check**: ローカルの `GEMINI.md` と SSD の `GEMINI.md.master` の差分を確認。不一致がある場合は同期を促す警告を出力。
+- **Master Consistency Check**: ローカルの `GEMINI.md` と `$ANTIGRAVITY_DIR` の `GEMINI.md.master` の差分を確認。不一致がある場合は同期を促す警告を出力。
 
 ---
 

@@ -9,11 +9,11 @@ description: 記事配信（学習・昇格・予約）の統合ワークフロ�
 ## Cross-Reference
 
 ```
-/checkpoint_to_blog = コンテンツ生成（作業→記事変換）
+/blog = コンテンツ生成（作業→記事変換）
 /publish = 配信実行（昇格・予約・配信）
 /learn_from_blog = フィードバック（正解データから学習）
 
-典型フロー: /checkout → /checkpoint_to_blog → /publish → /learn_from_blog
+典型フロー: /checkout → /blog → /publish → /learn_from_blog
 ```
 
 ## 手順

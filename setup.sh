@@ -75,14 +75,10 @@ if [ -d "$PRIVATE_DIR" ]; then
     fi
   fi
 
-  # .env — 既存なら上書きしない
+  # .env — シムリンクで常にprivate repoを参照（コピーではなくシムリンク）
   if [ -f "$PRIVATE_DIR/.env" ]; then
-    if [ ! -f "$ANTIGRAVITY_DIR/.env" ]; then
-      cp "$PRIVATE_DIR/.env" "$ANTIGRAVITY_DIR/.env"
-      echo "   ✅ .env 接続（新規）"
-    else
-      echo "   ⏭️  .env 既存（スキップ）"
-    fi
+    ln -sf "$PRIVATE_DIR/.env" "$ANTIGRAVITY_DIR/.env"
+    echo "   ✅ .env → シムリンク接続 ($PRIVATE_DIR/.env)"
   fi
 
   # blogs/ — rsync --update（新しいファイルのみ追加、既存は新しい方が勝つ）

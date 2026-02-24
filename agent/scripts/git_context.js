@@ -47,7 +47,7 @@ function ensureDirs() {
 function git(cmd) {
     try {
         const out = execSync(`git ${cmd}`, {
-            cwd: AG, encoding: 'utf8', timeout: 15000,
+            cwd: AG, encoding: 'utf8', timeout: 8000,
             stdio: ['pipe', 'pipe', 'pipe']
         }).trim();
         return { ok: true, out };
@@ -115,13 +115,17 @@ function ensureCtxBranch() {
     // Create empty tree → commit → ref. Zero working tree impact.
     const emptyTree = gitS('hash-object -t tree /dev/null');
     if (!emptyTree) {
-        // Fallback: pipe empty input
+        // Fallback: pipe empty input via Buffer (shell/TTY無依存)
         try {
-            const tree = execSync('git mktree < /dev/null', {
-                cwd: AG, encoding: 'utf8', shell: true, timeout: 5000
+            // git mktreeのfinputに空バイトを直接渡す → /dev/nullリダイレクト不要
+            const tree = execSync('git mktree', {
+                cwd: AG, encoding: 'utf8', timeout: 3000,
+                input: '', // 空 stdinを直接記述
+                stdio: ['pipe', 'pipe', 'pipe']
             }).trim();
             const commit = execSync(`git commit-tree ${tree} -m "ctx: init"`, {
-                cwd: AG, encoding: 'utf8', timeout: 5000
+                cwd: AG, encoding: 'utf8', timeout: 3000,
+                stdio: ['pipe', 'pipe', 'pipe']
             }).trim();
             gitS(`update-ref refs/heads/${CTX_BRANCH} ${commit}`);
         } catch (e) {
@@ -148,17 +152,19 @@ function commitToCtx(filePairs, message) {
     const ctxRef = git(`rev-parse ${CTX_BRANCH}`);
     if (!ctxRef.ok) { console.error(`⚠️ Cannot resolve ${CTX_BRANCH}`); return null; }
 
-    const tmpIdx = path.join(os.tmpdir(), `ctx-idx-${process.pid}`);
-    const tmpMsg = path.join(os.tmpdir(), `ctx-msg-${process.pid}`);
+    // Use mkdtemp for unpredictable tmp dir (prevents symlink attacks)
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ctx-'));
+    const tmpIdx = path.join(tmpDir, 'idx');
+    const tmpMsg = path.join(tmpDir, 'msg');
     const blobFiles = [];
 
     try {
         // Write commit message to file (shell injection prevention)
         fs.writeFileSync(tmpMsg, message, 'utf8');
 
-        // Write blob contents to temp files
+        // Write blob contents to temp files (inside secure tmpDir)
         for (const { relPath, content } of filePairs) {
-            const tmp = path.join(os.tmpdir(), `ctx-blob-${process.pid}-${Buffer.from(relPath).toString('hex').slice(0, 20)}`);
+            const tmp = path.join(tmpDir, `blob-${Buffer.from(relPath).toString('hex').slice(0, 20)}`);
             fs.writeFileSync(tmp, content, 'utf8');
             blobFiles.push({ tmp, relPath });
         }
@@ -188,10 +194,8 @@ function commitToCtx(filePairs, message) {
         console.error(`⚠️ commitToCtx failed: ${e.stderr?.trim() || e.message}`);
         return null;
     } finally {
-        // Cleanup all temp files
-        [tmpIdx, tmpMsg, ...blobFiles.map(b => b.tmp)].forEach(f => {
-            try { fs.unlinkSync(f); } catch { }
-        });
+        // Cleanup entire temp directory (all blobs, index, msg in one shot)
+        try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { }
     }
 }
 
@@ -332,14 +336,8 @@ function cmdRestore() {
             return head;
         }
     }
-    // Layer 4: main HEAD (JSON only, no YAML compat)
-    const restored = gitS('show HEAD:context-log/CONTEXT_HEAD.json');
-    if (restored) {
-        ensureDirs(); atomicWrite(HEAD_FILE, restored);
-        console.log('✅ Restored from main HEAD');
-        console.log(restored);
-        return JSON.parse(restored);
-    }
+    // Layer 4 削除: git show HEAD:... は index.lock 競合でハングする原因だった（safe-commands.md 根本原因3）
+    // Layer 1-3（全てディスクベース）で十分。git履歴を掘る必要はない。
     console.log('ℹ️ No context history.');
     return null;
 }

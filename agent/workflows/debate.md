@@ -24,7 +24,7 @@ description: 強制的にMulti-Persona Debateを実行し、提案を複数ペ�
 | Preset | 用途 | 自動編成チーム |
 |--------|------|----------------|
 | `--preset=titan` | `/vision-os` のビジョン議論 | Jensen + Steve + Elon + Skeptic |
-| `--preset=social-knowledge` | `/checkpoint_to_blog` のQA | Skeptic + Empathy Coach + Storyteller |
+| `--preset=social-knowledge` | `/blog` のQA | Skeptic + Empathy Coach + Storyteller |
 | (なし) | 通常 | `persona-orchestration` で動的アサイン |
 
 ---
@@ -144,7 +144,7 @@ fi
 |-----------|---------------|
 | `/vision-os` Phase 2 | `VISION.md` をディベート結果で更新 |
 | `/vision-os` Phase 5 | 合否を返し、`Block` なら修正ループへ |
-| `/checkpoint_to_blog` QA | 品質スコアを返す（Pass/Fail） |
+| `/blog` QA | 品質スコアを返す（Pass/Fail） |
 | `/verify` Phase 3 | 検証結果サマリーに統合 |
 | 直接呼び出し | Final Report のみ出力 |
 
@@ -183,7 +183,7 @@ Vision OS のPhase 2（ビジョン精錬）とPhase 5（品質ゲート）で�
 
 ### `--preset=social-knowledge` (記事QA専用)
 
-`/checkpoint_to_blog` の品質保証で使用。以下の3軸で検証：
+`/blog` の品質保証で使用。以下の3軸で検証：
 
 - [ ] **Universal Value**: 個人的な体験が普遍的な知恵に昇華されているか？
 - [ ] **Physical Metaphor**: 物理的・数学的なメタファーで本質を突いているか？
@@ -212,6 +212,6 @@ Vision OS のPhase 2（ビジョン精錬）とPhase 5（品質ゲート）で�
 |-----------|-----------|------|
 | `/vision-os` Phase 2 | `/debate deep --preset=titan` | ビジョン精錬 |
 | `/vision-os` Phase 5 | `/debate team --preset=titan` | 品質ゲート |
-| `/checkpoint_to_blog` Step 2.5 | `/debate deep --preset=social-knowledge` | 記事QA |
+| `/blog` Step 2.5 | `/debate deep --preset=social-knowledge` | 記事QA |
 | `/verify` Phase 3 | `/debate quick` | クイックレビュー |
 | `/work` (レビュー判定) | `/debate` | 標準ディベート |

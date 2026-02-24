@@ -25,7 +25,7 @@ description: 3巨頭（Steve, Elon, Jensen）による完全自律型・ビジ�
        ├─ Phase 3: Elon Blueprint
        ├─ Phase 4: Implementation → /evolve-wiz
        ├─ Phase 5: Quality Gate → /debate team --preset=titan
-       └─ Phase 6: Completion → /checkpoint_to_blog 自動判定
+       └─ Phase 6: Completion → /blog 自動判定
   └─ /checkout (セッション終了)
 ```
 
@@ -133,7 +133,7 @@ description: 3巨頭（Steve, Elon, Jensen）による完全自律型・ビジ�
 完成後、以下を自動判定:
 - `VISION.md` + `BLUEPRINT.md` + 最終成果物 → **Social Knowledge として記事化する価値があるか？**
 - 判定基準: 新規ファイル数 > 3、または git diff 行数 > 100
-- 閾値超え → 「この成果を `/checkpoint_to_blog` で記事にしますか？」と提案
+- 閾値超え → 「この成果を `/blog` で記事にしますか？」と提案
 - 閾値以下 → スキップ（checkout時の Phase 0 で再度判定）
 
 ---
