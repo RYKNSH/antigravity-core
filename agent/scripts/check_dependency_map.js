@@ -22,6 +22,14 @@ const ANTIGRAVITY_DIR = process.env.ANTIGRAVITY_DIR || path.join(os.homedir(), '
 const MAP_PATH = path.join(ANTIGRAVITY_DIR, 'dependency_map.json');
 const STRICT = process.argv.includes('--strict');
 
+// ② known_missing: 意図的に不在（将来実装予定）のスクリプトを明示リスト化
+// このリスト外のスクリプトが不在の場合は error としてCIをブロックする
+const KNOWN_MISSING = [
+    'sync_private.js',   // 将来実装予定: checkout時のprivate repo sync
+    'git_context.js',    // 将来実装予定: コンテキストスナップショット
+    'session_state.js',  // 将来実装予定: セッションステート管理
+];
+
 let errors = 0;
 let warnings = 0;
 
@@ -101,8 +109,12 @@ for (const [name] of Object.entries(scripts)) {
     const scriptPath = path.join(ANTIGRAVITY_DIR, 'agent', 'scripts', name);
     if (fs.existsSync(scriptPath)) {
         ok(`scripts.${name}`);
+    } else if (KNOWN_MISSING.includes(name)) {
+        // ② 意図的な不在（将来実装予定）→ infoのみ、CIブロックしない
+        console.log(`  ℹ️  scripts.${name} — known_missing（将来実装予定）`);
     } else {
-        warn(`scripts.${name} が見つかりません（将来実装予定の可能性あり）`);
+        // ② 未定義の不在 → errorとしてCIをブロック
+        fail(`scripts.${name} が見つかりません（known_missingに未登録 — 削除またはリスト追加が必要）`);
     }
 }
 

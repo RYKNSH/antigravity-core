@@ -174,7 +174,24 @@ function githubRequest(method, endpoint, body) {
     });
 }
 
+// ① 重複Issueスパム防止: 同一タイトルの既存Issueを検索
+async function issueExists(title) {
+    if (!GITHUB_TOKEN) return false;
+    const res = await githubRequest(
+        'GET',
+        `/repos/${REPO_OWNER}/${REPO_NAME}/issues?labels=bot%3A+evolve-proposal&state=open&per_page=100`
+    );
+    if (res.status !== 200 || !Array.isArray(res.body)) return false;
+    return res.body.some(issue => issue.title === title);
+}
+
 async function createIssue(proposal) {
+    // 重複チェック
+    if (await issueExists(proposal.title)) {
+        console.log(`  ⏭️  スキップ: 重複Issueが既に存在 — ${proposal.title}`);
+        return null;
+    }
+
     const res = await githubRequest('POST', `/repos/${REPO_OWNER}/${REPO_NAME}/issues`, {
         title: proposal.title,
         body: proposal.body,
