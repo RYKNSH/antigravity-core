@@ -129,6 +129,31 @@ _smart_run 10 1 "session-state" node "$ANTIGRAVITY_DIR/agent/scripts/session_sta
 _smart_run 10 1 "usage-tracker" "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" /checkout
 _smart_run 10 1 "evolve"        node "$ANTIGRAVITY_DIR/agent/scripts/evolve.js" --checkout
 
+# ─── 5.5. brain_log 構造化MD出力（INCIDENT_FORMAT.md形式） ─────────
+# AIエージェントは checkout の自己評価後に以下の形式で brain_log を書き出すこと
+# 参照: ~/.antigravity/INCIDENT_FORMAT.md
+# 出力先: ~/.antigravity/brain_log/session_MMDDHHNN.md
+# フォーマット:
+#   ## [INCIDENT] session_MMDDHHNN  ← このセッション中に発生したハング
+#   - type: hang | error | silent_failure | auth_block
+#   - component: [スクリプト名/WF名]
+#   - trigger: [原因]
+#   - duration: [時間]
+#   - layer: terminal | browser | network | git | filesystem
+#   - resolution: pending | [解決方法]
+#   - status: OPEN | FIXED
+#   - related_wf: [影響WF]
+#
+#   ## [FIXED] session_MMDDHHNN  ← このセッション中に解決したインシデント
+#   - type: ...（同上）
+#   - resolution: [解決方法]
+#   - fix_file: [修正ファイル]
+#   - status: FIXED
+#   - related_wf: [影響WF]
+#
+# ※ ハングが発生しなかったセッションでも "# No incidents this session" を書いてファイルを生成すること
+
+
 # ─── 6. 全ジョブ待機（PID追跡分のみ） ────────────────
 [ -n "${PUSH_PID:-}" ] && wait "$PUSH_PID" 2>/dev/null
 [ -n "${SYNC_PID:-}" ] && wait "$SYNC_PID" 2>/dev/null

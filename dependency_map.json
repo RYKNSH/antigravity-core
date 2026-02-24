@@ -1,9 +1,10 @@
 {
     "_meta": {
-        "version": "1.0.0",
+        "version": "1.1.0",
         "description": "Antigravity Core 依存マップ — WF/スクリプト間の読み書き関係定義",
         "purpose": "ハング発生時の相関箇所特定・サーバーサイドCI整合性チェックに使用",
-        "updated": "2026-02-24"
+        "updated": "2026-02-24",
+        "changelog": "v1.1.0: brain_log構造化フォーマット仕様追加 (INCIDENT_FORMAT.md参照)"
     },
     "files": {
         "core_a": {
@@ -301,6 +302,57 @@
             "role": "開発中プロジェクト群",
             "warning": "SSDマウント依存。アクセス前にマウント状態を確認すること。ls/find/statがハングする場合はSSD未マウントが原因。"
         }
+    },
+    "brain_log": {
+        "path": "~/.antigravity/brain_log/",
+        "format_spec": "INCIDENT_FORMAT.md",
+        "format_version": "1.0.0",
+        "written_by": [
+            "checkout (step 5.5)"
+        ],
+        "read_by": [
+            "checkin (brain_log全件スキャン)",
+            "server_evolve.js (future)"
+        ],
+        "entry_types": {
+            "INCIDENT": {
+                "fields": [
+                    "type",
+                    "component",
+                    "trigger",
+                    "duration",
+                    "layer",
+                    "resolution",
+                    "status",
+                    "related_wf"
+                ],
+                "status_values": [
+                    "OPEN",
+                    "FIXED",
+                    "WONT_FIX"
+                ]
+            },
+            "FIXED": {
+                "fields": [
+                    "type",
+                    "component",
+                    "trigger",
+                    "resolution",
+                    "fix_file",
+                    "status",
+                    "related_wf"
+                ],
+                "status_values": [
+                    "FIXED"
+                ]
+            }
+        },
+        "core_query_patterns": {
+            "open_hangs": "grep -r 'status: OPEN' ~/.antigravity/brain_log/",
+            "component_frequency": "grep -r 'component:' ~/.antigravity/brain_log/ | sort | uniq -c | sort -rn",
+            "checkout_related": "grep -r 'related_wf:' ~/.antigravity/brain_log/ | grep checkout | wc -l"
+        },
+        "server_ci_usage": "GitHub Actions CI が brain_log/ を定期スキャンし、OPEN インシデントを incidents.md に自動転記する（MS3.1で実装予定）"
     },
     "hang_correlation": {
         "description": "あるコンポーネントがハングしたとき、影響を受ける下流コンポーネントの一覧",
