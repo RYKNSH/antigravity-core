@@ -130,7 +130,7 @@ jobs:
       - name: Set ANTIGRAVITY_DIR for CI
         run: echo "ANTIGRAVITY_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
 
-      - name: Run Pipeline Chaos Tests (C1-C4)
+      - name: Run Pipeline Chaos Tests (C1-C5)
         run: |
           echo "::group::Pipeline Chaos"
           node agent/scripts/pipeline_chaos.js
