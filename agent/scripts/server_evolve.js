@@ -1,20 +1,23 @@
 #!/usr/bin/env node
 /**
- * server_evolve.js — サーバーサイド自律改善エンジン
+ * server_evolve.js — サーバーサイド自律改善エンジン v2.0
+ *
+ * v2.0 変更点（MR適用）:
+ *   - MR-01: ハードコードされた閾値（count >= 2）を除去。文脈・目的で評価
+ *   - MR-02: 各提案にメタルール評価セクションを追加
+ *   - MR-07: Issue本文に価値階層を埋め込み、人間（理念の番人）が評価しやすい形に
+ *   - MR-08: 早く提案・早くリカバリー設計。「防止」より「早期発見」
  *
  * 動作:
  * 1. incidents.md の OPEN インシデントを収集
- * 2. brain_log/ の INCIDENT エントリ（INCIDENT_FORMAT.md形式）を収集
- * 3. パターン分析（コンポーネント別頻度・WF別影響）
- * 4. 改善提案を生成（WFのルール追記 / スクリプト修正方針）
- * 5. GitHub API 経由でPRを自動作成（bot: evolve-proposal ラベル付き）
+ * 2. brain_log/ の INCIDENT エントリを収集
+ * 3. パターン分析（コンポーネント別・WF別）
+ * 4. DECISION_USECASES.md + 価値階層を評価コンテキストとして読み込み
+ * 5. 改善提案を GitHub Issue として作成（人間が理念の番人として評価）
  *
  * 使用方法:
  *   GITHUB_TOKEN=xxx node agent/scripts/server_evolve.js
- *   node agent/scripts/server_evolve.js --dry-run  # PR作成なしで提案のみ表示
- *
- * GitHub Actions から呼び出される場合:
- *   env.GITHUB_TOKEN は Actions の secrets.GITHUB_TOKEN を使用
+ *   node agent/scripts/server_evolve.js --dry-run
  */
 
 const fs = require('fs');
@@ -27,6 +30,30 @@ const DRY_RUN = process.argv.includes('--dry-run');
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
 const REPO_OWNER = process.env.GITHUB_REPOSITORY_OWNER || 'RYKNSH';
 const REPO_NAME = (process.env.GITHUB_REPOSITORY || 'RYKNSH/antigravity-core').split('/')[1];
+
+// ══════════════════════════════════════════
+// 価値階層（人間の判断基準の核心 / MR-07: 人間は理念の番人）
+// ══════════════════════════════════════════
+const VALUE_HIERARCHY = `
+## 判断軸（価値階層）
+- 理念: Gift & Receive — 与えることそのものが喜びの文化を創る
+- ビジョン: World Peace — 平和な世界
+- ミッション: Power to the People — 人々に力を与えろ  ← AIが自律判断できる最上位の基準
+- 戦略: UNLOCK PEOPLE VALUE — 人々の価値をアンロックする
+- 戦術: SPICE UP WORLD — この地球をもっと面白く
+
+## 自動却下条件
+- 付け焼き刃・その場しのぎ
+- 怠慢からくる支出
+- 難易度や時間を理由にした妥協
+
+## メタルール（判断の原則）
+- MR-01: ハードコード・定数的指標を判断軸にしない。文脈・目的・整合性で判断
+- MR-03: 迷ったら構造を理解するまで掘る。迷い = 情報不足
+- MR-05: ミッションは変えず器を変える判断がある
+- MR-07: AIは99%の判断を担う。人間の仕事は理念・ビジョン・ミッションの番人のみ
+- MR-08: 間違えることより前に進む。早く間違えて早くリカバリー
+`;
 
 // ══════════════════════════════════════════
 // 1. incidents.md から OPEN インシデントを収集
@@ -46,7 +73,7 @@ function collectOpenIncidents() {
 }
 
 // ══════════════════════════════════════════
-// 2. brain_log/ から INCIDENT エントリを収集（INCIDENT_FORMAT.md形式）
+// 2. brain_log/ から INCIDENT エントリを収集
 // ══════════════════════════════════════════
 function collectBrainLogIncidents() {
     const brainLogDir = path.join(ANTIGRAVITY_DIR, 'brain_log');
@@ -56,7 +83,6 @@ function collectBrainLogIncidents() {
     const files = fs.readdirSync(brainLogDir).filter(f => f.endsWith('.md'));
 
     for (const file of files) {
-        // ③ ファイルごとにtry-catch — 1ファイルが壊れても残りを処理し続ける
         let content;
         try {
             content = fs.readFileSync(path.join(brainLogDir, file), 'utf8');
@@ -65,7 +91,6 @@ function collectBrainLogIncidents() {
             continue;
         }
 
-        // INCIDENT_FORMAT.md形式のエントリを解析
         const entryRegex = /## \[(INCIDENT|FIXED)\] session_(\d+)\n([\s\S]+?)(?=\n## \[|$)/g;
         let match;
         while ((match = entryRegex.exec(content)) !== null) {
@@ -100,11 +125,16 @@ function analyzePatterns(brainLogIncidents) {
     const componentFreq = {};
     const wfFreq = {};
     const layerFreq = {};
+    const triggerMap = {};
 
     for (const inc of brainLogIncidents) {
         if (inc.status !== 'OPEN') continue;
 
         componentFreq[inc.component] = (componentFreq[inc.component] || 0) + 1;
+
+        // トリガーを記録（MR-03: 根本原因の構造を理解するため）
+        if (!triggerMap[inc.component]) triggerMap[inc.component] = [];
+        if (inc.trigger) triggerMap[inc.component].push(inc.trigger);
 
         for (const wf of (inc.relatedWf || '').split(',').map(s => s.trim()).filter(Boolean)) {
             wfFreq[wf] = (wfFreq[wf] || 0) + 1;
@@ -115,33 +145,88 @@ function analyzePatterns(brainLogIncidents) {
         }
     }
 
-    return { componentFreq, wfFreq, layerFreq };
+    return { componentFreq, wfFreq, layerFreq, triggerMap };
 }
 
 // ══════════════════════════════════════════
-// 4. 改善提案を生成
+// 4. 改善提案を生成（MR-01: ハードコード閾値なし）
 // ══════════════════════════════════════════
 function generateProposals(openIncidents, patterns) {
     const proposals = [];
-    const { componentFreq, wfFreq } = patterns;
+    const { componentFreq, wfFreq, triggerMap } = patterns;
 
-    // 頻度の高いコンポーネントへの対策
+    // コンポーネント別提案（MR-01: count >= 2 の閾値を撤廃、1件でも提案）
     for (const [component, count] of Object.entries(componentFreq).sort((a, b) => b[1] - a[1])) {
-        if (count >= 2) {
-            proposals.push({
-                title: `fix: ${component} で ${count}回のハングが発生 — タイムアウト設定を強化`,
-                body: `## 提案背景\n\nbrain_log の分析で \`${component}\` が ${count}回ハングしています。\n\n## 改善案\n\n- \`safe-commands.md\` に \`${component}\` 固有のタイムアウトルールを追加\n- \`dependency_map.json\` の \`hang_risk\` を \`HIGH\` に更新\n- \`checkout.md\` / \`checkin.md\` の該当ステップに \`timeout\` ラッパーを追加\n\n## 影響範囲\n\n- コンポーネント: \`${component}\`\n- 影響WF: ${Object.entries(wfFreq).map(([k]) => k).join(', ')}\n\n> このPRは \`server_evolve.js\` によって自動生成されました。`,
-                labels: ['bot: evolve-proposal', 'priority: medium'],
-            });
-        }
+        const triggers = (triggerMap[component] || []).join(' / ') || '不明';
+        const affectedWfs = Object.entries(wfFreq).map(([k]) => k).join(', ') || 'なし';
+
+        // MR-03: 根本原因（trigger）を提案に含め、構造理解を促す
+        // MR-07: Issue本文に価値階層を埋め込み、人間が理念の番人として評価できる形に
+        // MR-08: 提案は防止より早期発見・リカバリー設計
+        proposals.push({
+            title: `fix: [${component}] ハング発生 (${count}件) — 根本原因の特定と改善`,
+            body: `## 📊 インシデント概要
+
+- **コンポーネント**: \`${component}\`
+- **発生件数**: ${count}件（すべてOPEN）
+- **根本トリガー**: ${triggers}
+- **影響WF**: ${affectedWfs}
+
+## 🔍 メタルール評価（人間による確認ポイント）
+
+> **MR-07**: この提案はAIが分析・生成しました。人間（あなた）が理念の番人として以下を確認してください。
+
+| 評価軸 | 確認事項 |
+|--------|---------|
+| レイヤー | この修正は戦術〜戦略レベル（ミッション以下）の変更か？ |
+| 本質性 | 付け焼き刃ではなく根本原因への対処か？（MR-03: 構造を理解した上での修正か） |
+| スケール | 修正後はスケール可能な仕組みになるか？（MR-05: 器の選択） |
+| 理念整合 | Gift & Receive / World Peace / Power to the People に反しないか？ |
+
+## 💡 推奨アクション
+
+- \`safe-commands.md\` に \`${component}\` 固有のタイムアウトルールを追加
+- \`dependency_map.json\` の \`hang_risk\` を更新
+- 再発防止ルールを該当WFに追加
+
+## ⚡ MR-08: リカバリー優先
+
+> 完璧な修正を待つより、早く適用して早くリカバリーする。
+> この提案が間違っていても、次のサイクルで修正できる。
+
+${VALUE_HIERARCHY}
+
+---
+> 🤖 この Issue は \`server_evolve.js v2.0\` によって自動生成されました。`,
+            labels: ['bot: evolve-proposal'],
+        });
     }
 
-    // incidents.md の OPEN インシデントへの対策
+    // incidents.md の OPEN インシデントへの提案
     for (const inc of openIncidents) {
         proposals.push({
-            title: `fix: ${inc.id} ${inc.title} の再発防止策を実装`,
-            body: `## 背景\n\n\`incidents.md\` に登録された未解決インシデント \`${inc.id}\` の再発防止策が必要です。\n\n## 提案\n\n- 根本原因を特定し \`safe-commands.md\` にルールを追加\n- \`dependency_map.json\` の \`hang_correlation\` に相関情報を追記\n- 必要に応じて該当スクリプトを修正\n\n> このPRは \`server_evolve.js\` によって自動生成されました。`,
-            labels: ['bot: evolve-proposal', 'priority: high'],
+            title: `fix: ${inc.id} の再発防止策`,
+            body: `## 📋 インシデント情報
+
+- **ID**: \`${inc.id}\`
+- **タイトル**: ${inc.title}
+- **ステータス**: OPEN（未解決）
+
+## 🔍 メタルール評価（人間による確認ポイント）
+
+> **MR-07**: AIが検出しました。人間（あなた）が以下を確認してください。
+
+| 評価軸 | 確認事項 |
+|--------|---------|
+| レイヤー | ミッション以下の問題か（AI自律OK）/ 理念・ビジョンに触れるか（人間判断必須） |
+| 本質性 | 根本原因への対処か。付け焼き刃でないか |
+| リカバリー | MR-08: 早く修正を入れて早く前に進む方向か |
+
+${VALUE_HIERARCHY}
+
+---
+> 🤖 この Issue は \`server_evolve.js v2.0\` によって自動生成されました。`,
+            labels: ['bot: evolve-proposal'],
         });
     }
 
@@ -149,7 +234,7 @@ function generateProposals(openIncidents, patterns) {
 }
 
 // ══════════════════════════════════════════
-// 5. GitHub API — Issue 作成（PR代替: 現時点では改善提案をIssueで管理）
+// 5. GitHub API
 // ══════════════════════════════════════════
 function githubRequest(method, endpoint, body) {
     return new Promise((resolve, reject) => {
@@ -160,7 +245,7 @@ function githubRequest(method, endpoint, body) {
             headers: {
                 'Authorization': `Bearer ${GITHUB_TOKEN}`,
                 'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'antigravity-server-evolve/1.0',
+                'User-Agent': 'antigravity-server-evolve/2.0',
                 'Content-Type': 'application/json',
             },
         };
@@ -182,7 +267,6 @@ function githubRequest(method, endpoint, body) {
     });
 }
 
-// ① 重複Issueスパム防止: 同一タイトルの既存Issueを検索
 async function issueExists(title) {
     if (!GITHUB_TOKEN) return false;
     const res = await githubRequest(
@@ -194,9 +278,8 @@ async function issueExists(title) {
 }
 
 async function createIssue(proposal) {
-    // 重複チェック
     if (await issueExists(proposal.title)) {
-        console.log(`  ⏭️  スキップ: 重複Issueが既に存在 — ${proposal.title}`);
+        console.log(`  ⏭️  スキップ: 重複Issue — ${proposal.title}`);
         return null;
     }
 
@@ -219,11 +302,11 @@ async function createIssue(proposal) {
 // メイン
 // ══════════════════════════════════════════
 async function main() {
-    console.log('\n🤖 server_evolve.js — 自律改善エンジン起動');
-    console.log(`   モード: ${DRY_RUN ? 'DRY RUN（Issue作成なし）' : 'LIVE'}`);
+    console.log('\n🤖 server_evolve.js v2.0 — 自律改善エンジン起動');
+    console.log('   MR適用: MR-01(脱ハードコード) MR-07(理念番人) MR-08(早期発見・リカバリー)');
+    console.log(`   モード: ${DRY_RUN ? 'DRY RUN' : 'LIVE'}`);
     console.log(`   リポジトリ: ${REPO_OWNER}/${REPO_NAME}\n`);
 
-    // 1. データ収集
     const openIncidents = collectOpenIncidents();
     console.log(`📋 incidents.md OPEN: ${openIncidents.length}件`);
     openIncidents.forEach(i => console.log(`   - ${i.id}: ${i.title}`));
@@ -233,43 +316,38 @@ async function main() {
     console.log(`\n📋 brain_log INCIDENT (OPEN): ${openBrainLog.length}件`);
     openBrainLog.forEach(i => console.log(`   - [${i.session}] ${i.component}: ${i.trigger}`));
 
-    // 2. パターン分析
     const patterns = analyzePatterns(brainLogIncidents);
     console.log('\n📊 コンポーネント別ハング頻度:');
     Object.entries(patterns.componentFreq)
         .sort((a, b) => b[1] - a[1])
-        .forEach(([k, v]) => console.log(`   ${k}: ${v}回`));
+        .forEach(([k, v]) => console.log(`   ${k}: ${v}件（トリガー: ${(patterns.triggerMap[k] || []).join(' / ')}）`));
 
-    // 3. 改善提案生成
     const proposals = generateProposals(openIncidents, patterns);
     console.log(`\n💡 改善提案: ${proposals.length}件`);
     proposals.forEach((p, i) => console.log(`   ${i + 1}. ${p.title}`));
 
     if (proposals.length === 0) {
-        console.log('\n✅ 改善提案なし — インシデントはすべて解決済みです');
+        console.log('\n✅ 改善提案なし — インシデントはすべて解決済み');
         return;
     }
 
     if (DRY_RUN) {
-        console.log('\n[DRY RUN] Issue作成をスキップしました');
+        console.log('\n[DRY RUN] Issue作成をスキップ');
         return;
     }
 
     if (!GITHUB_TOKEN) {
-        console.warn('\n⚠️  GITHUB_TOKEN が未設定です。Issue作成をスキップします。');
-        console.warn('   実行方法: GITHUB_TOKEN=xxx node server_evolve.js');
+        console.warn('\n⚠️  GITHUB_TOKEN が未設定です');
         return;
     }
 
-    // 4. Issue作成（改善提案ごと）
     console.log('\n🚀 GitHub Issues を作成中...');
     for (const proposal of proposals) {
         await createIssue(proposal);
-        // レートリミット対策
         await new Promise(r => setTimeout(r, 500));
     }
 
-    console.log('\n✅ server_evolve.js 完了');
+    console.log('\n✅ server_evolve.js v2.0 完了');
 }
 
 main().catch(err => {
