@@ -10,26 +10,22 @@ ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 
 # ══════════════════════════════════════════════════════
 # ZERO ZONE — git 操作より前に必ず実行（ハング根本対策）
-# 前セッションの強制終了で残った stale lock を除去する
-# index.lock が残っていると全 git 操作が永続ハングする（safe-commands.md 根本原因3）
+# index.lock が残っていると全 git 操作が永続ハングする
 # ══════════════════════════════════════════════════════
 rm -f "$ANTIGRAVITY_DIR/.git/index.lock" 2>/dev/null
-rm -f "$ANTIGRAVITY_DIR/.git/MERGE_HEAD" 2>/dev/null   # 中断マージも除去
-[ -d ".git" ] && rm -f ".git/index.lock" 2>/dev/null   # カレントプロジェクトも
+rm -f "$ANTIGRAVITY_DIR/.git/MERGE_HEAD" 2>/dev/null
+[ -d ".git" ] && rm -f ".git/index.lock" 2>/dev/null
 
 # ══════════════════════════════════════════════════════
-# SLOW ZONE — ネットワーク/重いgit操作
-# disown で完全切り離し → waitしない → ブロックしない
+# SLOW ZONE — ネットワーク/重いgit操作（disown → ブロックしない）
 # ══════════════════════════════════════════════════════
 
-# ~/.antigravity の最新化（ネットワーク依存 → 完全非同期）
 if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   ( cd "$ANTIGRAVITY_DIR" && GIT_TERMINAL_PROMPT=0 \
     git pull origin main --quiet 2>/dev/null ) &
   disown $!
 fi
 
-# セッションブランチ作成（git操作 → 非同期）
 if [ -d ".git" ]; then
   CURRENT=$(git branch --show-current 2>/dev/null)
   if [ "$CURRENT" = "main" ] || [ "$CURRENT" = "master" ]; then
@@ -40,7 +36,6 @@ if [ -d ".git" ]; then
   else
     echo "🌿 Branch: $CURRENT"
   fi
-  # 7日以上前のsession/*ブランチを非同期で削除
   (
     git branch --list 'session/*' | while read b; do
       b=$(echo "$b" | xargs)
@@ -53,7 +48,6 @@ if [ -d ".git" ]; then
   disown $!
 fi
 
-# usage tracker（シェルスクリプト実行 → 非同期）
 [ -x "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" ] && {
   ( "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" /checkin \
     >/dev/null 2>&1 ) &
@@ -62,7 +56,6 @@ fi
 
 # ══════════════════════════════════════════════════════
 # FAST ZONE — ローカルI/Oのみ: waitして完了を保証
-# 全ジョブ合計 < 2秒 を保証
 # ══════════════════════════════════════════════════════
 
 # キャッシュ削除
@@ -76,12 +69,12 @@ rm -rf \
 find ~/.gemini/antigravity/conversations \
   -mindepth 1 -maxdepth 1 -mtime +1 -exec rm -rf {} + 2>/dev/null &
 
-# ワークスペース同期（ローカルrsync）
-mkdir -p .agent/skills .agent/workflows
+# ワークスペース同期（workflowsのみ — skillsは除外）
+# ⚠️ rsync -a skills/ は禁止: 大量I/OでD状態ハングを引き起こす
+# skillsは Core-A (~/.antigravity/agent/skills/) を直接参照すること
+mkdir -p .agent/workflows
 rsync -a --update --quiet \
   "$ANTIGRAVITY_DIR/agent/workflows/"*.md .agent/workflows/ 2>/dev/null &
-rsync -a --update --quiet \
-  "$ANTIGRAVITY_DIR/agent/skills/" .agent/skills/ 2>/dev/null &
 
 # 設定ファイルコピー
 cp "$ANTIGRAVITY_DIR/mcp_config.json" \
@@ -90,7 +83,7 @@ cp "$ANTIGRAVITY_DIR/mcp_config.json" \
   cp "$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master" \
     "$HOME/.gemini/GEMINI.md" 2>/dev/null &
 
-# Git Hooks セットアップ（gitconfig書き込みのみ → 高速）
+# Git Hooks セットアップ
 if [ -d ".git" ]; then
   CURRENT_HOOKS=$(git config --get core.hooksPath 2>/dev/null || echo "")
   if [ -z "$CURRENT_HOOKS" ] && [ -d "$ANTIGRAVITY_DIR/.git-hooks" ]; then
@@ -100,12 +93,8 @@ if [ -d ".git" ]; then
   fi
 fi
 
-# FAST ZONE の全ジョブを待つ
-# （disownされたSLOW ZONEジョブはwait対象外）
 wait
 
-# コンテキスト復元（ディスクのみ参照、git操作なし → 高速）
-# ZERO ZONE で stale lock を除去済みのため、ハングしない
 node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" restore 2>/dev/null &
 disown $!
 
@@ -119,7 +108,6 @@ echo "✅ Check-in complete!" && df -h . | tail -1
 
 # ══════════════════════════════════════════════════════
 # brain_log 全件スキャン → 未解決タスク → incidents.md 自動転記
-# P-04(Long-Running Memory Loss) 対策
 # ══════════════════════════════════════════════════════
 if [ -d "$ANTIGRAVITY_DIR/brain_log" ]; then
   UNRESOLVED_COUNT=0
@@ -149,7 +137,6 @@ if [ -d "$ANTIGRAVITY_DIR/brain_log" ]; then
     echo "📋 brain_log から未解決タスク ${UNRESOLVED_COUNT}件 を incidents.md に転記しました"
 fi
 
-# インシデント確認
 [ -f "$ANTIGRAVITY_DIR/incidents.md" ] && {
   OPEN_COUNT=$(grep -c "\[OPEN\]" "$ANTIGRAVITY_DIR/incidents.md" 2>/dev/null || echo 0)
   echo "⚠️  Open incidents: $OPEN_COUNT"
@@ -157,8 +144,7 @@ fi
 }
 
 # ══════════════════════════════════════════════════════
-# Workspace grounding scan（2Core + 環境ラベリング確認）
-# P-05(God Mode) 対策: 4種のディレクトリと役割を毎回確認
+# Workspace grounding scan（4環境ラベリング確認）
 # ══════════════════════════════════════════════════════
 echo "🗺️  Workspace (4-Environment Check):"
 echo "  Core-A [git managed] : $ANTIGRAVITY_DIR"
@@ -167,8 +153,6 @@ echo "  Projects [dev]: $HOME/Desktop/AntigravityWork"
 echo "  Private [secrets, non-git]: $HOME/.antigravity-private"
 echo ""
 
-# 各gitリポジトリのremote確認（Grounding原則）
-# タイムアウト5秒・maxdepth 2に制限してハング防止
 (
   find "$HOME/Desktop/AntigravityWork" "$HOME/.antigravity" \
     -maxdepth 2 -name ".git" -type d 2>/dev/null | head -20 | while read gitdir; do
@@ -179,7 +163,6 @@ echo ""
 ) &
 disown $!
 
-# ENVIRONMENTS.md 存在確認（なければ警告）
 [ ! -f "$ANTIGRAVITY_DIR/ENVIRONMENTS.md" ] && \
   echo "⚠️  ENVIRONMENTS.md が未作成です。環境ラベリングが未定義です。"
 ```
