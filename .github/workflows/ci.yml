@@ -1,0 +1,70 @@
+name: Core CI — Dependency Map Integrity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dependency_map.json'
+      - 'agent/scripts/check_dependency_map.js'
+      - 'agent/workflows/*.md'
+      - 'agent/scripts/*.js'
+      - 'agent/scripts/*.sh'
+      - 'INCIDENT_FORMAT.md'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'dependency_map.json'
+      - 'agent/scripts/check_dependency_map.js'
+      - 'agent/workflows/*.md'
+      - 'agent/scripts/*.js'
+      - 'agent/scripts/*.sh'
+      - 'INCIDENT_FORMAT.md'
+
+jobs:
+  dependency-map-check:
+    name: Dependency Map Integrity Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: JSON Lint — dependency_map.json
+        run: |
+          echo "::group::JSON Lint"
+          node -e "
+            const fs = require('fs');
+            try {
+              JSON.parse(fs.readFileSync('dependency_map.json', 'utf8'));
+              console.log('✅ dependency_map.json is valid JSON');
+            } catch(e) {
+              console.error('❌ Invalid JSON:', e.message);
+              process.exit(1);
+            }
+          "
+          echo "::endgroup::"
+
+      - name: Set ANTIGRAVITY_DIR for CI
+        run: echo "ANTIGRAVITY_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+
+      - name: Dependency Map Integrity Check
+        run: |
+          echo "::group::Integrity Check"
+          node agent/scripts/check_dependency_map.js --strict
+          echo "::endgroup::"
+
+      - name: Report Summary
+        if: always()
+        run: |
+          echo "## CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| JSON lint | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency map integrity | See job output |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
