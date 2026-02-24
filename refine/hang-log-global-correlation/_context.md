@@ -50,3 +50,6 @@
 | 2 | round_02.md | watchdog隠蔽・2Core未文書化・ブラウザ保護圏外問題 | `Continue` |
 | 3 | round_03.md | 学習ループが閉じていないという根本命題の定式化 | `Conclude` |
 | 4 | round_04.md | 業界典型パターン照合・新規問題4件発見・予防的検証マトリクス | `Conclude` ✅ |
+| 5 | round_05.md | 実践ハング検出→Core自動修正フロー / 依存グラフ / Chaos層 | Continue |
+| 6 | round_06.md | CoreサーバーサイドCI+ローカル自律更新アーキテクチャ / 依存マップ | Conclude |
+| Gap Analysis | gap_analysis.md | 穴の総点検・brain_log昇格問題の解決方針 | Conclude |

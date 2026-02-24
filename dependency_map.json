@@ -1,0 +1,340 @@
+{
+    "_meta": {
+        "version": "1.0.0",
+        "description": "Antigravity Core 依存マップ — WF/スクリプト間の読み書き関係定義",
+        "purpose": "ハング発生時の相関箇所特定・サーバーサイドCI整合性チェックに使用",
+        "updated": "2026-02-24"
+    },
+    "files": {
+        "core_a": {
+            "base": "~/.antigravity",
+            "git_managed": true,
+            "type": "workflow_engine"
+        },
+        "core_b": {
+            "base": "~/.gemini/antigravity",
+            "git_managed": false,
+            "type": "ai_workspace"
+        },
+        "private": {
+            "base": "~/.antigravity-private",
+            "git_managed": true,
+            "private_repo": true,
+            "type": "secrets"
+        }
+    },
+    "workflows": {
+        "checkin": {
+            "file": "agent/workflows/checkin.md",
+            "reads": [
+                "~/.antigravity/.git/index.lock",
+                "~/.antigravity-private/.env",
+                "agent/rules/GEMINI.md.master",
+                "mcp_config.json",
+                "agent/workflows/*.md",
+                "agent/skills/**",
+                "brain_log/session_*.md",
+                "incidents.md",
+                "NEXT_SESSION.md"
+            ],
+            "writes": [
+                "~/.gemini/GEMINI.md",
+                "~/.gemini/antigravity/mcp_config.json",
+                ".agent/workflows/*.md",
+                ".agent/skills/**",
+                "incidents.md"
+            ],
+            "calls_scripts": [
+                "git_context.js restore",
+                "update_usage_tracker.sh /checkin"
+            ],
+            "calls_git": [
+                "pull origin main"
+            ],
+            "network": [
+                "github.com:443"
+            ],
+            "hang_risk": "medium",
+            "hang_causes": [
+                "git pull timeout",
+                "rsync on unmounted path"
+            ]
+        },
+        "checkout": {
+            "file": "agent/workflows/checkout.md",
+            "reads": [
+                "NEXT_SESSION.md",
+                "~/.antigravity/.git/**"
+            ],
+            "writes": [
+                "brain_log/session_*.md",
+                "context-log/*.json",
+                "~/.gemini/antigravity/brain/**"
+            ],
+            "calls_scripts": [
+                "git_context.js snapshot",
+                "session_state.js snapshot",
+                "evolve.js --checkout",
+                "update_usage_tracker.sh /checkout",
+                "sync_private.js"
+            ],
+            "calls_git": [
+                "add agent/workflows/ agent/skills/ agent/scripts/ agent/rules/",
+                "commit",
+                "push origin main"
+            ],
+            "network": [
+                "github.com:443"
+            ],
+            "hang_risk": "high",
+            "hang_causes": [
+                "git push credential prompt (fix: GIT_TERMINAL_PROMPT=0)",
+                "bash -c nested variable expansion (fix: write_to_file → bash script)",
+                "index.lock残存 (fix: rm -f .git/index.lock before any git op)",
+                "pipe buffer flush blocked by tail (fix: no pipe on git push)"
+            ],
+            "caution": "AIはbash -cインライン実行禁止。write_to_file(/tmp/checkout_run.sh)→bash実行のこと"
+        },
+        "go": {
+            "file": "agent/workflows/go.md",
+            "reads": [
+                ".debug_learnings.md",
+                ".test_evolution_patterns.md",
+                ".sweep_patterns.md",
+                "WHITEPAPER.md",
+                "ROADMAP.md",
+                "MILESTONE.md"
+            ],
+            "writes": [
+                ".last_quality_hash",
+                ".session_state"
+            ],
+            "calls_workflows": [
+                "new-feature",
+                "bug-fix",
+                "refactor",
+                "test",
+                "fbl",
+                "error-sweep",
+                "deploy",
+                "debate"
+            ],
+            "calls_scripts": [
+                "fuzzymatch.js",
+                "session_state.js set-workflow"
+            ],
+            "hang_risk": "low"
+        },
+        "blog": {
+            "file": "agent/workflows/blog.md",
+            "reads": [
+                "~/.antigravity/.env (NOTION_API_KEY, NOTION_DATABASE_ID)",
+                "brand_concept.md",
+                "blogs/article_template.md"
+            ],
+            "writes": [
+                "blogs/NN_article.md"
+            ],
+            "calls_scripts": [
+                "session_state.js set-workflow",
+                "notion_poster.js"
+            ],
+            "network": [
+                "api.notion.com:443"
+            ],
+            "hang_risk": "medium",
+            "hang_causes": [
+                "Notion API HTTPS timeout (no timeout in script)"
+            ]
+        },
+        "evolve": {
+            "file": "agent/workflows/evolve.md",
+            "reads": [
+                "incidents.md",
+                "brain_log/session_*.md",
+                "agent/workflows/*.md",
+                "agent/rules/*.md"
+            ],
+            "writes": [
+                "SELF_EVOLUTION.md",
+                "agent/workflows/*.md (改善提案)",
+                "agent/rules/*.md (改善提案)"
+            ],
+            "calls_scripts": [
+                "evolve.js"
+            ],
+            "hang_risk": "low"
+        }
+    },
+    "scripts": {
+        "git_context.js": {
+            "reads": [
+                "~/.antigravity/.git/**",
+                "context-log/*.json"
+            ],
+            "writes": [
+                "context-log/CONTEXT_HEAD.yaml",
+                "context-log/*.json"
+            ],
+            "network": [],
+            "called_by": [
+                "checkin",
+                "checkout"
+            ]
+        },
+        "session_state.js": {
+            "reads": [
+                "~/.gemini/antigravity/brain/**"
+            ],
+            "writes": [
+                "~/.gemini/antigravity/brain/**"
+            ],
+            "network": [],
+            "called_by": [
+                "checkin",
+                "checkout",
+                "go",
+                "blog"
+            ]
+        },
+        "evolve.js": {
+            "reads": [
+                "incidents.md",
+                "SELF_EVOLUTION.md",
+                "agent/workflows/*.md",
+                "agent/rules/safe-commands.md"
+            ],
+            "writes": [
+                "SELF_EVOLUTION.md"
+            ],
+            "network": [],
+            "called_by": [
+                "checkout",
+                "evolve"
+            ]
+        },
+        "update_usage_tracker.sh": {
+            "reads": [
+                "USAGE_TRACKER.md"
+            ],
+            "writes": [
+                "USAGE_TRACKER.md"
+            ],
+            "concurrency_risk": "HIGH — sed -i 並列書き込みで破損リスク",
+            "fix_applied": "flock排他ロック + set -euo pipefail (2026-02-23適用済み)",
+            "called_by": [
+                "checkin",
+                "checkout"
+            ]
+        },
+        "notion_poster.js": {
+            "reads": [
+                "~/.antigravity/.env → ~/.antigravity-private/.env (symlink)",
+                "blogs/NN_article.md"
+            ],
+            "writes": [],
+            "network": [
+                "api.notion.com:443"
+            ],
+            "hang_risk": "HIGH — HTTPSタイムアウト設定なし",
+            "called_by": [
+                "blog"
+            ],
+            "env_required": [
+                "NOTION_API_KEY",
+                "NOTION_DATABASE_ID"
+            ]
+        },
+        "sync_private.js": {
+            "reads": [
+                "~/.antigravity/**"
+            ],
+            "writes": [
+                "~/.antigravity-private/**"
+            ],
+            "network": [
+                "github.com:443"
+            ],
+            "called_by": [
+                "checkout"
+            ],
+            "requires_remote": "private"
+        },
+        "chaos_monkey.js": {
+            "reads": [],
+            "writes": [
+                "chaos_log.md"
+            ],
+            "purpose": "意図的にハング状態を誘発するChaos Engineering用スクリプト",
+            "status": "ISOLATED — チェックアウト/チェックインパイプラインに未統合",
+            "called_by": []
+        }
+    },
+    "environment_map": {
+        "core_a": {
+            "path": "~/.antigravity",
+            "role": "Workflow Engine（git管理・全プロジェクト共有インフラ）",
+            "git_push": "RYKNSH/antigravity-core (public)",
+            "do_not": [
+                "~/.antigravity-private/ の内容をgit add しない"
+            ]
+        },
+        "core_b": {
+            "path": "~/.gemini/antigravity",
+            "role": "AI作業ログ（git管理外・セッション間で揮発する可能性あり）",
+            "git_push": "なし — pushしてはいけない",
+            "sync_from": "Core-Aからrsyncで受け取る一方向フロー"
+        },
+        "private": {
+            "path": "~/.antigravity-private",
+            "role": "個人シークレット（APIキー・ブログ・セッション履歴）",
+            "git_push": "RYKNSH/antigravity-private (private)",
+            "contains": [
+                ".env",
+                "blogs/",
+                "brain_log/",
+                "NEXT_SESSION.md"
+            ]
+        },
+        "projects": {
+            "path": "~/Desktop/AntigravityWork",
+            "role": "開発中プロジェクト群",
+            "warning": "SSDマウント依存。アクセス前にマウント状態を確認すること。ls/find/statがハングする場合はSSD未マウントが原因。"
+        }
+    },
+    "hang_correlation": {
+        "description": "あるコンポーネントがハングしたとき、影響を受ける下流コンポーネントの一覧",
+        "git_index_lock": {
+            "trigger": "~/.antigravity/.git/index.lock が残存",
+            "affected": [
+                "checkin (git pull)",
+                "checkout (git add/commit/push)",
+                "evolve (git操作)"
+            ],
+            "fix": "rm -f ~/.antigravity/.git/index.lock"
+        },
+        "update_usage_tracker": {
+            "trigger": "update_usage_tracker.sh がハング",
+            "affected": [
+                "checkout (_smart_run 10s後にgive up)",
+                "checkin (_smart_run 10s後にgive up)"
+            ],
+            "fix": "flock排他ロック適用済み (2026-02-23)"
+        },
+        "notion_api_timeout": {
+            "trigger": "api.notion.com への接続が詰まる",
+            "affected": [
+                "blog (notion_poster.js が無限待ち)"
+            ],
+            "fix": "notion_poster.jsにhttps.request timeoutを追加（未実装）"
+        },
+        "ssd_unmounted": {
+            "trigger": "~/Desktop/AntigravityWork がマウントされていない",
+            "affected": [
+                "checkin (find Desktop...でハング)",
+                "checkin (各プロジェクトgit確認でハング)"
+            ],
+            "fix": "Desktop配下へのアクセスをすべてスキップ or SSDマウント確認ステップを追加"
+        }
+    }
+}
