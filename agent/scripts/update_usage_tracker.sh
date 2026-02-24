@@ -26,15 +26,23 @@ if [ ! -f "$WORKFLOW_FILE" ]; then
     exit 0
 fi
 
-# BP-03: flock で排他ロック（並列書き込み競合防止）
-# TRACKER_FILE に対して排他ロックを取得し、スクリプト終了時に自動解放
-LOCK_FILE="${TRACKER_FILE}.lock"
+# BP-03: mkdir で排他ロック（macOS/Linux両対応・並列書き込み競合防止）
+LOCK_DIR="${TRACKER_FILE}.lock"
 
-(
-  flock -w 10 200 || {
+wait_time=0
+while ! mkdir "$LOCK_DIR" 2>/dev/null; do
+  sleep 1
+  wait_time=$((wait_time + 1))
+  if [ $wait_time -ge 10 ]; then
     echo "⚠️ Could not acquire lock on $TRACKER_FILE (timeout 10s). Skipping." >&2
     exit 1
-  }
+  fi
+done
+
+# 終了時にロックディレクトリを自動削除
+trap 'rm -rf "$LOCK_DIR" 2>/dev/null' EXIT
+
+{
 
   # 現在のカウントを取得
   CURRENT_LINE=$(grep "| /${WORKFLOW_NAME} |" "$TRACKER_FILE" || true)
@@ -64,4 +72,4 @@ LOCK_FILE="${TRACKER_FILE}.lock"
 
     echo "✅ Updated /$WORKFLOW_NAME: $CURRENT_COUNT → $NEW_COUNT (Last: $TODAY)"
   fi
-) 200>"$LOCK_FILE"
+}
