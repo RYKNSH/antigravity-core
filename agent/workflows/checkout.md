@@ -157,7 +157,8 @@ _smart_run 10 1 "evolve"        node "$ANTIGRAVITY_DIR/agent/scripts/evolve.js" 
 # ─── 6. 全ジョブ待機（PID追跡分のみ） ────────────────
 [ -n "${PUSH_PID:-}" ] && wait "$PUSH_PID" 2>/dev/null
 [ -n "${SYNC_PID:-}" ] && wait "$SYNC_PID" 2>/dev/null
-wait  # cleanup jobs
+# `wait` without args waits for ALL background tasks, including the watchdog.
+# Therefore we explicitly remove `wait` here, jobs in (3) are fire-and-forget.
 
 echo "✅ Checkout complete!" && df -h . | tail -1
 ```
