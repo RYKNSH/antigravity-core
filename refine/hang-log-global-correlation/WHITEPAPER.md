@@ -1,9 +1,9 @@
 # Antigravity Core Self-Improving Pipeline — Whitepaper
 
-> **作成日時**: 2026-02-24（v1.0）→ 2026-02-24 Round 7 実装検証で v2.0 に更新
+> **作成日時**: 2026-02-24（v1.0）→ 2026-02-24 Round 7 実装検証で v2.0 に更新 → v2.1 承認ゲート実装完了
 > **ディベート**: Round 1-7 完走・戦略ロック済み
 > **参照先**: `refine/hang-log-global-correlation/` (round_01〜07)
-> **現在地**: MS1.1〜MS4.1 全実装済み。残倹題 = 承認ゲートの運用定義
+> **現在地**: MS1.1〜MS4.1 全実装済み。承認ゲート運用フロー実装完了（2026-02-24）
 
 ---
 
@@ -98,39 +98,41 @@ watchdogを持つことで、システムは壊れた状態でも動き続けら
       ↓
   AI改善提案エンジン（/evolve のサーバー版）
       ↓
-  PR自動生成
+  Issue自動生成（bot: evolve-proposal）
       ↓
-  CI: 依存マップ整合性チェック + Chaos層テスト
+  【承認ゲート】/approval-gate WFで人間レビュー
       ↓
-  Pass → main merge（承認ゲート）
+  PR作成 → CI: 依存マップ整合性チェック + Chaos層テスト
+      ↓
+  Pass → main merge
       ↓
 [各ローカル]
   checkin時に git pull → 最新Coreを受け取る（既に実装済み）
 ```
 
-### 全コンポーネント実装済み（Round 7検証済み）
+### 全コンポーネント実装済み（2026-02-24 完全完了）
 
-| コンポーネント | 状態 | Round 7検証結果 |
+| コンポーネント | 状態 | 実装内容 |
 |---|---|---|
-| ローカル → Core push | ✅ git push 実装済み | 専用項目 |
-| Core → ローカル pull | ✅ checkin.md SLOW ZONEで実装済み | 専用項目 |
-| ハング報告スキーム | ✅ safe-commands.md フェーズ2.5 | 専用項目 |
-| 依存マップ | ✅ dependency_map.json v1.1.0 | JSON lint CIで和実証済み |
-| brain_log → incidents.md 転記 | ✅ checkin.md全件スキャン | 専用項目 |
-| brain_log 構造化MD | ✅ MS1.1 INCIDENT_FORMAT.md | C4テストで動作確認済み |
-| GitHub Actions 最小CI | ✅ MS2.1 ci.yml | PR/push/weekly トリガー実装済み |
-| サーバー版 evolve エンジン | ✅ MS3.1 server_evolve.js | OPENインシデント分析+Issue生成 |
-| Chaos CI | ✅ MS4.1 pipeline_chaos.js | **C1〜C5 全シナリオ 6 passed, 0 failed** |
-| INC-003 ブラウザSA | ✅ CLOSED | 专用項目 |
+| ローカル → Core push | ✅ 実装済み | git push 実装済み |
+| Core → ローカル pull | ✅ 実装済み | checkin.md SLOW ZONEで実装済み |
+| ハング報告スキーム | ✅ 実装済み | safe-commands.md フェーズ2.5 |
+| 依存マップ | ✅ 実装済み | dependency_map.json v1.1.0 |
+| brain_log → incidents.md 転記 | ✅ 実装済み | checkin.md全件スキャン |
+| brain_log 構造化MD | ✅ 実装済み | MS1.1 INCIDENT_FORMAT.md |
+| GitHub Actions 最小CI | ✅ 実装済み | MS2.1 ci.yml |
+| サーバー版 evolve エンジン | ✅ 実装済み | MS3.1 server_evolve.js |
+| Chaos CI | ✅ 実装済み | MS4.1 pipeline_chaos.js（C1〜C5 全シナリオ passed） |
+| INC-003 ブラウザSA | ✅ CLOSED | safe-commands.mdブラウザルール追加 |
+| **承認ゲート運用フロー** | **✅ 実装済み（2026-02-24）** | **agent/workflows/approval-gate.md 新規作成** |
 
-### 残倷題（Round 7に特定）
+### 残課題（優先度更新）
 
 | コンポーネント | 優先度 | 状況 |
 |---|---|---|
-| 承認ゲートの進流定義（IssueからPRまでのプロセス） | 🔴 高 | Issue作成は出来るが、PRへのクローズフローが未文書 |
-| C型ハングの実際再現（Notion/Railway） | 🟠 中 | C5はネット層タイムアウトのみ。SaaS UIスタックはブラウザSAスコープ公外 |
+| C型ハングの実際再現（Notion/Railway） | 🟠 中 | C5はネット層タイムアウトのみ。SaaS UIスタックはブラウザSAスコープ外 |
 | マルチユーザーコンフリクト | 🟡 低 | OSS化後 |
-| Chaos CI サンドボックスコスト | 🟡 低 | GitHub Actionsランナーで現在は無偈 |
+| Chaos CI サンドボックスコスト | 🟡 低 | GitHub Actionsランナーで現在は無償 |
 
 ---
 
@@ -195,7 +197,7 @@ watchdogを持つことで、システムは壊れた状態でも動き続けら
 2. **報告なき修正は学習ではない** — ハングは必ず報告されてからCoreに反映される
 3. **watchdogは保護、インシデント記録は学習** — 両方必要で代替不可
 4. **フォーマットが自動化の鍵** — 構造化されていないデータはサーバーが学習できない
-5. **承認ゲートは Issue → 人間レビュー → PR** —（Round 7確定） server_evolve.jsがIssueを自動作成。人間が内容を確認してPRとして提出。完全自律mergeはWHITEPAPER設計原則上許可しない
+5. **承認ゲートはIssue→人間レビュー→PR** — server_evolve.jsがIssueを自動作成。人間が `/approval-gate` WFで確認してPRとして提出。完全自律mergeはWHITEPAPER設計原則上許可しない
 
 ---
 
@@ -207,5 +209,5 @@ watchdogを持つことで、システムは壊れた状態でも動き続けら
 | **実装済み** | **依存マップ整合性チェック** | **GitHub Actions ci.yml** |
 | **実装済み** | **Chaos Engineering C1〜C5** | **pipeline_chaos.js（6 passed）** |
 | **実装済み** | **週次 OPENインシデント分析+Issue生成** | **server_evolve.js** |
-| 次フェーズ | 房 Issue → PR プロセス定義 | 承認ゲート運用ルール |
+| **✅ 実装済み** | **Issue→PR承認ゲートフロー** | **agent/workflows/approval-gate.md** |
 | 将来 | マルチユーザー競合テスト | 専用サンドボックス |
