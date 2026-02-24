@@ -184,6 +184,8 @@
             ]
         },
         "session_state.js": {
+            "future": true,
+            "purpose": "セッションステート管理 — 将来実装予定",
             "reads": [
                 "~/.gemini/antigravity/brain/**"
             ],
@@ -247,6 +249,8 @@
             ]
         },
         "sync_private.js": {
+            "future": true,
+            "purpose": "checkout時のprivate repo sync — 将来実装予定",
             "reads": [
                 "~/.antigravity/**"
             ],

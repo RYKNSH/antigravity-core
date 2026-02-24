@@ -56,7 +56,15 @@ function collectBrainLogIncidents() {
     const files = fs.readdirSync(brainLogDir).filter(f => f.endsWith('.md'));
 
     for (const file of files) {
-        const content = fs.readFileSync(path.join(brainLogDir, file), 'utf8');
+        // ③ ファイルごとにtry-catch — 1ファイルが壊れても残りを処理し続ける
+        let content;
+        try {
+            content = fs.readFileSync(path.join(brainLogDir, file), 'utf8');
+        } catch (e) {
+            console.warn(`⚠️  brain_log/${file} の読み取りをスキップ: ${e.message}`);
+            continue;
+        }
+
         // INCIDENT_FORMAT.md形式のエントリを解析
         const entryRegex = /## \[(INCIDENT|FIXED)\] session_(\d+)\n([\s\S]+?)(?=\n## \[|$)/g;
         let match;
