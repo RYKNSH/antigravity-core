@@ -19,6 +19,17 @@ on:
       - 'agent/scripts/*.js'
       - 'agent/scripts/*.sh'
       - 'INCIDENT_FORMAT.md'
+  schedule:
+    # 毎週月曜 09:00 UTC — サーバーサイド自律改善エンジンを週次実行
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    # 手動実行も可能
+    inputs:
+      dry_run:
+        description: 'Dry run (Issue作成なし)'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
   dependency-map-check:
@@ -68,3 +79,35 @@ jobs:
           echo "| Dependency map integrity | See job output |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+
+  server-evolve:
+    name: Server Evolve — Weekly Auto-Improvement
+    runs-on: ubuntu-latest
+    # 週次スケジュールまたは手動実行時のみ
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set ANTIGRAVITY_DIR for CI
+        run: echo "ANTIGRAVITY_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+
+      - name: Run server_evolve.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          DRY_FLAG=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            DRY_FLAG="--dry-run"
+          fi
+          echo "::group::Server Evolve"
+          node agent/scripts/server_evolve.js $DRY_FLAG
+          echo "::endgroup::"
