@@ -94,18 +94,12 @@ description: どんな小さなエラーも見逃さない徹底的なエラー�
 # TypeScript strict チェック
 npx tsc --noEmit --strict 2>&1 | head -100
 
-# 未使用import/変数の検出
-grep -rn "// @ts-ignore\|// @ts-expect-error\|eslint-disable" --include="*.ts" --include="*.tsx" src/
+# High-Grade Static Analysis (AST Based)
+# any型、ts-ignore、未使用変数、空catch、console残留などを一括で高精度に検出
+node ~/.antigravity/agent/scripts/error_sweep_ast.js src/
 ```
 
-**コード内検索**:
-```bash
-# any型の使用箇所
-grep -rn ": any\|as any\|<any>" --include="*.ts" --include="*.tsx" src/
-
-# 型アサーションの使用箇所
-grep -rn " as [A-Z]" --include="*.ts" --include="*.tsx" src/
-```
+**コード分析（手動）**:
 
 ---
 
@@ -157,13 +151,10 @@ diff <(grep -v '^#' .env | grep '=' | cut -d= -f1 | sort) \
 
 #### 実行
 ```bash
-# 空catchの検出
-grep -rn "catch.*{" --include="*.ts" --include="*.tsx" -A1 src/ | grep -B1 "^--$\|^\s*}$"
+# Runtimeエラートリガー候補の検出
+# Phase 0 の error_sweep_ast.js の出力（空catch, console残留等）も併せて参照すること
 
-# console残留の検出
-grep -rn "console\.\(log\|error\|warn\|debug\)" --include="*.ts" --include="*.tsx" src/
-
-# fire-and-forget asyncの検出
+# fire-and-forget asyncの検出 (簡易正規表現ベース)
 grep -rn "^\s*[a-zA-Z]*(" --include="*.ts" --include="*.tsx" src/ | grep -v "await\|return\|const\|let\|var"
 ```
 
@@ -299,14 +290,24 @@ Phase 6 で `BLOCKED` 判定の場合、以下のループを実行:
 発見 → 分析 → 修正 → Phase 0-5 再実行 → 再判定
 ```
 
-**セーフティ機構**:
-- ループ: **プログレッシブ拡張**（3回→/debug-deep→5回→First Principles→5回 = 最处13回）
-- タイムアウト: **進捗なょ10分 → /debug-deep エスカレーション**（進捗あれば無制限）
-- **各修正前に git checkpoint を作成**:
+**セーフティ機構 (The Ouroboros)**:
+- ループ: **修復 → 再評価** 
+- 修正前に必ず git checkpoint を作成:
   ```bash
-  git add -A && git commit -m "error-sweep: checkpoint before fix N"
+  git add -A && git commit -m "error-sweep: checkpoint before fix"
   ```
-- 5回失敗 → **`/debug-deep` に自動エスカレーション**（checkpointからロールバック可能）
+- **失敗の記録と痛覚の逆流**:
+  失敗（修正したのにまだBLOCKED）するたびに、状態を記録する:
+  ```bash
+  node ~/.antigravity/agent/scripts/session_state.js record-failure "/error-sweep" "Sweep failed to pass after repair"
+  
+  # エスカレーション判定 (Exit code 2 で逆流)
+  node ~/.antigravity/agent/scripts/session_state.js check-escalation
+  # 🔴 もしここで Exit code 2 が出たら、直ちに現在の /error-sweep を破棄し、ロールバックして /debug-deep を開始せよ。
+  ```
+
+> [!CAUTION] 
+> 3回失敗した時点で `check-escalation` が Exit code 2 を返す。このシグナルを受け取ったAIは、**自分で頑張るのを即座にやめ、問答無用で `/debug-deep` に処理をエスカレーション（痛覚逆流）させなければならない**。
 
 **監査ログ**:
 ```bash

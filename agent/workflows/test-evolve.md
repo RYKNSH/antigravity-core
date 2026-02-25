@@ -75,16 +75,8 @@ description: テスト自体を進化させる自律型フィードバックル�
 
 #### 実行
 ```bash
-# テストファイル一覧
-find . -name "*.test.*" -o -name "*.spec.*" | grep -v node_modules | sort
-
-# テストケース数の概算
-grep -rn "it(\|test(\|describe(" --include="*.test.*" --include="*.spec.*" . | grep -v node_modules | wc -l
-
-# テスト対象外モジュールの検出（src内でテストのないファイル）
-comm -23 \
-  <(find src -name "*.ts" -o -name "*.tsx" | sed 's/\.tsx\?$//' | sort -u) \
-  <(find . -name "*.test.*" -o -name "*.spec.*" | grep -v node_modules | sed 's/\.test\.\|\.spec\./\./' | sed 's/\.\(ts\|tsx\|js\|jsx\)$//' | sort -u) 2>/dev/null
+# 高精度なテスト資産のマッピングと集計（レポーターベース/ASTベース）
+node ~/.antigravity/agent/scripts/test_inventory_parser.js .
 ```
 
 ---
@@ -308,10 +300,21 @@ Phase 5 で追加したテストが既存テストを壊した場合:
 発見 → 分析 → 修正 → 全テスト再実行 → 再判定
 ```
 
-**セーフティ機構**:
-- ループ: **プログレッシブ拡張**（3回→/debug-deep→5回→First Principles→5回 = 最大13回）
-- 3回失敗 → `/debug-deep` に自動エスカレーション
-- 各修正前に `git add -A && git commit -m "test-evolve: checkpoint"`
+**セーフティ機構 (The Ouroboros)**:
+- ループ: **修復 → 全テスト再実行 → 再判定**
+- 修正前に必ず: `git add -A && git commit -m "test-evolve: checkpoint"`
+- **失敗の記録と痛覚の逆流**:
+  テストが壊れたまま復旧できない場合、状態を記録する:
+  ```bash
+  node ~/.antigravity/agent/scripts/session_state.js record-failure "/test-evolve" "Tests still failing after evolution execution"
+  
+  # エスカレーション判定 (Exit code 2 で逆流)
+  node ~/.antigravity/agent/scripts/session_state.js check-escalation
+  # 🔴 もしここで Exit code 2 が出たら、直ちに現在の /test-evolve を破棄し、ロールバックして /debug-deep を開始せよ。
+  ```
+
+> [!CAUTION] 
+> 3回失敗した時点で `check-escalation` が Exit code 2 を返す。このシグナルを受け取ったAIは、**自分で頑張るのを即座にやめ、問答無用で `/debug-deep` に処理をエスカレーション（痛覚逆流）させなければならない**。
 
 ---
 
