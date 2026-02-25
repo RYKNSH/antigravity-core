@@ -14,7 +14,7 @@ description: Antigravity Core Self-Improving Pipeline開発セッション開始
 - 現在のPhaseと完了済みMSを確認
 
 ## 3. 判断の軸をロード
-- `~/.antigravity/refine/hang-log-global-correlation/WHITEPAPER.md` — ビジョン・設計原則の確認
+- `~/.antigravity/docs/WHITEPAPER.md` — ビジョン・設計原則の確認
 
 ## 4. 今のPhaseと進行中のマイルストーン確認
 - `~/.antigravity/docs/ROADMAP.md` — 現在のPhaseと責務を確認
@@ -34,7 +34,14 @@ description: Antigravity Core Self-Improving Pipeline開発セッション開始
 - ❌ 禁止: 各プロジェクト（AntigravityWork配下）のコード修正
 - ❌ 禁止: `~/.antigravity-private/` の内容をgit add
 
-## 7. 実行開始
+## 7. メタ検証とエスカレーション（Level 2トリップワイヤー）
+- Core（WFや各種スクリプト等）を修正した後、必ず絶対品質基準としてメタ検証スクリプトを実行する。
+- 実行コマンド: `bash ~/.antigravity/agent/scripts/verify_core.sh`
+- **エラー時のルール（逆流プロトコル）**:
+  - もし上記スクリプトが失敗した場合、それは純粋な技術的エラー（Level 1）ではなく**「検証ゲートでの厳格な失敗（Level 2）」**と見なす。
+  - その際、作業をただちに停止し、**`docs/MILESTONES.md` と `task.md` の整合性を問う `/debate deep` を呼び出すこと**（自己回帰によるエスカレーション）。
+
+## 8. 実行開始
 ユーザーの承認を得たら `/go` で実行開始。
 
 ---
@@ -42,7 +49,7 @@ description: Antigravity Core Self-Improving Pipeline開発セッション開始
 ### 参照用ドキュメント（必要な時のみ）
 | ファイル | いつ読む |
 |---------|---------|
-| `refine/hang-log-global-correlation/WHITEPAPER.md` | 設計原則の根拠を確認したい時 |
+| `docs/WHITEPAPER.md` | 設計原則の根拠を確認したい時 |
 | `dependency_map.json` | ハングの影響範囲を調べたい時 |
 | `incidents.md` | 未解決インシデントを確認したい時 |
 | `refine/hang-log-global-correlation/round_*.md` | ディベートの詳細を確認したい時 |

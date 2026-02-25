@@ -44,6 +44,5 @@
 | Supabase | `database_management_and_deployment` |
 | Vercel | `database_management_and_deployment` |
 | pnpm | `antigravity_portable_dev_ecosystem` |
-| Persona | `persona_orchestration_system` |
 | FBL | `autonomous_feedback_loop_fbl` |
 | Debug | `debug_patterns`, `galileo_log` |

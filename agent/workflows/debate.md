@@ -4,8 +4,6 @@ description: 強制的にMulti-Persona Debateを実行し、提案を複数ペ�
 
 # /debate - Autonomous Debate & Critique Workflow
 
-**Concept**: AI自身が「司会者 (Moderator)」となり、複数の専門家ペルソナを召喚して議論を戦わせる。ユーザーの介入を待たず、納得いく結論が出るまで**自律的に議論ループを回し続ける**。
-
 ---
 
 ## 1. Trigger & Modes

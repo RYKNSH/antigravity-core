@@ -5,23 +5,14 @@ description: マルチペルソナ・ディベートによる成果物品質向�
 
 # Persona Orchestration System
 
-## Purpose
+## 概要
 
-単一視点では気づけない盲点を、複数の専門家ペルソナによる「議論」で発見し、成果物の品質を飛躍的に向上させる。さらに、ペルソナを「採用・育成・解雇」する仕組みにより、チーム自体が進化し続ける。
+このスキルの背景となる思考フレームワーク（なぜPersona OrchestrationやThe Debate Loopが必要か等）は、Antigravity Coreの基幹概念である `docs/WHITEPAPER.md` (9.1 The Debate Loop) に定義されています。
+本ドキュメントは、その哲学を具体的なシステムとして運用するための「ランク管理・評価ルール」や「生成・解雇ロジック」のみを定義した運用マニュアル（意図的劣化プロセスにおける現場の実装ルール）です。
 
 ---
 
-## Core Concept: The Debate Loop
-
-```
-[Input] → [HR Director] → [Persona Assembly] → [Sequential Debate] → [Synthesis] → [Output]
-               ↓                 ↓                      ↓                  ↓
-          タスク分析         チーム編成           各視点からの批評       統合版作成
-               ↓                 ↓                      ↓                  ↓
-          必要な専門家      既存 or 生成          [Scoring]  ←───────────┘
-          を自動判断                                  ↓
-                                            [Feedback → Growth/Cull]
-```
+## 1. HR Director (人事部長メタペルソナ)
 
 ### HR Director (人事部長)
 
