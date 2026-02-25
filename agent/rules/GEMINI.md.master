@@ -56,7 +56,6 @@
 ## 📚 ルール詳細
 - 技術標準: `~/.antigravity/agent/rules/code-standards.md`
 - 安全コマンド: `~/.antigravity/agent/rules/safe-commands.md`
-- Compaction: `~/.antigravity/agent/rules/compaction.md`
 
 ## 🗺️ グローバルリソース (~/.antigravity/)
 
