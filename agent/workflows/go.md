@@ -153,17 +153,19 @@ node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" set-workflow "/go" "imple
 | **Quick** (Low Risk) | lint + typecheck + test + fbl quick + **test-evolve scoring** | ~2分 |
 | **Standard** (Medium Risk) | quick + error-sweep + **test-evolve quick** | ~8分 |
 | **Deep** (High Risk) | standard + **test-evolve standard**(ミューテーション含む) + debate quick | ~20分 |
+| **Full** (Ship/Release) | `/fullcheck` Tier 1-6 全30レイヤー | ~40分 |
 
 > [!IMPORTANT]
 > **AI-Driven前提**: リソース制約なし。全コミットで品質スコア計測（scoring）。
 > Risk Score = max(ファイル数, 変更種別, コンテキスト)。
-> DB/認証/決済/新API → 自動Deep。ship前 → 強制Deep。品質B未満3連続 → Auto-Escalation。
-> 詳細は `/verify` の Risk-Based 判定ロジックを参照。
+> DB/認証/決済/新API → 自動Deep。**ship前 / MS完了 / 「フルチェック」指定 → 自動Full**。品質B未満3連続 → Auto-Escalation。
+> 詳細は `/verify` の Risk-Based 判定ロジックと `QUALITY_SCOPE_CHECKLIST.md` を参照。
 
 ```markdown
 # ユーザーが明示的に指定した場合はそちらを優先
-/verify --quick    # 強制quick
-/verify --deep     # 強制deep
+/verify --quick      # 強制quick
+/verify --deep       # 強制deep
+/verify --fullcheck  # 強制full（Tier 1-6 全30レイヤー）
 ```
 
 ### Smart Dedup ロジック（コンテンツハッシュ方式）

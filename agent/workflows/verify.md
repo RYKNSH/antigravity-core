@@ -39,9 +39,10 @@ Auto-Escalation: 品質B未満3コミット連続 → 強制Deep
 ## 使用方法
 
 ```bash
-/verify           # 規模自動判定
-/verify --quick   # 強制 quick
-/verify --deep    # 強制 deep
+/verify              # 規模自動判定
+/verify --quick      # 強制 quick
+/verify --deep       # 強制 deep
+/verify --fullcheck  # 強制 full（Tier 1-6 全30レイヤー）
 ```
 
 ---
@@ -93,7 +94,7 @@ fi
 5. 完了レポート
 
 ### Deep（High Risk）
-**対象**: DB schema変更、認証/決済ロジック、新API追加、アーキテクチャ変更、6+ファイル横断、ship前、品質B未満3連続
+**対象**: DB schema変更、認証/決済ロジック、新API追加、アーキテクチャ変更、6+ファイル横断、品質B未満3連続
 
 > 🏥 **Health Check Protocol 適用**
 
@@ -102,6 +103,16 @@ fi
 3. `/test-evolve standard`（Phase 0+1+3+4+5+6 — ミューテーション含む）
 4. `/debate quick`（マルチペルソナ最終レビュー）
 5. 完了レポート
+
+### Full（Ship/Release）
+**対象**: ship前、MS完了、`--fullcheck` 明示指定、「フルチェック」発言
+
+> 🏥 **Health Check Protocol 適用**
+
+1. Deep の全ステップ実行
+2. `/fullcheck` Tier 4-6 追加チェック（レジリエンス、レート制限、カオス、コントラクト等）
+3. 全30レイヤー Sweep Report
+4. Verdict: 🏆 WORLD-CLASS / 🟢 PRODUCTION-READY / 🟡 NEEDS-WORK / 🔴 BLOCKED
 
 ---
 
@@ -113,11 +124,11 @@ fi
 
 ### 判定因子
 
-| # | 因子 | Quick (1) | Standard (2) | Deep (3) |
-|---|------|-----------|-------------|----------|
-| A | **ファイル数** | ≤2 | 3-5 | 6+ |
-| B | **変更種別** | CSS/config/docs/typo | ロジック/UI変更 | DB schema/認証/決済/API新規 |
-| C | **コンテキスト** | 通常 | 新API追加 | ship前/MS完了/アーキ変更 |
+| # | 因子 | Quick (1) | Standard (2) | Deep (3) | Full (4) |
+|---|------|-----------|-------------|----------|----------|
+| A | **ファイル数** | ≤2 | 3-5 | 6+ | — |
+| B | **変更種別** | CSS/config/docs/typo | ロジック/UI変更 | DB schema/認証/決済/API新規 | — |
+| C | **コンテキスト** | 通常 | 新API追加 | アーキ変更 | **ship前/MS完了/fullcheck指定** |
 
 ### 判定フロー
 
@@ -129,11 +140,12 @@ fi
    - schema 定義ファイルの変更 → Deep
    - API route/endpoint の新規追加 → Standard以上
 3. コンテキストスコア（C）を算出:
-   - /ship から呼ばれた → Deep
-   - MS完了条件を満たした → Deep
-   - アーキテクチャ変更を含む → Deep
+   - アーキテクチャ変更を含む → Deep (3)
+   - /ship から呼ばれた → **Full (4)**
+   - MS完了条件を満たした → **Full (4)**
+   - 「フルチェック」/ --fullcheck 指定 → **Full (4)**
 4. Risk Score = max(A, B, C)
-5. コマンドライン引数 --quick / --deep で上書き可能
+5. コマンドライン引数 --quick / --deep / --fullcheck で上書き可能
 ```
 
 ### 変更種別の自動検出
@@ -157,7 +169,7 @@ echo "$CHANGED_FILES" | grep -qiE 'route|endpoint|api/' && [ "$SCORE_B" -lt 2 ] 
 # CSS/config/docs のみなら 1 のまま
 
 # 因子C: コンテキスト（呼出元による上書き）
-SCORE_C=${CONTEXT_SCORE:-1}  # /ship からの呼出時は 3 がセットされる
+SCORE_C=${CONTEXT_SCORE:-1}  # /ship からの呼出時は 4 がセットされる
 
 # Auto-Escalation: 品質B未満3コミット連続 → 強制Deep
 if [ -f ".test_quality_history.md" ]; then
@@ -172,11 +184,13 @@ case $RISK_SCORE in
   1) SIZE="quick" ;;
   2) SIZE="standard" ;;
   3) SIZE="deep" ;;
+  4) SIZE="full" ;;
 esac
 
 # コマンドライン引数で上書き
 [ "$1" = "--quick" ] && SIZE="quick"
 [ "$1" = "--deep" ] && SIZE="deep"
+[ "$1" = "--fullcheck" ] && SIZE="full"
 
 echo "🔍 Verify Chain: $SIZE (Risk Score: $RISK_SCORE — Files: $SCORE_A, Type: $SCORE_B, Context: $SCORE_C)"
 ```

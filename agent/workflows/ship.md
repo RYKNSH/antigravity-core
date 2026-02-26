@@ -62,11 +62,11 @@ $ANTIGRAVITY_DIR/agent/scripts/git_guard.sh --check
 ```
 
 ```markdown
-🔍 Deep検証実行中...
-→ /verify --deep（CONTEXT_SCORE=3 — ship前強制Deep）
+🔍 Full検証実行中...
+→ /verify --fullcheck（CONTEXT_SCORE=4 — ship前強制Full）
 ```
 
-Deep検証失敗時 → 即座に中止。修正後に再実行。
+Full検証失敗時 → 即座に中止。修正後に再実行。
 
 ---
 
