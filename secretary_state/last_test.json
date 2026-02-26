@@ -1,0 +1,152 @@
+{
+  "timestamp": "2026-02-26T16:34:42.865Z",
+  "passed": 29,
+  "failed": 0,
+  "results": [
+    {
+      "name": "pm2 daemon running",
+      "status": "✅",
+      "detail": "5 processes"
+    },
+    {
+      "name": "pm2: sec-listener online",
+      "status": "✅",
+      "detail": "PID 38487"
+    },
+    {
+      "name": "pm2: sec-queue-processor online",
+      "status": "✅",
+      "detail": "PID 38488"
+    },
+    {
+      "name": "pm2: sec-approval-watcher online",
+      "status": "✅",
+      "detail": "PID 38727"
+    },
+    {
+      "name": "pm2: sec-channel-pollers online",
+      "status": "✅",
+      "detail": "PID 38856"
+    },
+    {
+      "name": "pm2: sec-response-drafter online",
+      "status": "✅",
+      "detail": "PID 38895"
+    },
+    {
+      "name": "GET /health",
+      "status": "✅",
+      "detail": "uptime: 1747s"
+    },
+    {
+      "name": "POST /webhook/line (mock)",
+      "status": "✅",
+      "detail": "accepted empty events"
+    },
+    {
+      "name": "POST /webhook/chatwork (mock)",
+      "status": "✅",
+      "detail": ""
+    },
+    {
+      "name": "POST /webhook/test-channel (generic)",
+      "status": "✅",
+      "detail": ""
+    },
+    {
+      "name": "Queue directory exists",
+      "status": "✅",
+      "detail": ""
+    },
+    {
+      "name": "Enqueue Level 1 message",
+      "status": "✅",
+      "detail": ""
+    },
+    {
+      "name": "Enqueue Level 2 message",
+      "status": "✅",
+      "detail": ""
+    },
+    {
+      "name": "Enqueue Level 3 message",
+      "status": "✅",
+      "detail": ""
+    },
+    {
+      "name": "Level 1: FAQ → score >= 0.7",
+      "status": "✅",
+      "detail": "score: 0.8, level: Level 1 (Auto)"
+    },
+    {
+      "name": "Level 2: 曖昧質問 → score 0.3-0.7",
+      "status": "✅",
+      "detail": "score: 0.5, level: Level 2 (Draft)"
+    },
+    {
+      "name": "Level 3: 緊急 → score < 0.3",
+      "status": "✅",
+      "detail": "score: 0, level: Level 3 (Urgent)"
+    },
+    {
+      "name": "Draft: FAQ match (営業時間)",
+      "status": "✅",
+      "detail": "営業時間についてのお問い合わせありがとうございます。現在の営業時間は平日 10:00〜18:00 と"
+    },
+    {
+      "name": "Draft: FAQ match (料金)",
+      "status": "✅",
+      "detail": "ご質問ありがとうございます。料金に関する詳細は、担当者より改めてご案内させていただきます。少々お待ち"
+    },
+    {
+      "name": "Draft: generic (no FAQ match)",
+      "status": "✅",
+      "detail": "いつもお世話になっております。\n\nお問い合わせいただきありがとうございます。\n\n「プロジェクトの進捗"
+    },
+    {
+      "name": "Notion API health",
+      "status": "✅",
+      "detail": "🟢 HEALTHY"
+    },
+    {
+      "name": "Health report structure",
+      "status": "✅",
+      "detail": "notion: 🟢 HEALTHY, queue pending: 5"
+    },
+    {
+      "name": "Supervisor health report",
+      "status": "✅",
+      "detail": "5/5 processes online"
+    },
+    {
+      "name": "config/notion.json exists",
+      "status": "✅",
+      "detail": ""
+    },
+    {
+      "name": "config/rbac.json exists",
+      "status": "✅",
+      "detail": ""
+    },
+    {
+      "name": "config/persona.json exists",
+      "status": "✅",
+      "detail": ""
+    },
+    {
+      "name": "ecosystem.config.js valid",
+      "status": "✅",
+      "detail": "5 apps configured"
+    },
+    {
+      "name": "processQueue() executes",
+      "status": "✅",
+      "detail": "queue processed"
+    },
+    {
+      "name": "Red Phone module loads",
+      "status": "✅",
+      "detail": ""
+    }
+  ]
+}
