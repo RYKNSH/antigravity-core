@@ -15,6 +15,20 @@ DBマイグレーション、最終テスト、デプロイを連鎖実行。
 /new-feature, /bug-fix → /verify → /ship
 ```
 
+## Quality Scope Coverage
+
+> 参照: `~/.antigravity/agent/resources/QUALITY_SCOPE_CHECKLIST.md`
+
+| Tier | 必須 |
+|------|------|
+| 🔴 Tier 1: MUST | ✅ |
+| 🟡 Tier 2: SHOULD | ✅ |
+| 🟢 Tier 3: BETTER | ✅ |
+| 🔵 Tier 4: ROBUST | ✅ |
+| 🟣 Tier 5: PRODUCTION | ✅ |
+
+> `/ship --fullcheck` で Tier 6 含む全30レイヤー実行可能。
+
 > [!CAUTION]
 > **Ship前に `/verify --deep` が必須。** Deep検証をPassしていないコードはリリースできない。
 

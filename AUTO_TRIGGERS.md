@@ -14,6 +14,7 @@
 | 「整理」「リファクタ」 | `/refactor` |
 | 「デプロイ」「公開」 | `/ship` |
 | 「本当に？」「検証して」 | `/galileo` |
+| 「フルチェック」「完全チェック」「全スコープ」 | `/fullcheck` |
 | 「つづけて」「go」「進めて」 | 次ステップを自律実行 |
 
 ## AI自律トリガー
@@ -27,6 +28,7 @@
 | テスト品質スコア C以下 | `/test-evolve` 提案 |
 | `/fbl deep` 実行時 | `/test-evolve quick` 自動（Phase 5.75） |
 | リリース前チェック | `/test-evolve` full 提案 |
+| `/ship --fullcheck` | `/fullcheck` → `/ship`（Tier 1-6 全稼働） |
 
 ## 自律継続ルール
 

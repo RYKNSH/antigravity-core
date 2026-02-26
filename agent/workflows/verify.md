@@ -21,6 +21,19 @@ description: 実装後の検証を一括実行 — Risk-Based Verify Chain + Alw
 Auto-Escalation: 品質B未満3コミット連続 → 強制Deep
 ```
 
+## Quality Scope Coverage
+
+> 参照: `~/.antigravity/agent/resources/QUALITY_SCOPE_CHECKLIST.md`
+
+| Tier | Quick | Standard | Deep |
+|------|-------|----------|------|
+| 🔴 Tier 1 | ✅ | ✅ | ✅ |
+| 🟡 Tier 2 | 一部 | ✅ | ✅ |
+| 🟢 Tier 3 | — | 推奨 | ✅ |
+| 🔵 Tier 4 | — | — | 推奨 |
+
+> 全Tier実行は `/fullcheck` を使用。
+
 ---
 
 ## 使用方法

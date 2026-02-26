@@ -21,6 +21,19 @@ description: エラー上限・タイムアウト到達時にディープリサ�
 /debug-deep 2nd+3rd round 合計10回失敗 → PAUSE（真のエスカレーション）
 ```
 
+## Quality Scope Coverage
+
+> 参照: `~/.antigravity/agent/resources/QUALITY_SCOPE_CHECKLIST.md`
+
+| Tier | 必須 |
+|------|------|
+| 🔴 Tier 1: MUST | ✅ |
+| 🟡 Tier 2: SHOULD | ✅ |
+| 🟢 Tier 3: BETTER | 推奨 |
+| 🔵 Tier 4: ROBUST | 推奨 |
+
+> `/fullcheck` で全30レイヤー実行。
+
 ---
 
 ## Step 1: コンテキスト保全（最重要）

@@ -20,6 +20,19 @@ description: どんな小さなエラーも見逃さない徹底的なエラー�
 /error-sweep Phase 7 → .sweep_patterns.md に原則を蓄積（Self-Repair 2回以上時）
 ```
 
+## Quality Scope Coverage
+
+> 参照: `~/.antigravity/agent/resources/QUALITY_SCOPE_CHECKLIST.md`
+
+| Tier | quick | full |
+|------|-------|------|
+| 🔴 Tier 1 | ✅ | ✅ |
+| 🟡 Tier 2 | 一部 | ✅ |
+| 🟢 Tier 3 | — | 推奨 |
+| 🔵 Tier 4 | — | ✅ |
+
+> 全Tier実行は `/fullcheck` を使用。
+
 ---
 
 ## バリエーション
