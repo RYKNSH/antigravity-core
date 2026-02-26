@@ -27,6 +27,7 @@
 | MCP が `Bad credentials` | ローカル git に切り替え。`mcp_config.json` のトークンを後で別途更新 |
 | ネットワーク全断 | `write_to_file` でファイル編集だけ完了させ、push は後回し |
 | ターミナル全滅 | `view_file` / `write_to_file` / GitHub MCP のみで完結させる（Layer 3）|
+| APIキー・Token入力待ち | コマンドをTerminateし、`browser_subagent` で対象サービスからKeyを取得・再設定する（MR-10）|
 
 > [!NOTE]
 > **視野を広く保つ原則**: ハングしたツール1本に固執しない。「別のツールで同じゴールに到達できるか？」を常に問え。
@@ -187,6 +188,7 @@ GIT_TERMINAL_PROMPT=0 git push origin [branch] --no-verify
 Layer 1: GIT_TERMINAL_PROMPT=0 付き実行  (credential prompt ハング対策)
 Layer 2: run_command(WaitMsBeforeAsync=500) → Background → 30s無出力→Terminate
 Layer 3: write_to_file/view_file/GitHub MCP でターミナル迂回
+Layer 4: Token/Key入力ブロックによるハング時は `browser_subagent` を起動し自律的に認証情報を取得（MR-10）
 ```
 
 | 操作 | リスク | Layer |
@@ -196,6 +198,7 @@ Layer 3: write_to_file/view_file/GitHub MCP でターミナル迂回
 | rm -rf（ディレクトリ） | 高 | 2 |
 | 大量ファイルコピー | 中 | 1→2 |
 | ターミナル全滅 | 最高 | 3 |
+| CLIでのトークン要求 | 中 | 4 (MR-10) |
 
 ## 📂 環境参照
 
