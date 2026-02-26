@@ -5,11 +5,14 @@
 ## 🚨 HANG / FREEZE 即時脱出プロトコル（最優先ルール）
 
 > [!IMPORTANT]
-> **コマンドが30秒以上 "No output" のままならハングと判定せよ。待つな。即脱出せよ。**
+> **コマンドの文脈（内容・対象）に応じてハングを動的に判定せよ（MR-01）。数秒で終わるはずの処理が終わらないなら待たずに即脱出せよ。**
 
-### フェーズ1: 検知（30秒ルール）
-- `command_status` で30秒以上 `RUNNING` + `No output` → **ハング確定**
-- 「もう少し待てば返るかも」という思考は禁止。必ず次フェーズへ進む
+### フェーズ1: 検知（文脈ベースの動的ルール）
+- `command_status` で `RUNNING` + `No output` が**本来予想される完了時間を超過した** → **ハング確定**
+  - 例1: `ls` や `cat` は1秒未満。数秒応答がなければ即ハング判定。
+  - 例2: `git push` は数秒〜10秒。
+  - 例3: `npm install` や `build` は数分かかる場合があるため、出力の流れ（stagnation）で判定。
+- 「もう少し待てば返るかも」という思考は禁止。完了時間を過ぎたら必ず次フェーズへ進む
 
 ### フェーズ2: 即時脱出
 ```
@@ -45,7 +48,7 @@
 | 同じ操作を **3回** 試みて失敗 | **即座に別アプローチに切り替える** |
 | MFA壁 / ログイン要求に遭遇 | ブラウザを諦め、API/MCP/CLI に切り替える |
 | ページ構造変化で要素が見つからない | Raw APIエディタ / curlへ切り替える |
-| 30秒以上ページが応答しない | サブエージェントをキャンセルして報告する |
+| 通常の描画時間を超過し応答しない | サブエージェントをキャンセルして報告する |
 
 ### 切り替え後アクション（INC-003 対策）
 
@@ -56,7 +59,7 @@
 |----------------|---------|--------|
 | MFA壁 / ログイン要求 | MCP / CLI | `mcp_github_*` / Supabase MCP / `railway login --browserless` |
 | セレクタ3回失敗 | Raw API (curl) | `curl -X POST https://api.supabase.com/...` を直接叩く |
-| 30秒応答なし | スキップ + 記録 | `incidents.md` に記録し、次タスクへ進む |
+| 描画スタック（ハング）| スキップ + 記録 | `incidents.md` に記録し、次タスクへ進む |
 | UI構造変化 | APIドキュメント参照 | サービスの公式API/CLIに切り替えて同じ操作を実行 |
 
 ### 禁止パターン
@@ -77,7 +80,7 @@
 
 | サービス | よくあるC型ハング | 対処手段 |
 |---------|---------------|---------|
-| **Notion** | ページUI描画が30秒以上ブロック / ブロック追加が反応しない | ブラウザSA諦め → `auth_notion.js` + Notion API (`fetch_notion_page.js`) で直接操作 |
+| **Notion** | ページUI描画がブロック / ブロック追加が反応しない | ブラウザSA諦め → `auth_notion.js` + Notion API (`fetch_notion_page.js`) で直接操作 |
 | **Railway** | デプロイ画面でspinnerが止まらない / ログストリームが詰まる | ブラウザSA諦め → `railway up --detach` CLIで非同期デプロイ |
 | **Vercel** | Build logsが固まる | `vercel deploy --prod` CLIで実行 |
 | **Supabase** | SQL editorが応答しない | Supabase MCP `mcp_supabase_*` で直接クエリ実行 |
@@ -90,7 +93,7 @@
 ```
 
 **APIフォールバック手順**:
-1. ブラウザSA 30秒無反応 → キャンセル
+1. ブラウザSAがスタック（応答なし） → キャンセル
 2. 対象サービスのAPI/CLI代替を確認（上表）
 3. API/CLI代替で同じ操作を実行
 4. `incidents.md` に `INC-XXX [OPEN] C型ハング: [サービス名] UIスタック` で記録
@@ -186,7 +189,7 @@ GIT_TERMINAL_PROMPT=0 git push origin [branch] --no-verify
 
 ```
 Layer 1: GIT_TERMINAL_PROMPT=0 付き実行  (credential prompt ハング対策)
-Layer 2: run_command(WaitMsBeforeAsync=500) → Background → 30s無出力→Terminate
+Layer 2: run_command(WaitMsBeforeAsync=必要最小限) → Background → 予期される時間から超過→Terminate (MR-01)
 Layer 3: write_to_file/view_file/GitHub MCP でターミナル迂回
 Layer 4: Token/Key入力ブロックによるハング時は `browser_subagent` を起動し自律的に認証情報を取得（MR-10）
 ```
