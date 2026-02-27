@@ -30,6 +30,7 @@ brain/checkpoint_logs/
 memory/
 data_graph.backup.json
 data_graph.json.tmp.*
+feedback_store.json
 
 # === Personal directory ===
 personal/*
