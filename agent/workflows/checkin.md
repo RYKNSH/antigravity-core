@@ -110,6 +110,19 @@ node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" restore 2>/dev/null &
 disown $!
 
 # ══════════════════════════════════════════════════════
+# Discord Session Hook（プロジェクト内にhookがあれば自動実行）
+# セッション開始 → Discordチャンネル自動作成
+# ══════════════════════════════════════════════════════
+DISCORD_HOOK="./src/discord/session-hook.js"
+if [ -f "$DISCORD_HOOK" ]; then
+  PROJECT_NAME=$(basename "$(pwd)" | tr '[:lower:]' '[:upper:]' | tr '-' ' ')
+  SESSION_LABEL="dev-$(date +%m%d)"
+  ( node "$DISCORD_HOOK" checkin "$PROJECT_NAME" "$SESSION_LABEL" 2>/dev/null ) &
+  disown $!
+  echo "🔗 Discord session hook triggered"
+fi
+
+# ══════════════════════════════════════════════════════
 # 結果表示
 # ══════════════════════════════════════════════════════
 echo "✅ Check-in complete!" && df -h . | tail -1

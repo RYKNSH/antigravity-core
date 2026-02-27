@@ -160,6 +160,14 @@ _smart_run 10 1 "evolve"        node "$ANTIGRAVITY_DIR/agent/scripts/evolve.js" 
 # `wait` without args waits for ALL background tasks, including the watchdog.
 # Therefore we explicitly remove `wait` here, jobs in (3) are fire-and-forget.
 
+# ─── 6.5. Discord Session Archive Hook ─────────────
+DISCORD_HOOK="./src/discord/session-hook.js"
+if [ -f "$DISCORD_HOOK" ]; then
+  ( node "$DISCORD_HOOK" checkout "$SCORE" 2>/dev/null ) &
+  disown $!
+  echo "📦 Discord session archived"
+fi
+
 echo "✅ Checkout complete!" && df -h . | tail -1
 ```
 
