@@ -20,32 +20,6 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 
 ---
 
-## 共通完了プロトコル（全WF必須）
-
-> [!IMPORTANT]
-> **タスク完了は「報告」ではなく「遷移」である。**
-> MR-03違反（「次はどれから？」）の100%がnotify_userのMessage引数で発生している。
-> これは「ルールで防ぐ」のではなく「構造で防ぐ」。以下を全WFに適用。
-
-### 完了時の行動（優先順）
-
-1. **中間タスクが残っている場合** → notify_userを呼ばず即着手
-2. **全タスク完了の場合** → notify_userで**宣言形式**の完了報告
-
-### notify_userのMessage記述ルール
-
-- ❌ 禁止: 選択をユーザーに委ねる（「どちらから？」「何から？」）= 構造を理解していない証拠
-- ✅ 必須: 構造を理解し、理念＞ビジョン＞ミッションに合致しているか照合し、宣言する（「次は〇〇に着手する」）
-- ✅ 推奨: 中間タスクなら報告せず即着手（理解→判断→行動を一息で）
-
-### 次タスクの自律決定ロジック
-
-1. NEXT_SESSION.md の #1（最優先）
-2. 進行中の実装計画 の次ステップ
-3. 上記がなければ → /checkout を実行
-
----
-
 ## メタワークフロー層
 
 ### `/go`（統合版）
@@ -181,13 +155,16 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | **フロー** | Phase 0: Pre-Flight（サーバー確認）→ Phase 1: Automated Audit（Lighthouse + axe-core）→ Phase 2: Score Card → Phase 3: Auto-Fix → Phase 4: Report |
 | **エラー時** | サーバー未起動→`npm run dev`自動起動試行。Lighthouse実行失敗→npx再インストール試行。Grade D→`/fbl` Phase 6 Self-Repair対象 |
 
-### `/error-sweep`
+### `/error-sweep`（World-Class Deep Error Check）
 | 項目 | 定義 |
 |------|------|
 | **入力** | 変更ファイルリスト(自動検出), `quick`/`full`(任意), `--changed-only`(任意) |
-| **出力** | Sweep Report(severity別), 修正リスト, Verdict, `.sweep_patterns.md` 更新(Self-Repair 2回以上時) |
-| **完了条件** | critical = 0（CLEAN or CONDITIONAL PASS）+ Phase 7 学習記録完了(該当時) |
-| **エラー時** | Self-Repair プログレッシブ拡張全段階失敗→`/debug-deep` 自動エスカレーション。「進捗なょ10分」→強制停止+レポート出力 |
+| **出力** | World-Class Score Card(10カテゴリ100点満点), Sweep Report(severity別), 修正リスト, Verdict(WORLD-CLASS/CLEAN/CONDITIONAL/BLOCKED), `.sweep_patterns.md` + `.sweep_standards.md` 更新(Self-Repair 2回以上時) |
+| **Phase構成** | Phase 0: Living Standards Engine(過去パターン+外部基準動的取得) → Phase 1: Static Analysis → Phase 2: Dependency Audit → Phase 3: Security Deep Scan(OWASP Top 10) → Phase 4: Runtime Sentinel → Phase 5: Logic Consistency → Phase 6: Contract Verification → Phase 7: Performance Deep Scan → Phase 7.5: Integration & A11y(WCAG 2.1 AA) → Phase 8: World-Class Score Card → Phase 9: Reinforcement Learning + Standards Evolution |
+| **完了条件** | critical = 0 + Score ≥ 70（CLEAN以上）+ Phase 9 学習記録完了(該当時) |
+| **Living Standards** | Phase 0で技術スタック自動検出 → 外部ベストプラクティスWeb検索 → `~/.antigravity/knowledge/global_standards/`にキャッシュ(24h TTL) → `.sweep_standards.md`にマージ |
+| **Self-Evolving** | Phase 9でパターン抽象化+外部基準淘汰。次回Phase 0で自動参照するダブル進化学習ループ |
+| **エラー時** | Self-Repair プログレッシブ拡張全段階失敗→`/debug-deep` 自動エスカレーション。「進捗なし10分」→強制停止+レポート出力 |
 
 ### `/test-evolve`（AI-Driven Test Evolution）
 | 項目 | 定義 |
@@ -364,19 +341,6 @@ autonomy_level: 2  # L0-L3
 | 3rd round: さらに5回失敗（合訓13回） | → **真のPAUSE**（エスカレーション） |
 | 「進捗なょ10分」 | → `/debug-deep` 自動発動（アプローチ転換） |
 | **SSD I/O ハング**（10s超過） | → 3-Layer Defense自動発動（`safe-commands.md` 参照）→ 全失敗時Deferred Tasks記録 |
-
-### 階層的エスカレーション（逆流プロトコル）
-
-下流フェーズ（`/go`, `/verify`, `/test-evolve`、およびメタ検証）において発生したエラーは、その性質と重症度（Level 1〜3）に応じて段階的に上位アーティファクトへ回帰（エスカレーション）し、ディープディベート（問い）を発動させる。
-
-| エラーLevel | 定義（発動センサー） | アクション（逆流先） |
-|-------------|----------------------|----------------------|
-| **Level 1 (技術的)** | 構文エラー、Lintエラー、一時的なテスト失敗 | 下流の `/fbl` や `/debug-deep` にてコードレベルで純粋に自己解決する（上流には遡らない）。 |
-| **Level 2 (停滞 / コンテキスト喪失)** | `/verify` の絶対品質基準（Lighthouse等）未達、`/test-evolve` 評価C以下、メタ検証スクリプト(`verify_core.sh`)の失敗 | 作業を即時停止（PAUSE回避）し、**`docs/MILESTONES.md` (直近の北極星) と現状の `task.md` の整合性を問う `/debate deep`** を発動する。 |
-| **Level 3 (アーキテクチャ崩壊)** | Level 2のディベート結果、「タスクの方向性自体が根底からズレている」とAIが判定した場合 | さらに上位の **`docs/ROADMAP.md` や `docs/WHITEPAPER.md` へ回帰し、戦略層の再定義（/think 等の再実行）**へエスカレーションする。 |
-
-> [!IMPORTANT]
-> この逆流プロトコルは、ユーザーへの「どうしますか？」という質問（MR-03違反）を根絶するための自律的ループである。AIは下流での「厳格な品質エラー（痛み）」を感じた時のみ、上位のガードレールに疑問を投げかける。
 
 ### セッション終了の扱い
 
