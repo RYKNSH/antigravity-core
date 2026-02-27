@@ -1,343 +1,157 @@
 #!/usr/bin/env node
 /**
- * DRG Bootstrap — Scan all services and populate data_graph.json
+ * DRG Bootstrap — Scan connected services and populate data_graph.json
  * 
- * This script is meant to be run ONCE during initial DRG setup.
- * After initial population, DRG is updated incrementally.
+ * Scans your GitHub repos (via MCP or API) and creates a starter DRG.
+ * Each user's data_graph.json is personal and NOT committed to git.
  * 
- * Usage: node bootstrap_drg.js
+ * Usage:
+ *   node bootstrap_drg.js                    # Interactive scan
+ *   node bootstrap_drg.js --github-user=USER # Specify GitHub user
+ * 
+ * Prerequisites:
+ *   - data_graph.template.json must exist (copied to data_graph.json if missing)
+ *   - GitHub MCP configured, or GITHUB_TOKEN env var set
  */
 
 const drg = require('./drg.js');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
-// ============================================================
-// DATA: Extracted from GitHub API + Chatwork API + known structure
-// ============================================================
+const DRG_DIR = process.env.ANTIGRAVITY_DIR || path.join(os.homedir(), '.antigravity');
+const DRG_PATH = path.join(DRG_DIR, 'data_graph.json');
+const TEMPLATE_PATH = path.join(DRG_DIR, 'data_graph.template.json');
 
-const PROJECTS = [
-    {
-        id: 'proj:secretary-buddy',
-        type: 'project',
-        label: 'Secretary Buddy',
-        status: 'active',
-        sources: {
-            github: 'RYKNSH/secretary-buddy',
-            local: '~/Desktop/AntigravityWork/SECRETARY BUDDY',
-            chatwork_rooms: [16392435], // マイチャット
-        }
-    },
-    {
-        id: 'proj:art-buddy',
-        type: 'project',
-        label: 'Art Buddy',
-        status: 'active',
-        sources: {
-            github: 'RYKNSH/ART_BUDDY',
-        }
-    },
-    {
-        id: 'proj:discord-buddy',
-        type: 'project',
-        label: 'Discord Buddy',
-        status: 'active',
-        sources: {
-            github: 'RYKNSH/DiscordBuddy',
-        }
-    },
-    {
-        id: 'proj:antigravity-core',
-        type: 'project',
-        label: 'Antigravity Core',
-        status: 'active',
-        sources: {
-            github: 'RYKNSH/antigravity-core',
-            local: '~/.antigravity',
-        }
-    },
-    {
-        id: 'proj:antigravity-private',
-        type: 'project',
-        label: 'Antigravity Private',
-        status: 'active',
-        sources: {
-            github: 'RYKNSH/antigravity-private',
-            local: '~/.antigravity-private',
-        }
-    },
-    {
-        id: 'proj:antigravity-controller',
-        type: 'project',
-        label: 'Antigravity Controller',
-        status: 'active',
-        sources: {
-            github: 'RYKNSH/Antigravity-Controller',
-        }
-    },
-    {
-        id: 'proj:artistory-academy',
-        type: 'project',
-        label: 'ARTISTORY Academy',
-        status: 'active',
-        sources: {
-            github: 'RYKNSH/artistory-academy',
-        }
-    },
-    {
-        id: 'proj:kpi-buddy',
-        type: 'project',
-        label: 'KPI Buddy',
-        status: 'active',
-        sources: {
-            github: 'RYKNSH/kpi-buddy',
-        }
-    },
-    {
-        id: 'proj:zen-ai',
-        type: 'project',
-        label: 'Zen AI',
-        status: 'paused',
-        sources: {
-            github: 'RYKNSH/zen-ai',
-        }
-    },
-    {
-        id: 'proj:videdit',
-        type: 'project',
-        label: 'Videdit Pipeline',
-        status: 'paused',
-        sources: {
-            github: 'RYKNSH/Videdit_pipeline',
-        }
-    },
-    {
-        id: 'proj:mother-agent',
-        type: 'project',
-        label: 'Mother Agent',
-        status: 'archived',
-        sources: {
-            github: 'RYKNSH/Mother-Agent',
-        }
-    },
-    {
-        id: 'proj:ryknsh-records',
-        type: 'project',
-        label: 'RYKNSH Records',
-        status: 'active',
-        sources: {
-            github: 'RYKNSH/RYKNSH-records',
-        }
-    },
-    {
-        id: 'proj:soloprostudio',
-        type: 'project',
-        label: 'SoloProStudio',
-        status: 'paused',
-        sources: {
-            github: 'RYKNSH/SoloProStudio',
-        }
-    },
-    {
-        id: 'proj:type-motion',
-        type: 'project',
-        label: 'Type Motion',
-        status: 'paused',
-        sources: {
-            github: 'RYKNSH/type-motion',
-        }
-    },
-    {
-        id: 'proj:l-buddy',
-        type: 'project',
-        label: 'L-Buddy (LINE Bot)',
-        status: 'paused',
-        sources: {
-            github: 'RYKNSH/l-buddy',
-        }
-    },
-    {
-        id: 'proj:discord-bot-stephen',
-        type: 'project',
-        label: 'Discord Bot Stephen',
-        status: 'archived',
-        sources: {
-            github: 'RYKNSH/Discord-Bot-Stephen',
-        }
-    },
-];
+// ─── Parse CLI args ──────────────────────────────────────
+const args = process.argv.slice(2).reduce((acc, arg) => {
+    const [k, v] = arg.replace('--', '').split('=');
+    acc[k] = v || true;
+    return acc;
+}, {});
 
-// GitHub repos as nodes
-const REPOS = PROJECTS.map(p => ({
-    id: `repo:${p.sources.github}`,
-    type: 'repo',
-    label: `${p.label} (GitHub)`,
-    url: `https://github.com/${p.sources.github}`,
-}));
+// ─── Ensure data_graph.json exists ───────────────────────
+function ensureDRGFile() {
+    if (!fs.existsSync(DRG_PATH)) {
+        if (fs.existsSync(TEMPLATE_PATH)) {
+            fs.copyFileSync(TEMPLATE_PATH, DRG_PATH);
+            console.log('📄 Created data_graph.json from template');
+        } else {
+            console.error('❌ Neither data_graph.json nor template found. Run from ~/.antigravity/');
+            process.exit(1);
+        }
+    }
+}
 
-// Key Chatwork rooms (business-relevant groups only, not direct messages)
-const CHATWORK_ROOMS = [
-    { id: 'cw:413850110', type: 'room', label: '全体_小西流 AI×音楽 PJ_S2C' },
-    { id: 'cw:420889031', type: 'room', label: 'SP全体_小西流AI×音楽 PJ_S2C' },
-    { id: 'cw:415372223', type: 'room', label: '【動画共同編集】ARTISTORY AI PROJECT' },
-    { id: 'cw:413574974', type: 'room', label: '【デザイン】ARTISTORY AI PROJECT' },
-    { id: 'cw:415356796', type: 'room', label: '【動画】ARTISTORY AI PROJECT' },
-    { id: 'cw:409948274', type: 'room', label: 'teamふぃす' },
-    { id: 'cw:409121886', type: 'room', label: '小西さんPJ × Misfits' },
-    { id: 'cw:409948243', type: 'room', label: 'ART JOURNEY PROJECT' },
-    { id: 'cw:374989559', type: 'room', label: '【プレダイ】シェア・アウトプット' },
-    { id: 'cw:394772565', type: 'room', label: '【プレダイ】IT&AIヘルプデスク' },
-    { id: 'cw:352827563', type: 'room', label: '【プレダイ】全体連絡(受信専用)' },
-    { id: 'cw:407052454', type: 'room', label: '【JPRO】エリートクラスMMG（3期）' },
-    { id: 'cw:407053188', type: 'room', label: '【JPRO】特待生MMG（5期）' },
-];
+// ─── GitHub Scan (via fetch API) ─────────────────────────
+async function scanGitHub(username) {
+    console.log(`\n📂 Scanning GitHub repos for ${username}...`);
+    const repos = [];
+    let page = 1;
 
-// Infrastructure nodes
-const INFRA = [
-    { id: 'infra:antigravity', type: 'component', label: 'Antigravity Dev Environment', path: '~/.antigravity' },
-    { id: 'infra:mcp-bus', type: 'component', label: 'MCP Bus (5 servers)', services: ['chatwork', 'discord', 'github', 'google-workspace'] },
-    { id: 'infra:supabase', type: 'database', label: 'Supabase (shared DB)' },
-    { id: 'infra:gdrive', type: 'folder', label: 'Google Drive (435GB)' },
-];
+    while (true) {
+        const url = `https://api.github.com/users/${username}/repos?per_page=100&page=${page}&sort=updated`;
+        const headers = { 'User-Agent': 'Antigravity-DRG-Bootstrap' };
+        if (process.env.GITHUB_TOKEN) {
+            headers['Authorization'] = `token ${process.env.GITHUB_TOKEN}`;
+        }
 
-// ============================================================
-// EDGES: Known relationships
-// ============================================================
+        const res = await fetch(url, { headers });
+        if (!res.ok) {
+            console.error(`❌ GitHub API error: ${res.status}`);
+            break;
+        }
 
-const EDGES = [
-    // Project → Repo
-    ...PROJECTS.map(p => ({
-        from: p.id,
-        to: `repo:${p.sources.github}`,
-        relation: 'implements',
-    })),
+        const data = await res.json();
+        if (data.length === 0) break;
+        repos.push(...data);
+        page++;
+    }
 
-    // Shared infrastructure
-    { from: 'proj:secretary-buddy', to: 'infra:supabase', relation: 'depends_on', evidence: 'Supabase DB for user data + metrics' },
-    { from: 'proj:artistory-academy', to: 'infra:supabase', relation: 'depends_on', evidence: 'Shared Supabase instance' },
-    { from: 'proj:kpi-buddy', to: 'infra:supabase', relation: 'depends_on', evidence: 'KPI metrics storage' },
+    return repos.map(r => ({
+        project: {
+            id: `proj:${r.name.toLowerCase()}`,
+            type: 'project',
+            label: r.name,
+            status: r.archived ? 'archived' : 'active',
+        },
+        repo: {
+            id: `repo:${r.full_name}`,
+            type: 'repo',
+            label: `${r.name} (GitHub)`,
+            url: r.html_url,
+        },
+        edge: {
+            from: `proj:${r.name.toLowerCase()}`,
+            to: `repo:${r.full_name}`,
+            relation: 'implements',
+        }
+    }));
+}
 
-    // Antigravity relationships  
-    { from: 'proj:antigravity-core', to: 'proj:antigravity-private', relation: 'depends_on', evidence: '.env secrets symlinked' },
-    { from: 'proj:antigravity-controller', to: 'proj:antigravity-core', relation: 'depends_on', evidence: 'Discord control of antigravity' },
-    { from: 'proj:secretary-buddy', to: 'proj:antigravity-core', relation: 'depends_on', evidence: 'Uses antigravity workflows' },
-
-    // Buddy ecosystem
-    { from: 'proj:discord-buddy', to: 'proj:secretary-buddy', relation: 'shared_infra', evidence: 'Same Discord bot ecosystem' },
-    { from: 'proj:art-buddy', to: 'proj:secretary-buddy', relation: 'shared_infra', evidence: 'ACE infrastructure shared' },
-    { from: 'proj:l-buddy', to: 'proj:secretary-buddy', relation: 'shared_infra', evidence: 'LINE integration channel' },
-
-    // Chatwork correlations
-    { from: 'proj:artistory-academy', to: 'cw:415372223', relation: 'discussed_in' },
-    { from: 'proj:artistory-academy', to: 'cw:413574974', relation: 'discussed_in' },
-    { from: 'proj:artistory-academy', to: 'cw:415356796', relation: 'discussed_in' },
-    { from: 'proj:artistory-academy', to: 'cw:409948243', relation: 'discussed_in' },
-
-    // MCP Bus connections
-    { from: 'infra:mcp-bus', to: 'proj:secretary-buddy', relation: 'shared_infra', evidence: 'SECRETARY BUDDY uses MCP Bus' },
-];
-
-// ============================================================
-// CORRELATIONS: Detected relationships
-// ============================================================
-
-const CORRELATIONS = [
-    {
-        entities: ['proj:secretary-buddy', 'proj:discord-buddy', 'proj:art-buddy', 'proj:l-buddy'],
-        type: 'buddy_ecosystem',
-        detected_by: 'L1:name_match',
-        confidence: 0.95,
-        evidence: 'All share "-buddy" naming convention and SECRETARY BUDDY as hub',
-    },
-    {
-        entities: ['proj:antigravity-core', 'proj:antigravity-private', 'proj:antigravity-controller'],
-        type: 'infra_stack',
-        detected_by: 'L1:name_match',
-        confidence: 0.95,
-        evidence: 'All share "antigravity" naming convention',
-    },
-    {
-        entities: ['cw:415372223', 'cw:413574974', 'cw:415356796'],
-        type: 'content_mirror',
-        detected_by: 'L1:name_match',
-        confidence: 0.90,
-        evidence: 'All contain "ARTISTORY AI PROJECT" in name',
-    },
-];
-
-// ============================================================
-// BOOTSTRAP EXECUTION
-// ============================================================
-
-function bootstrap() {
+// ─── Bootstrap ───────────────────────────────────────────
+async function bootstrap() {
     console.log('🚀 DRG Bootstrap starting...\n');
 
-    // Read current DRG
-    let data = drg.readDRG(true); // Create backup first
+    ensureDRGFile();
+    let data = drg.readDRG(true); // Backup first
     if (!data) {
         console.error('Failed to read DRG. Aborting.');
         process.exit(1);
     }
 
-    // Add project nodes
-    console.log('📦 Adding project nodes...');
-    for (const p of PROJECTS) {
-        try {
-            drg.addNode(data, p);
-            console.log(`  ✅ ${p.id} (${p.label})`);
-        } catch (e) {
-            console.log(`  ⏭️  ${p.id} — ${e.message}`);
-        }
-    }
+    // GitHub scan
+    const githubUser = args['github-user'] || args['github_user'];
+    if (githubUser) {
+        const results = await scanGitHub(githubUser);
+        console.log(`  Found ${results.length} repos\n`);
 
-    // Add repo nodes
-    console.log('\n📂 Adding repo nodes...');
-    for (const r of REPOS) {
-        try {
-            drg.addNode(data, r);
-            console.log(`  ✅ ${r.id}`);
-        } catch (e) {
-            console.log(`  ⏭️  ${r.id} — ${e.message}`);
+        for (const r of results) {
+            try { drg.addNode(data, r.project); } catch { }
+            try { drg.addNode(data, r.repo); } catch { }
+            try { drg.addEdge(data, r.edge); } catch { }
         }
-    }
 
-    // Add chatwork room nodes
-    console.log('\n💬 Adding chatwork room nodes...');
-    for (const c of CHATWORK_ROOMS) {
-        try {
-            drg.addNode(data, c);
-            console.log(`  ✅ ${c.id} (${c.label})`);
-        } catch (e) {
-            console.log(`  ⏭️  ${c.id} — ${e.message}`);
+        // Auto-detect correlations by name patterns
+        const projects = data.nodes.filter(n => n.type === 'project');
+        const nameGroups = {};
+        for (const p of projects) {
+            // Group by common prefixes/suffixes
+            const name = p.label.toLowerCase();
+            for (const suffix of ['-buddy', 'antigravity', 'discord']) {
+                if (name.includes(suffix)) {
+                    if (!nameGroups[suffix]) nameGroups[suffix] = [];
+                    nameGroups[suffix].push(p.id);
+                }
+            }
         }
+
+        for (const [pattern, entities] of Object.entries(nameGroups)) {
+            if (entities.length >= 2) {
+                data.correlations = data.correlations || [];
+                data.correlations.push({
+                    entities,
+                    type: 'name_pattern',
+                    detected_by: 'L1:name_match',
+                    confidence: 0.85,
+                    evidence: `Shared pattern: "${pattern}"`
+                });
+            }
+        }
+    } else {
+        console.log('⚠️  No --github-user specified. Skipping GitHub scan.');
+        console.log('   Usage: node bootstrap_drg.js --github-user=YOUR_USERNAME\n');
     }
 
     // Add infrastructure nodes
-    console.log('\n🏗️  Adding infrastructure nodes...');
-    for (const i of INFRA) {
-        try {
-            drg.addNode(data, i);
-            console.log(`  ✅ ${i.id} (${i.label})`);
-        } catch (e) {
-            console.log(`  ⏭️  ${i.id} — ${e.message}`);
-        }
+    const infraNodes = [
+        { id: 'infra:antigravity', type: 'component', label: 'Antigravity Dev Environment' },
+    ];
+    for (const i of infraNodes) {
+        try { drg.addNode(data, i); } catch { }
     }
 
-    // Add edges
-    console.log('\n🔗 Adding edges...');
-    for (const e of EDGES) {
-        try {
-            drg.addEdge(data, e);
-        } catch (err) {
-            console.log(`  ⏭️  ${e.from} → ${e.to} — ${err.message}`);
-        }
-    }
-    console.log(`  ✅ ${EDGES.length} edges added`);
-
-    // Add correlations
-    console.log('\n🧠 Adding correlations...');
-    data.correlations = CORRELATIONS;
-    console.log(`  ✅ ${CORRELATIONS.length} correlations added`);
-
-    // Write back
+    // Write
     console.log('\n💾 Writing DRG...');
     const success = drg.writeDRG(data);
     if (success) {
@@ -345,11 +159,14 @@ function bootstrap() {
         console.log(`\n📊 Stats:`);
         console.log(`   Nodes: ${data.nodes.length}`);
         console.log(`   Edges: ${data.edges.length}`);
-        console.log(`   Correlations: ${data.correlations.length}`);
+        console.log(`   Correlations: ${(data.correlations || []).length}`);
     } else {
         console.error('❌ DRG write failed!');
         process.exit(1);
     }
 }
 
-bootstrap();
+bootstrap().catch(err => {
+    console.error('❌ Bootstrap error:', err.message);
+    process.exit(1);
+});

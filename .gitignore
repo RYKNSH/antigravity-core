@@ -28,6 +28,7 @@ brain/checkpoint_logs/
 
 # === DRG MEMORY (LOCAL ONLY — G3.4/G8.1) ===
 memory/
+data_graph.json
 data_graph.backup.json
 data_graph.json.tmp.*
 feedback_store.json

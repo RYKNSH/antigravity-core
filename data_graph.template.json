@@ -1,0 +1,11 @@
+{
+    "_schema": {
+        "version": "1",
+        "description": "Data Relationship Graph — Antigravity環境の全データ関係性インデックス",
+        "instructions": "このテンプレートをdata_graph.jsonにコピーし、bootstrap_drg.jsでデータを投入してください"
+    },
+    "nodes": [],
+    "edges": [],
+    "correlations": [],
+    "last_synced": null
+}
