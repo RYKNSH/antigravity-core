@@ -67,6 +67,36 @@ description: 計画されたタスクを実装するモード。ルーティン�
 > [!TIP]
 > 過去の失敗パターンに該当するタスクの場合、計画段階で対策を織り込む。
 
+### 0-2.5. DRG + Memory Preload（G4.1 — スキップ禁止）
+
+// turbo
+```bash
+# DRG読み込み + バリデーション (G4.1: ハードコード — スキップ不可)
+ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
+node "$ANTIGRAVITY_DIR/agent/scripts/drg.js" read
+```
+
+DRG読み込み成功時、以下を確認:
+
+1. **Staleness Check (G4.2)**: `last_synced` が24時間以上前なら `⚠️ DRG stale` と報告
+2. **Memory Load**: `memory/decisions.json` の直近5件を確認し、前回判断のコンテキスト復元
+3. **Canary Check (G2.6)**: 既知のリポジトリ（`RYKNSH/antigravity-core`）がGitHub MCPで読み取れるか確認。読めなければ `🚨 MCP権限異常` を報告
+
+```markdown
+📊 DRG Loaded
+- Nodes: [X] / Edges: [Y] / Correlations: [Z]
+- Last Synced: [timestamp]
+- Staleness: [OK / ⚠️ STALE (Xh ago)]
+- Canary: [✅ / 🚨 FAIL]
+- Memory: [直近判断サマリー]
+```
+
+> [!IMPORTANT]
+> DRGファイルが存在しない or パース失敗の場合:
+> 1. `data_graph.backup.json` からの復元を試みる
+> 2. 復元も失敗 → `node bootstrap_drg.js` を実行して再構築
+> 3. 再構築後も失敗 → ユーザーに報告し、DRGなしで続行
+
 ### 0-3. Context Recovery（WHITEPAPER存在時）
 
 WHITEPAPER.md が存在するプロジェクトでは自動でコンテキスト回帰:

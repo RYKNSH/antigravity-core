@@ -26,6 +26,11 @@ brain_log/
 brain/checkpoint_logs/
 .session_state.json
 
+# === DRG MEMORY (LOCAL ONLY — G3.4/G8.1) ===
+memory/
+data_graph.backup.json
+data_graph.json.tmp.*
+
 # === Personal directory ===
 personal/*
 !personal/.gitkeep
