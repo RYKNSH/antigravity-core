@@ -1,6 +1,6 @@
 #!/bin/bash
-# ssd_guard.sh — I/O ハング防止ラッパー (3-Layer Defense)
-# Usage: ssd_guard.sh <timeout_seconds> <command> [args...]
+# io_guard.sh — I/O ハング防止ラッパー (3-Layer Defense)
+# Usage: io_guard.sh <timeout_seconds> <command> [args...]
 #
 # Layer 1: perl alarm でタイムアウト
 # Layer 2: バックグラウンド実行 + watchdog kill (Layer 1失敗時)
@@ -11,14 +11,13 @@ shift
 CMD="$@"
 
 if [ -z "$CMD" ]; then
-  echo "Usage: ssd_guard.sh <timeout_seconds> <command> [args...]"
-  echo "Example: ssd_guard.sh 10 cp file.txt /Volumes/PortableCore/dest/"
+  echo "Usage: io_guard.sh <timeout_seconds> <command> [args...]"
+  echo "Example: io_guard.sh 10 cp file.txt ~/Desktop/dest/"
   exit 1
 fi
 
 echo "🛡️ Core Guard: timeout=${TIMEOUT}s cmd='$CMD'"
 
-# Layer 1: perl alarm
 perl -e "alarm $TIMEOUT; exec @ARGV" $CMD
 EXIT_CODE=$?
 
@@ -29,13 +28,11 @@ fi
 
 echo "⚠️ Layer 1 failed (exit=$EXIT_CODE). Trying Layer 2 (background+kill)..."
 
-# Layer 2: background + watchdog
 eval "$CMD" &
 BG_PID=$!
 sleep $TIMEOUT
 
 if kill -0 $BG_PID 2>/dev/null; then
-  # Still running = hung
   kill -9 $BG_PID 2>/dev/null
   wait $BG_PID 2>/dev/null
   echo "❌ Layer 2: process hung, killed (PID=$BG_PID)"
