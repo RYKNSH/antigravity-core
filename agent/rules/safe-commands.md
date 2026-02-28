@@ -163,14 +163,55 @@ rm -f ~/.antigravity/.git/index.lock 2>/dev/null
 **ビルド・テスト**: `pnpm lint/test`, `vitest`, `tsc --noEmit`
 **パッケージ確認**: `pnpm list`, `npm list`
 
+## 🚫 ターミナル使用前の判断フロー（最重要ルール）
+
+> [!CAUTION]
+> **ターミナルはハングの最大の原因**。`run_command` を使う前に必ず以下の判断フローを通せ。
+
+### 判断フロー（毎回必須 — `run_command` の前に必ず通せ）
+
+```
+やりたいこと
+  → 1. ネイティブツールで可能？ → YES → 使え（終了）100%ハングしない
+  → 2. MCPで可能？             → YES → 使え（終了）100%ハングしない
+  → 3. ブラウザで可能？         → YES → 使え（終了）100%ハングしない
+  → 4. 専用CLIが存在する？      → YES → 使え（終了）タイムアウト付きで安全
+     → 持ってない？ → search_web/read_url_content/browser_subagentでリサーチ → インストール → 使え
+  → 5. 上記全て不可             → ターミナル使用OK（防御付き）
+```
+
+> [!CAUTION]
+> **ステップ1〜4を飛ばしてステップ5に行くな。ハングしない方法は山ほどある。思考停止するな。**
+
+### ハングしない手段の代替マトリクス
+
+| やりたいこと | ❌ 生ターミナル | ✅ 1. ネイティブツール | ✅ 2. MCP | ✅ 3. ブラウザ | ✅ 4. CLI |
+|------------|---------------|---------------------|----------|-------------|----------|
+| ファイル読み取り | `cat`, `tail` | `view_file` | — | — | — |
+| ファイル検索 | `find`, `grep` | `find_by_name`, `grep_search` | — | — | — |
+| ファイル作成/編集 | `sed`, `echo >` | `write_to_file`, `replace_file_content` | — | — | — |
+| ファイルコピー | `cp`, `rsync` | `view_file` → `write_to_file` | — | — | — |
+| Git push | `git push` | — | `mcp_github_push_files` | — | `gh` CLI |
+| Git操作全般 | `git` | — | `mcp_github_*` | GitHub UI | `gh` CLI |
+| Web取得 | `curl`, `wget` | `read_url_content` | — | `browser_subagent` | — |
+| API操作 | `curl -X POST` | — | MCP ツール群 | `browser_subagent` | 各サービスCLI |
+| デプロイ | 生コマンド | — | — | ダッシュボード | `railway`, `vercel`, `fly` CLI |
+| DB操作 | `psql` 直打ち | — | `mcp_supabase_*` | Supabase UI | `supabase` CLI |
+| パッケージ管理 | — | — | — | — | `brew`, `pnpm` |
+
+> [!IMPORTANT]
+> **「ターミナルの方が速い」は幻想**。ハングして数分ロスする方がはるかに遅い。
+> **CLIが無い？** → `search_web` でリサーチ → `browser_subagent` でインストール手順確認 → インストール → 使え。道具がないなら作れ/探せ。
+
 ## 🚫 ファイル操作のネイティブツール強制 (I/O Hang 防御)
 
 > [!CAUTION]
 > ターミナルコマンドによるファイル操作はI/Oブロック（D状態）でシステムハングを引き起こす最大の原因です。
 
 1. **ターミナルでのファイル操作禁止**: `cp`, `rsync`, `sed`, `mkdir` 等を用いたファイル作成・コピー・移動・置換を**原則禁止**とします。
-2. **LLMネイティブツールの優先**: 必ずエージェントのネイティブツール（`write_to_file`, `replace_file_content`, `multi_replace_file_content`）を使用してください。ディレクトリ作成もツールが自動で行います。
-3. **`Cwd` パラメータの強制**: `run_command` の `CommandLine` 内で `cd` を直接実行してはいけません。必ずツールの `Cwd` パラメータでカレントディレクトリを指定してください。
+2. **ファイル読み取りもネイティブツール優先**: `cat`, `head`, `tail`, `less` より `view_file` を使え。メモリ圧迫時は `cat` すらハングする。
+3. **LLMネイティブツールの優先**: 必ずエージェントのネイティブツール（`write_to_file`, `replace_file_content`, `multi_replace_file_content`）を使用してください。ディレクトリ作成もツールが自動で行います。
+4. **`Cwd` パラメータの強制**: `run_command` の `CommandLine` 内で `cd` を直接実行してはいけません。必ずツールの `Cwd` パラメータでカレントディレクトリを指定してください。
 
 ## 🔒 Git Safety Rules（Grounding原則）
 
