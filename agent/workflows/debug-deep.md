@@ -75,7 +75,7 @@ Compactionに耐えるよう、すべての情報を `.session_state` に永続�
 
 ### 2-1. 内部ナレッジ検索
 1. **`.debug_learnings.md`**（プロジェクト単位）を読む — 過去に同じパターンはないか？
-2. **`SSD/.antigravity/knowledge/`**（グローバル）を検索 — 関連ナレッジはないか？
+2. **`~/.antigravity/knowledge/`**（グローバル）を検索 — 関連ナレッジはないか？
 3. **`.agent/skills/`** を検索 — 使えるスキルはないか？
 
 ### 2-2. 公式ドキュメント・Web検索
@@ -179,12 +179,12 @@ git add -A && git commit -m "debug-deep: checkpoint before approach change"
 [同様のエラーが起きたらどう対処すべきか]
 ```
 
-### 6-2. グローバル: `SSD/.antigravity/knowledge/debug_patterns/`
+### 6-2. グローバル: `~/.antigravity/knowledge/debug_patterns/`
 
 エラーパターンが**プロジェクト固有でない場合**（フレームワーク起因、OS起因、一般的なパターン等）、グローバルナレッジにも保存:
 
 ```
-SSD/.antigravity/knowledge/debug_patterns/
+~/.antigravity/knowledge/debug_patterns/
 ├── [framework]_[pattern].md    # e.g. nextjs_hydration_mismatch.md
 ├── [category]_[pattern].md     # e.g. macos_permission_sandbox.md
 └── INDEX.md                    # パターン一覧（検索用）

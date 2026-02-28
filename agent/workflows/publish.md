@@ -46,4 +46,4 @@ description: 記事配信（学習・昇格・予約）の統合ワークフロ�
     -   ※これは `/learn_from_blog` ワークフローとして独立しても良い。
 
 ---
-*Note: このワークフローは「Article Distribution System」タスクで整備されたスクリプト群（SSD First / Zero-Config対応版）を使用します。*
+*Note: このワークフローは「Article Distribution System」タスクで整備されたスクリプト群（Zero-Config対応版）を使用します。*

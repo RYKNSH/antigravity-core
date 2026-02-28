@@ -80,7 +80,7 @@ description: どんな小さなエラーも見逃さない徹底的なエラー�
 
 1. **`.sweep_patterns.md`**（プロジェクト単位）が存在すれば読む
 2. **`.debug_learnings.md`**（プロジェクト単位）が存在すれば読む — `/debug-deep` の学習も検出に活かす（**クロスポリネーション**）
-3. **`SSD/.antigravity/knowledge/debug_patterns/`**（グローバル）を検索
+3. **`~/.antigravity/knowledge/debug_patterns/`**（グローバル）を検索
 
 **Priority Score による重点チェック**:
 - `Priority = 発見頻度 × ヒット率`
@@ -675,7 +675,7 @@ Phase 0 で取得した外部基準をプロジェクトに永続化:
 Principle が**プロジェクト固有でない場合**（言語/フレームワーク共通のパターン）、グローバルにも保存:
 
 ```
-SSD/.antigravity/knowledge/debug_patterns/
+~/.antigravity/knowledge/debug_patterns/
 ├── typescript_async_await_enforcement.md
 ├── fullstack_date_type_unification.md
 ├── owasp_csp_header_requirement.md

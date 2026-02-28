@@ -49,15 +49,15 @@ description: 全ワークフローの入力・出力・完了条件・エラー�
 | **入力** | なし（自動検出） |
 | **出力** | 環境ステータスレポート, NEXT_SESSION.md の内容（存在時）, Deferred Tasks リトライ結果 |
 | **完了条件** | Phase 1-3 全完了（Phase 2.75 Deferred Tasks含む）, 環境が作業可能状態 |
-| **エラー時** | SSD未接続→ローカルのみで続行。npm install失敗→エラー表示して続行。Deferred Tasksリトライ失敗→記録を保持して続行 |
+| **エラー時** | npm install失敗→エラー表示して続行。Deferred Tasksリトライ失敗→記録を保持して続行 |
 
 ### `/checkout`
 | 項目 | 定義 |
 |------|------|
 | **入力** | セッション中の作業コンテキスト（自動収集） |
-| **出力** | `NEXT_SESSION.md`, SSDブレインログ, コミット |
+| **出力** | `NEXT_SESSION.md`, ブレインログ, コミット |
 | **完了条件** | Phase 0-4 全完了, git変更が保存済み |
-| **エラー時** | Score計算失敗→スキップしてログ保存。git失敗→手動コミット提案。SSD未接続→ローカル保存のみ |
+| **エラー時** | Score計算失敗→スキップしてログ保存。git失敗→手動コミット提案 |
 
 ---
 
@@ -340,7 +340,7 @@ autonomy_level: 2  # L0-L3
 | 2nd round: リトライ5回失敗 | → First Principlesからアプローチ転換→5回 |
 | 3rd round: さらに5回失敗（合訓13回） | → **真のPAUSE**（エスカレーション） |
 | 「進捗なょ10分」 | → `/debug-deep` 自動発動（アプローチ転換） |
-| **SSD I/O ハング**（10s超過） | → 3-Layer Defense自動発動（`safe-commands.md` 参照）→ 全失敗時Deferred Tasks記録 |
+| **I/O ハング**（10s超過） | → 3-Layer Defense自動発動（`safe-commands.md` 参照）→ 全失敗時Deferred Tasks記録 |
 
 ### セッション終了の扱い
 

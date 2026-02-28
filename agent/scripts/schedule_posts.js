@@ -5,7 +5,7 @@ const path = require('path');
 // 1. Global Env Retrieval
 let envPath = path.join(process.cwd(), '.env');
 if (!fs.existsSync(envPath)) {
-    // Fallback to SSD global env
+    // Fallback to global env
     envPath = '${process.env.ANTIGRAVITY_DIR || path.join(require("os").homedir(), ".antigravity")}/.env';
 }
 
@@ -66,7 +66,7 @@ function request(path, method, body) {
 function getNextGoldenTime() {
     // Current time in JST (System time is JST based on metadata)
     const now = new Date();
-    
+
     // Find next slot today
     for (const h of GOLDEN_HOURS) {
         const slot = new Date(now);
@@ -90,11 +90,11 @@ function formatToIsoLocal(date) {
     const m = pad(date.getMonth() + 1);
     const d = pad(date.getDate());
     const h = pad(date.getHours());
-    
+
     // Allow variable minutes if we want random jitter, but sticking to :00 for now
     const min = pad(date.getMinutes());
     const s = pad(date.getSeconds());
-    
+
     return `${y}-${m}-${d}T${h}:${min}:${s}`;
 }
 
@@ -147,120 +147,120 @@ async function main() {
         }
 
         // 2. Find Unscheduled Ready Posts
-        console.log('🔍 Searching for "Ready" posts without scheduled date...'); 
+        console.log('🔍 Searching for "Ready" posts without scheduled date...');
         const response = await request(`/v1/databases/${NOTION_DATABASE_ID}/query`, 'POST', {
-             filter: {
-                 and: [
-                     {
-                         property: STATUS_PROP,
-                         select: {
-                             equals: "Ready"
-                         }
-                     },
-                     {
-                         property: DATE_PROP,
-                         date: {
-                             is_empty: true
-                         }
-                     }
-                 ]
-             },
-             sorts: [
-                 {
+            filter: {
+                and: [
+                    {
+                        property: STATUS_PROP,
+                        select: {
+                            equals: "Ready"
+                        }
+                    },
+                    {
+                        property: DATE_PROP,
+                        date: {
+                            is_empty: true
+                        }
+                    }
+                ]
+            },
+            sorts: [
+                {
                     timestamp: "last_edited_time",
                     direction: "ascending" // Oldest first? or Descending? Let's do Ascending (FIFOish) or just stick to one.
-                 }
-             ]
-         });
- 
-         const pages = response.results;
-         if (pages.length === 0) {
-             console.log('✅ No unscheduled ready posts found.');
-             return;
-         }
- 
-         console.log(`found ${pages.length} post(s) to schedule.`);
-         
-         // 3. Determine Start Time (Next Golden Hour AFTER baseTime)
-         let targetTime = new Date(baseTime);
-         
-         // Move to next golden hour logic
-         // We need a robust "getNextGoldenTimeFrom(date)" function
-         // Inline logic for now to ensure flow
-         
-         function advanceToNextGolden(d) {
-             const t = new Date(d);
-             const currentH = t.getHours();
-             const idx = GOLDEN_HOURS.findIndex(h => h > currentH);
-             
-             if (idx !== -1) {
-                 // Found a slot later today
-                 t.setHours(GOLDEN_HOURS[idx], 0, 0, 0);
-             } else {
-                 // Move to tomorrow first slot
-                 t.setDate(t.getDate() + 1);
-                 t.setHours(GOLDEN_HOURS[0], 0, 0, 0);
-             }
-             
-             // If d was already exactly on a golden hour (e.g. from previous loop), we still need to advance?
-             // If baseTime is 08:00, we want next to be 12:00.
-             // The logic above: if currentH is 8, findIndex(h > 8) finds 12. Correct.
-             // If currentH is 22, findIndex is -1. Tomorrow 8. Correct.
-             
-             // Edge case: what if t <= d (because d was not exactly logic aligned)?
-             // Ensure result is strictly > d
-             if (t <= d) {
-                 // Should not happen with logic above unless same hour?
-                 // Force +1 hour and retry? or just explicit jump?
-                 // simplified:
-             }
-             return t;
-         }
+                }
+            ]
+        });
 
-         // Initial jump
-         targetTime = advanceToNextGolden(baseTime);
+        const pages = response.results;
+        if (pages.length === 0) {
+            console.log('✅ No unscheduled ready posts found.');
+            return;
+        }
 
-         // Safety: if baseTime was "Now" (no existing posts), ensuring it's in future is handled by advanceToNextGolden of (Now).
-         // If baseTime was a past scheduled post (e.g. yesterday), advanceToNextGolden might pick a time in the past?
-         // NO, we want "Future" schedule.
-         // If "Existing Latest" is in the past (e.g. 01/26 22:00), and now is 01/27 03:00.
-         // advanceToNextGolden(01/26 22:00) -> 01/27 08:00. which is > Now. OK.
-         // If "Existing Latest" is 01/27 08:00 (Future). advance -> 01/27 12:00. OK.
-         // What if "Existing Latest" was long ago?
-         // We should probably clamp start time to max(Now, LatestExisting).
-         
-         const now = new Date();
-         if (targetTime < now) {
-             // If calculated start is in past, catch up to Now
-             targetTime = advanceToNextGolden(now);
-         }
+        console.log(`found ${pages.length} post(s) to schedule.`);
 
-         for (const page of pages) {
-             const title = page.properties[TITLE_PROP]?.title[0]?.plain_text || "Untitled";
-             
-             console.log(`📅 Scheduling "${title}" to ${formatToIsoLocal(targetTime)}`);
- 
-             await request(`/v1/pages/${page.id}`, 'PATCH', {
-                 properties: {
-                     [DATE_PROP]: {
-                         date: {
-                             start: formatToIsoLocal(targetTime),
-                             time_zone: "Asia/Tokyo" 
-                         }
-                     }
-                 }
-             });
- 
-             console.log(`✨ Scheduled!`);
- 
-             // Advance for next iteration
-             targetTime = advanceToNextGolden(targetTime);
-         }
- 
-     } catch (e) {
-         console.error('Error:', e);
-         process.exit(1);
-     }
- }
+        // 3. Determine Start Time (Next Golden Hour AFTER baseTime)
+        let targetTime = new Date(baseTime);
+
+        // Move to next golden hour logic
+        // We need a robust "getNextGoldenTimeFrom(date)" function
+        // Inline logic for now to ensure flow
+
+        function advanceToNextGolden(d) {
+            const t = new Date(d);
+            const currentH = t.getHours();
+            const idx = GOLDEN_HOURS.findIndex(h => h > currentH);
+
+            if (idx !== -1) {
+                // Found a slot later today
+                t.setHours(GOLDEN_HOURS[idx], 0, 0, 0);
+            } else {
+                // Move to tomorrow first slot
+                t.setDate(t.getDate() + 1);
+                t.setHours(GOLDEN_HOURS[0], 0, 0, 0);
+            }
+
+            // If d was already exactly on a golden hour (e.g. from previous loop), we still need to advance?
+            // If baseTime is 08:00, we want next to be 12:00.
+            // The logic above: if currentH is 8, findIndex(h > 8) finds 12. Correct.
+            // If currentH is 22, findIndex is -1. Tomorrow 8. Correct.
+
+            // Edge case: what if t <= d (because d was not exactly logic aligned)?
+            // Ensure result is strictly > d
+            if (t <= d) {
+                // Should not happen with logic above unless same hour?
+                // Force +1 hour and retry? or just explicit jump?
+                // simplified:
+            }
+            return t;
+        }
+
+        // Initial jump
+        targetTime = advanceToNextGolden(baseTime);
+
+        // Safety: if baseTime was "Now" (no existing posts), ensuring it's in future is handled by advanceToNextGolden of (Now).
+        // If baseTime was a past scheduled post (e.g. yesterday), advanceToNextGolden might pick a time in the past?
+        // NO, we want "Future" schedule.
+        // If "Existing Latest" is in the past (e.g. 01/26 22:00), and now is 01/27 03:00.
+        // advanceToNextGolden(01/26 22:00) -> 01/27 08:00. which is > Now. OK.
+        // If "Existing Latest" is 01/27 08:00 (Future). advance -> 01/27 12:00. OK.
+        // What if "Existing Latest" was long ago?
+        // We should probably clamp start time to max(Now, LatestExisting).
+
+        const now = new Date();
+        if (targetTime < now) {
+            // If calculated start is in past, catch up to Now
+            targetTime = advanceToNextGolden(now);
+        }
+
+        for (const page of pages) {
+            const title = page.properties[TITLE_PROP]?.title[0]?.plain_text || "Untitled";
+
+            console.log(`📅 Scheduling "${title}" to ${formatToIsoLocal(targetTime)}`);
+
+            await request(`/v1/pages/${page.id}`, 'PATCH', {
+                properties: {
+                    [DATE_PROP]: {
+                        date: {
+                            start: formatToIsoLocal(targetTime),
+                            time_zone: "Asia/Tokyo"
+                        }
+                    }
+                }
+            });
+
+            console.log(`✨ Scheduled!`);
+
+            // Advance for next iteration
+            targetTime = advanceToNextGolden(targetTime);
+        }
+
+    } catch (e) {
+        console.error('Error:', e);
+        process.exit(1);
+    }
+}
 
 main();

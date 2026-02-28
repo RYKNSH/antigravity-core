@@ -254,3 +254,4 @@ Layer 4: Token/Key入力ブロックによるハング時は `browser_subagent` 
 ## 📂 環境参照
 
 4種ディレクトリの役割・禁止操作 → [`ENVIRONMENTS.md`](../ENVIRONMENTS.md) を参照
+

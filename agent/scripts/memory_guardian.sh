@@ -54,7 +54,7 @@ LOCK_FILE="/tmp/memory_guardian.lock"
 STATE_FILE="/tmp/memory_guardian.state"
 MAX_LOG_SIZE=1048576  # 1MB log rotation
 
-# SSD構成は廃止。ローカルのプロジェクトディレクトリを対象とする
+# ローカルのプロジェクトディレクトリを対象とする
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 DEV_DIR="$HOME/Desktop"
 
@@ -194,7 +194,7 @@ safe_find() {
   run_with_timeout "$FIND_TIMEOUT" "find" find "$@"
 }
 
-# --- Safe rm (with timeout, SSD I/O hang 対策) ---
+# --- Safe rm (with timeout, I/O hang 対策) ---
 safe_rm() {
   run_with_timeout "$CMD_TIMEOUT" "rm" rm "$@"
 }
@@ -474,7 +474,7 @@ action_level2() {
     log "DRY-RUN" "Would clear npm cache"
   fi
 
-  # 7. Build caches on SSD (if connected) — 実行中プロジェクト保護
+  # 7. Build caches (dev projects) — 実行中プロジェクト保護
   if [ -d "$DEV_DIR" ]; then
     get_active_project_dirs
     if [ "$DRY_RUN" = false ]; then
@@ -535,12 +535,12 @@ action_level3() {
     log "DRY-RUN" "Would pause Spotlight indexing for 10 min"
   fi
 
-  # 10. macOS metadata cleanup on SSD — タイムアウト付き
+  # 10. macOS metadata cleanup — タイムアウト付き
   if [ -d "$DEV_DIR" ]; then
     if [ "$DRY_RUN" = false ]; then
       safe_find "$DEV_DIR" -name ".DS_Store" -type f -delete 2>/dev/null || true
       safe_find "$DEV_DIR" -name "._*" -type f -not -path "*/.git/*" -delete 2>/dev/null || true
-      log "ACTION" "macOS metadata files cleaned from SSD"
+      log "ACTION" "macOS metadata files cleaned"
     else
       local ds_count
       ds_count=$(safe_find "$DEV_DIR" -name ".DS_Store" -type f 2>/dev/null | wc -l | tr -d ' ') || true

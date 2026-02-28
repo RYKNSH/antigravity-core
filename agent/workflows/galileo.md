@@ -227,7 +227,7 @@ AIエージェントも「みんなそう言っている」に流されず、**�
 テスト結果を以下に保存し、将来の判断に活用:
 
 ```
-SSD/.antigravity/knowledge/galileo_log/
+~/.antigravity/knowledge/galileo_log/
 ├── [date]_[topic].md       # 各テストの記録
 ├── overturn_tracker.md     # OVERTURN判定の追跡（精度検証用）
 └── INDEX.md                # 検索用インデックス
