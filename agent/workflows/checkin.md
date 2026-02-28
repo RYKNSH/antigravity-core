@@ -48,10 +48,49 @@ if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   disown $!
 fi
 
-# セッションブランチ作成（git操作 → 非同期）
+# セッションブランチ作成前に自律修復（Bulletproof State Sync Protocol）
 if [ -d ".git" ]; then
   CURRENT=$(timeout 3 git branch --show-current 2>/dev/null || echo "unknown")
+  
+  # main/masterにいる場合のみSync Protocolを発動
   if [ "$CURRENT" = "main" ] || [ "$CURRENT" = "master" ]; then
+    echo "🔄 State Sync Check for $CURRENT..."
+    GIT_TERMINAL_PROMPT=0 timeout 10 git fetch --all 2>/dev/null || true
+    BEHIND=$(timeout 3 git rev-list HEAD..origin/"$CURRENT" --count 2>/dev/null || echo 0)
+    
+    if [ -n "$BEHIND" ] && [ "$BEHIND" -gt 0 ] 2>/dev/null; then
+      echo "⚠️ Local is behind origin/$CURRENT by $BEHIND commits. Initiating Self-Healing Sync..."
+      
+      # 1. 未コミット変更の安全退避 (Data Loss Prevention)
+      STASH_OUT=$(timeout 5 git stash push -m "Auto-fallback-recovery" 2>&1)
+      HAS_STASH=false
+      if echo "$STASH_OUT" | grep -q 'Saved working directory'; then
+        HAS_STASH=true
+        echo "🛡️ Uncommitted changes stashed safely."
+      fi
+
+      # 2. 履歴の直列化 (Rebase)
+      if GIT_TERMINAL_PROMPT=0 timeout 15 git rebase origin/"$CURRENT" 2>/dev/null; then
+        echo "✅ Successfully synced with origin/$CURRENT."
+        # 3. 退避した作業の復元
+        if [ "$HAS_STASH" = true ]; then
+          if timeout 5 git stash pop 2>/dev/null; then
+             echo "📦 Restored uncommitted changes."
+          else
+             echo "🚨 CONFLICT during stash pop. Please resolve manually: git stash pop"
+          fi
+        fi
+      else
+        # 4. コンフリクト時の安全停止 (Code Destruction Prevention)
+        echo "🚨 CONFLICT during rebase. Aborting sync to protect local code."
+        git rebase --abort 2>/dev/null || true
+        echo "⚠️ Please resolve the divergence manually before proceeding."
+      fi
+    else
+      echo "✅ Local is up to date."
+    fi
+
+    # 同期・修復後にセッションブランチを作成（非同期）
     SESSION_BRANCH="session/$(basename "$(pwd)")-$(date +%m%d%H%M)"
     ( timeout 5 git checkout -b "$SESSION_BRANCH" 2>/dev/null \
       && echo "🌿 Branch: $SESSION_BRANCH" ) &
@@ -59,6 +98,7 @@ if [ -d ".git" ]; then
   else
     echo "🌿 Branch: $CURRENT"
   fi
+
   # 7日以上前のsession/*ブランチを非同期で削除（タイムアウト付き）
   (
     timeout 10 git branch --list 'session/*' 2>/dev/null | head -20 | while read b; do
