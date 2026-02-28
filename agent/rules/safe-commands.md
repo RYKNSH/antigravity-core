@@ -159,9 +159,18 @@ rm -f ~/.antigravity/.git/index.lock 2>/dev/null
 
 ## 許可コマンド (SafeToAutoRun: true)
 
-**読み取り専用**: `ls`, `cat`, `head`, `tail`, `grep`, `find`, `fd`, `df -h`, `du -sh`, `git status/diff/log`, `pwd`, `which`, `echo`, `lsof`
+**読み取り専用**: `ls`, `cat`, `head`, `tail`, `grep`, `find`, `fd`, `df -h`, `du -sh`, `pwd`, `which`, `echo`, `lsof`
 **ビルド・テスト**: `pnpm lint/test`, `vitest`, `tsc --noEmit`
 **パッケージ確認**: `pnpm list`, `npm list`
+
+## 🚫 ファイル操作のネイティブツール強制 (I/O Hang 防御)
+
+> [!CAUTION]
+> ターミナルコマンドによるファイル操作はI/Oブロック（D状態）でシステムハングを引き起こす最大の原因です。
+
+1. **ターミナルでのファイル操作禁止**: `cp`, `rsync`, `sed`, `mkdir` 等を用いたファイル作成・コピー・移動・置換を**原則禁止**とします。
+2. **LLMネイティブツールの優先**: 必ずエージェントのネイティブツール（`write_to_file`, `replace_file_content`, `multi_replace_file_content`）を使用してください。ディレクトリ作成もツールが自動で行います。
+3. **`Cwd` パラメータの強制**: `run_command` の `CommandLine` 内で `cd` を直接実行してはいけません。必ずツールの `Cwd` パラメータでカレントディレクトリを指定してください。
 
 ## 🔒 Git Safety Rules（Grounding原則）
 
@@ -190,12 +199,17 @@ GIT_TERMINAL_PROMPT=0 git push origin [branch] --no-verify
 - `rm -rf /` 系
 - 本番への直接デプロイ（`/deploy` WF経由必須）
 
-## ⏱️ Timeout Guard (3-Layer Defense)
+## ⏱️ Timeout Guard & Async Polling Protocol (3-Layer Defense)
+
+> [!IMPORTANT]
+> 「長時間タスクをそのまま直列で実行して待機する」ことは禁止です。
+
+1. **非同期実行の徹底**: `npm install`, ビルド, デプロイなどの長時間プロセスを実行する際は、`WaitMsBeforeAsync` を低め（1000ms〜3000ms）に設定し、**即座にバックグラウンドへ送り `command_status` ツールでポーリング**してください。
 
 ```
 Layer 1: GIT_TERMINAL_PROMPT=0 付き実行  (credential prompt ハング対策)
-Layer 2: run_command(WaitMsBeforeAsync=必要最小限) → Background → 予期される時間から超過→Terminate (MR-01)
-Layer 3: write_to_file/view_file/GitHub MCP でターミナル迂回
+Layer 2: run_command(WaitMsBeforeAsync=必要最小限) → Background → 定期的に command_status で監視
+Layer 3: write_to_file / replace_file_content でI/Oブロックのターミナル迂回
 Layer 4: Token/Key入力ブロックによるハング時は `browser_subagent` を起動し自律的に認証情報を取得（MR-10）
 ```
 

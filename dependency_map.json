@@ -384,6 +384,13 @@
             ],
             "fix": "notion_poster.jsにhttps.request timeoutを追加（未実装）"
         },
+        "notion_ui_hang": {
+            "trigger": "NotionやRailwayなどのWeb UIがJSエラーや非同期処理でレンダリングストールする",
+            "affected": [
+                "browser_subagent (要素出現待ちで無限ブロック)"
+            ],
+            "fix": "WaitMsBeforeAsync + command_statusによる強制脱出（MR-08/MR-10）。Chaos C6で検証済み"
+        },
         "ssd_unmounted": {
             "trigger": "~/Desktop/AntigravityWork がマウントされていない",
             "affected": [
