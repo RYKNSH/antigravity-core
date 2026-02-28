@@ -1,12 +1,31 @@
 ---
 description: 環境を最新化して軽量状態で開始
 ---
-# /checkin v4 — SLA-Guaranteed
+# /checkin v5 — Anti-Hang Edition
 
 // turbo-all
 
 ```bash
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
+
+# ══════════════════════════════════════════════════════
+# GLOBAL WATCHDOG — checkin 全体を60秒で強制完了させる
+# どんなI/Oハングが起きても必ず戻ってくる
+# ══════════════════════════════════════════════════════
+CHECKIN_TIMEOUT=60
+CHECKIN_PID=$$
+(
+  sleep "$CHECKIN_TIMEOUT"
+  if kill -0 "$CHECKIN_PID" 2>/dev/null; then
+    echo "⚠️ checkin watchdog: ${CHECKIN_TIMEOUT}s timeout — forcing completion"
+    kill -TERM "$CHECKIN_PID" 2>/dev/null
+    sleep 2
+    kill -9 "$CHECKIN_PID" 2>/dev/null || true
+  fi
+) &
+WATCHDOG_PID=$!
+# watchdog をスクリプト終了時に確実に kill
+trap 'kill $WATCHDOG_PID 2>/dev/null; exit' EXIT TERM INT
 
 # ══════════════════════════════════════════════════════
 # ZERO ZONE — git 操作より前に必ず実行（ハング根本対策）
@@ -25,70 +44,74 @@ rm -f "$ANTIGRAVITY_DIR/.git/MERGE_HEAD" 2>/dev/null   # 中断マージも除�
 # ~/.antigravity の最新化（ネットワーク依存 → 完全非同期）
 if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   ( cd "$ANTIGRAVITY_DIR" && GIT_TERMINAL_PROMPT=0 \
-    git pull origin main --quiet 2>/dev/null ) &
+    timeout 15 git pull origin main --quiet 2>/dev/null || true ) &
   disown $!
 fi
 
 # セッションブランチ作成（git操作 → 非同期）
 if [ -d ".git" ]; then
-  CURRENT=$(git branch --show-current 2>/dev/null)
+  CURRENT=$(timeout 3 git branch --show-current 2>/dev/null || echo "unknown")
   if [ "$CURRENT" = "main" ] || [ "$CURRENT" = "master" ]; then
     SESSION_BRANCH="session/$(basename "$(pwd)")-$(date +%m%d%H%M)"
-    ( git checkout -b "$SESSION_BRANCH" 2>/dev/null \
+    ( timeout 5 git checkout -b "$SESSION_BRANCH" 2>/dev/null \
       && echo "🌿 Branch: $SESSION_BRANCH" ) &
     disown $!
   else
     echo "🌿 Branch: $CURRENT"
   fi
-  # 7日以上前のsession/*ブランチを非同期で削除
+  # 7日以上前のsession/*ブランチを非同期で削除（タイムアウト付き）
   (
-    git branch --list 'session/*' | while read b; do
+    timeout 10 git branch --list 'session/*' 2>/dev/null | head -20 | while read b; do
       b=$(echo "$b" | xargs)
-      LAST=$(git log -1 --format=%ct "$b" 2>/dev/null || echo 0)
-      [ $(( $(date +%s) - LAST )) -gt 604800 ] \
-        && git branch -D "$b" 2>/dev/null \
+      LAST=$(timeout 3 git log -1 --format=%ct "$b" 2>/dev/null || echo 0)
+      [ $(( $(date +%s) - ${LAST:-0} )) -gt 604800 ] \
+        && timeout 3 git branch -D "$b" 2>/dev/null \
         && echo "🗑️ Pruned: $b"
     done
   ) &
   disown $!
 fi
 
-# usage tracker（シェルスクリプト実行 → 非同期）
+# usage tracker（シェルスクリプト実行 → 非同期・タイムアウト付き）
 [ -x "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" ] && {
-  ( "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" /checkin \
+  ( timeout 10 "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" /checkin \
     >/dev/null 2>&1 ) &
   disown $!
 }
 
 # ══════════════════════════════════════════════════════
-# FAST ZONE — ローカルI/Oのみ: waitして完了を保証
-# 全ジョブ合計 < 2秒 を保証
+# FAST ZONE — ローカルI/Oのみ
+# ★ 全操作に timeout 付き → I/Oハングで wait が永久ブロックしない
+# 全ジョブ合計 < 5秒 を保証
 # ══════════════════════════════════════════════════════
 
-# キャッシュ削除
-rm -rf \
+# キャッシュ削除（timeout 5秒）
+( timeout 5 rm -rf \
   ~/.gemini/antigravity/browser_recordings/* \
   ~/.gemini/antigravity/implicit/* \
   ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache \
-  2>/dev/null &
+  2>/dev/null ) &
 
-# 1日以上前の会話キャッシュを削除
-find ~/.gemini/antigravity/conversations \
-  -mindepth 1 -maxdepth 1 -mtime +1 -exec rm -rf {} + 2>/dev/null &
+# 1日以上前の会話キャッシュを削除（timeout 5秒）
+( timeout 5 find ~/.gemini/antigravity/conversations \
+  -mindepth 1 -maxdepth 1 -mtime +1 -exec rm -rf {} + 2>/dev/null ) &
 
-# ワークスペース同期（ローカルrsync）
-mkdir -p .agent/skills .agent/workflows
-rsync -a --update --quiet \
-  "$ANTIGRAVITY_DIR/agent/workflows/"*.md .agent/workflows/ 2>/dev/null &
-rsync -a --update --quiet \
-  "$ANTIGRAVITY_DIR/agent/skills/" .agent/skills/ 2>/dev/null &
+# ワークスペース同期（★ ここがハングの最大原因だった）
+# rsync を disown で完全切り離し → wait 対象外にする
+mkdir -p .agent/skills .agent/workflows 2>/dev/null
+( timeout 10 rsync -a --update --quiet \
+  "$ANTIGRAVITY_DIR/agent/workflows/"*.md .agent/workflows/ 2>/dev/null ) &
+disown $!
+( timeout 10 rsync -a --update --quiet \
+  "$ANTIGRAVITY_DIR/agent/skills/" .agent/skills/ 2>/dev/null ) &
+disown $!
 
-# 設定ファイルコピー
-cp "$ANTIGRAVITY_DIR/mcp_config.json" \
-  ~/.gemini/antigravity/mcp_config.json 2>/dev/null &
+# 設定ファイルコピー（timeout 3秒ずつ）
+( timeout 3 cp "$ANTIGRAVITY_DIR/mcp_config.json" \
+  ~/.gemini/antigravity/mcp_config.json 2>/dev/null ) &
 [ -f "$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master" ] && \
-  cp "$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master" \
-    "$HOME/.gemini/GEMINI.md" 2>/dev/null &
+  ( timeout 3 cp "$ANTIGRAVITY_DIR/agent/rules/GEMINI.md.master" \
+    "$HOME/.gemini/GEMINI.md" 2>/dev/null ) &
 
 # Git Hooks セットアップ（gitconfig書き込みのみ → 高速）
 if [ -d ".git" ]; then
@@ -100,24 +123,21 @@ if [ -d ".git" ]; then
   fi
 fi
 
-# FAST ZONE の全ジョブを待つ
-# （disownされたSLOW ZONEジョブはwait対象外）
+# FAST ZONE の timeout付きジョブのみ待つ（disown されたジョブは待たない）
 wait
 
-# コンテキスト復元（ディスクのみ参照、git操作なし → 高速）
-# ZERO ZONE で stale lock を除去済みのため、ハングしない
-node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" restore 2>/dev/null &
+# コンテキスト復元（disown + timeout → ハングしない）
+( timeout 10 node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" restore 2>/dev/null ) &
 disown $!
 
 # ══════════════════════════════════════════════════════
 # Discord Session Hook（プロジェクト内にhookがあれば自動実行）
-# セッション開始 → Discordチャンネル自動作成
 # ══════════════════════════════════════════════════════
 DISCORD_HOOK="./src/discord/session-hook.js"
 if [ -f "$DISCORD_HOOK" ]; then
   PROJECT_NAME=$(basename "$(pwd)" | tr '[:lower:]' '[:upper:]' | tr '-' ' ')
   SESSION_LABEL="dev-$(date +%m%d)"
-  ( node "$DISCORD_HOOK" checkin "$PROJECT_NAME" "$SESSION_LABEL" 2>/dev/null ) &
+  ( timeout 10 node "$DISCORD_HOOK" checkin "$PROJECT_NAME" "$SESSION_LABEL" 2>/dev/null ) &
   disown $!
   echo "🔗 Discord session hook triggered"
 fi
@@ -129,7 +149,6 @@ echo "✅ Check-in complete!" && df -h . | tail -1
 
 # ══════════════════════════════════════════════════════
 # NEXT_SESSION 警告読み込み（MR-09: 記録→能動的引き渡し）
-# 前セッションの知見を AIが必ず読んで先に報告する
 # ══════════════════════════════════════════════════════
 
 # プロジェクト側 NEXT_SESSION.md
@@ -154,9 +173,7 @@ echo "> 構造を理解し、理念＞ビジョン＞ミッションに合致し
 echo "> （❌「何から始めますか？」などとユーザーに聞かないこと）"
 
 # ══════════════════════════════════════════════════════
-# Layer 1: メタルール要約読み込み（MR-09 + Layer 1実装）
-# DECISION_USECASES.md からMR見出し一覧のみを抽出（〜1KB）
-# セッション開始時のコンテキストに注入することで判断精度を上げる
+# Layer 1: メタルール要約読み込み
 # ══════════════════════════════════════════════════════
 MR_FILE="$ANTIGRAVITY_DIR/DECISION_USECASES.md"
 [ -f "$MR_FILE" ] && {
@@ -166,12 +183,11 @@ MR_FILE="$ANTIGRAVITY_DIR/DECISION_USECASES.md"
   echo "  ⚠️  Layer 0 Tripwires: 「〜しますか？」「AまたはB？」→ MR-03確認 / 数値を根拠にする → MR-01確認"
 }
 
-# 注意点・警告だけを抽出して冒頭でフラグを立てる
-# （ゾンビプロセスやI/Oブロック等の警告を見落とさないため）
+# 注意点・警告だけを抽出（タイムアウト付き grep — ハング対策）
 WARNINGS=""
 for f in "./NEXT_SESSION.md" "$ANTIGRAVITY_DIR/NEXT_SESSION.md"; do
   [ -f "$f" ] && {
-    W=$(grep -E "(⚠️|警告|注意|ゾンビ|ハング|ブロック|I/Oブロック|残って)" "$f" 2>/dev/null || true)
+    W=$(timeout 3 grep -E "(⚠️|警告|注意|ゾンビ|ハング|ブロック|I/Oブロック|残って)" "$f" 2>/dev/null || true)
     [ -n "$W" ] && WARNINGS="$WARNINGS\n$W"
   }
 done
@@ -187,49 +203,51 @@ done
 
 [ -f ".sweep_patterns.md" ] && echo "📚 Patterns loaded"
 
-
 # ══════════════════════════════════════════════════════
-# brain_log 全件スキャン → 未解決タスク → incidents.md 自動転記
-# P-04(Long-Running Memory Loss) 対策
+# brain_log スキャン → 未解決タスク → incidents.md 自動転記
+# ★ ハング対策: head -50 でファイル数上限、timeout 10秒で全体保護
 # ══════════════════════════════════════════════════════
 if [ -d "$ANTIGRAVITY_DIR/brain_log" ]; then
-  UNRESOLVED_COUNT=0
-  while IFS= read -r log_file; do
-    while IFS= read -r task_line; do
-      TASK_SUMMARY=$(echo "$task_line" | sed 's/^- \[ \] //' | head -c 80)
-      if ! grep -qF "$TASK_SUMMARY" "$ANTIGRAVITY_DIR/incidents.md" 2>/dev/null; then
-        LOG_NAME=$(basename "$log_file")
-        {
-          echo ""
-          echo "## UNRESOLVED-$(date +%m%d%H%M) [OPEN] brain_log未解決タスク"
-          echo ""
-          echo "**発生元**: $LOG_NAME"
-          echo "**内容**: $TASK_SUMMARY"
-          echo "**転記日**: $(date +%Y-%m-%d)"
-          echo ""
-          echo "> 未解決のまま次セッションに持ち越されたタスク。/incident で詳細記録推奨。"
-          echo ""
-          echo "---"
-        } >> "$ANTIGRAVITY_DIR/incidents.md"
-        UNRESOLVED_COUNT=$((UNRESOLVED_COUNT + 1))
-      fi
-    done < <(grep -E '^- \[ \]' "$log_file" 2>/dev/null || true)
-  done < <(find "$ANTIGRAVITY_DIR/brain_log" -name 'session_*.md' -type f 2>/dev/null)
-
-  [ "$UNRESOLVED_COUNT" -gt 0 ] && \
-    echo "📋 brain_log から未解決タスク ${UNRESOLVED_COUNT}件 を incidents.md に転記しました"
+  (
+    timeout 10 bash -c '
+      ANTIGRAVITY_DIR="'"$ANTIGRAVITY_DIR"'"
+      UNRESOLVED_COUNT=0
+      for log_file in $(find "$ANTIGRAVITY_DIR/brain_log" -name "session_*.md" -type f 2>/dev/null | head -50); do
+        while IFS= read -r task_line; do
+          TASK_SUMMARY=$(echo "$task_line" | sed "s/^- \[ \] //" | head -c 80)
+          if ! grep -qF "$TASK_SUMMARY" "$ANTIGRAVITY_DIR/incidents.md" 2>/dev/null; then
+            LOG_NAME=$(basename "$log_file")
+            {
+              echo ""
+              echo "## UNRESOLVED-$(date +%m%d%H%M) [OPEN] brain_log未解決タスク"
+              echo ""
+              echo "**発生元**: $LOG_NAME"
+              echo "**内容**: $TASK_SUMMARY"
+              echo "**転記日**: $(date +%Y-%m-%d)"
+              echo ""
+              echo "> 未解決のまま次セッションに持ち越されたタスク。/incident で詳細記録推奨。"
+              echo ""
+              echo "---"
+            } >> "$ANTIGRAVITY_DIR/incidents.md"
+            UNRESOLVED_COUNT=$((UNRESOLVED_COUNT + 1))
+          fi
+        done < <(grep -E "^- \[ \]" "$log_file" 2>/dev/null | head -20)
+      done
+      [ "$UNRESOLVED_COUNT" -gt 0 ] && \
+        echo "📋 brain_log から未解決タスク ${UNRESOLVED_COUNT}件 を incidents.md に転記しました"
+    '
+  ) || echo "⚠️ brain_log scan timed out (skipped)"
 fi
 
-# インシデント確認
+# インシデント確認（timeout 付き）
 [ -f "$ANTIGRAVITY_DIR/incidents.md" ] && {
-  OPEN_COUNT=$(grep -c "\[OPEN\]" "$ANTIGRAVITY_DIR/incidents.md" 2>/dev/null || echo 0)
+  OPEN_COUNT=$(timeout 3 grep -c "\[OPEN\]" "$ANTIGRAVITY_DIR/incidents.md" 2>/dev/null || echo 0)
   echo "⚠️  Open incidents: $OPEN_COUNT"
-  [ "$OPEN_COUNT" -gt 0 ] && grep "\[OPEN\]" "$ANTIGRAVITY_DIR/incidents.md"
+  [ "$OPEN_COUNT" -gt 0 ] && timeout 3 grep "\[OPEN\]" "$ANTIGRAVITY_DIR/incidents.md" | head -10
 }
 
 # ══════════════════════════════════════════════════════
-# Workspace grounding scan（2Core + 環境ラベリング確認）
-# P-05(God Mode) 対策: 4種のディレクトリと役割を毎回確認
+# Workspace grounding scan
 # ══════════════════════════════════════════════════════
 echo "🗺️  Workspace (4-Environment Check):"
 echo "  Core-A [git managed] : $ANTIGRAVITY_DIR"
@@ -238,19 +256,22 @@ echo "  Projects [dev]: $HOME/Desktop/AntigravityWork"
 echo "  Private [secrets, non-git]: $HOME/.antigravity-private"
 echo ""
 
-# 各gitリポジトリのremote確認（Grounding原則）
-# タイムアウト5秒・maxdepth 2に制限してハング防止
+# 各gitリポジトリのremote確認（タイムアウト厳格化 + head制限）
 (
-  find "$HOME/Desktop/AntigravityWork" "$HOME/.antigravity" \
-    -maxdepth 2 -name ".git" -type d 2>/dev/null | head -20 | while read gitdir; do
-    repo=$(dirname "$gitdir")
-    remote=$(timeout 3 git -C "$repo" remote get-url origin 2>/dev/null || echo "⚠️ NO_REMOTE")
-    echo "  📁 $(basename "$repo") → $remote"
-  done
-) &
-disown $!
+  timeout 10 bash -c '
+    find "$HOME/Desktop/AntigravityWork" "$HOME/.antigravity" \
+      -maxdepth 2 -name ".git" -type d 2>/dev/null | head -10 | while read gitdir; do
+      repo=$(dirname "$gitdir")
+      remote=$(timeout 3 git -C "$repo" remote get-url origin 2>/dev/null || echo "⚠️ NO_REMOTE")
+      echo "  📁 $(basename "$repo") → $remote"
+    done
+  '
+) || echo "  ⚠️ Workspace scan timed out (skipped)"
 
 # ENVIRONMENTS.md 存在確認（なければ警告）
 [ ! -f "$ANTIGRAVITY_DIR/ENVIRONMENTS.md" ] && \
   echo "⚠️  ENVIRONMENTS.md が未作成です。環境ラベリングが未定義です。"
+
+# Watchdog cleanup（正常終了時）
+kill $WATCHDOG_PID 2>/dev/null || true
 ```
