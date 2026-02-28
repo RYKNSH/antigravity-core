@@ -22,11 +22,11 @@ RAM_BYTES=$(sysctl -n hw.memsize 2>/dev/null || echo 8589934592)
 RAM_GB=$((RAM_BYTES / 1024 / 1024 / 1024))
 
 if [ "$RAM_GB" -le 8 ]; then
-  # 8GB以下: 厳しめの閾値
-  THRESHOLD_L1=35
-  THRESHOLD_L2=25
-  THRESHOLD_L3=15
-  SWAP_CRITICAL=1536
+  # 8GB以下: 早期介入の閾値（2026-02-28 引上げ: I/Oハング連発対策）
+  THRESHOLD_L1=40
+  THRESHOLD_L2=30
+  THRESHOLD_L3=20
+  SWAP_CRITICAL=1024
 elif [ "$RAM_GB" -le 16 ]; then
   # 16GB: 標準
   THRESHOLD_L1=30

@@ -203,6 +203,49 @@ Layer 4: Token/Key入力ブロックによるハング時は `browser_subagent` 
 | ターミナル全滅 | 最高 | 3 |
 | CLIでのトークン要求 | 中 | 4 (MR-10) |
 
+---
+
+## 🧠 根本原因5: メモリ圧迫時は全I/Oが危険（2026-02-28 追加）
+
+> [!CAUTION]
+> **SWAP圧迫状態では `ls`, `cat`, `ps` レベルの基本コマンドすらハングする。**
+> ディスクI/O = メモリ回収待ち → カーネルレベルのページフォルト連鎖。
+> 「コマンドが簡単だから大丈夫」は誤り。全I/Oが危険。
+
+### メモリ圧迫検知ルール
+
+| 条件 | 判定 |
+|------|------|
+| `ls` / `cat` / `echo` が2秒以内に完了しない | **メモリ圧迫確定** |
+| 連続2回のコマンドがユーザーにキャンセルされた | **メモリ圧迫確定** |
+| `run_command` が RUNNING + No output で10秒超過 | **メモリ圧迫の疑い** |
+
+### メモリ圧迫時フォールバックプロトコル
+
+```
+検知 → ターミナル使用即中止 → 以下のツールのみで作業続行:
+
+1. view_file / view_file_outline / view_code_item  — ファイル読み取り
+2. grep_search / find_by_name                       — 検索
+3. write_to_file / replace_file_content             — ファイル書き込み
+4. mcp_github_* (push_files, create_or_update_file) — git操作
+5. read_url_content                                  — Web取得
+
+❌ 絶対に使わない: run_command, send_command_input, command_status
+```
+
+### コマンド発行パターンルール
+
+| ❌ 禁止パターン | ✅ 正解 |
+|---------------|---------|
+| 1つの`run_command`で10行スクリプト | **1コマンド1行に分離** |
+| `cp A && cp B && cp C` チェーン | 各 `cp` を別の `run_command` |
+| `cat file \| tail -N` パイプ | `tail -N file` (パイプ不使用) |
+| `git add && git commit` | `git add` → 完了確認 → `git commit` |
+| ディスクI/O3連続 | **2回連続キャンセル → フォールバック発動** |
+
+---
+
 ## 📂 環境参照
 
 4種ディレクトリの役割・禁止操作 → [`ENVIRONMENTS.md`](../ENVIRONMENTS.md) を参照
