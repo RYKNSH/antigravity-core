@@ -1,6 +1,6 @@
 # 💾 Backup Strategy
 
-> SSD紛失・故障に備えたバックアップ戦略
+> データ紛失に備えたバックアップ戦略
 
 ## バックアップ対象
 
@@ -22,45 +22,36 @@
 
 ```bash
 # 初回設定
-ln -s /Volumes/PortableSSD/.antigravity ~/Library/Mobile\ Documents/com~apple~CloudDocs/antigravity_backup
+ln -s ~/.antigravity ~/Library/Mobile\ Documents/com~apple~CloudDocs/antigravity_backup
 
 # または手動コピー
-cp -R /Volumes/PortableSSD/.antigravity ~/Library/Mobile\ Documents/com~apple~CloudDocs/antigravity_backup_$(date +%Y%m%d)
+cp -R ~/.antigravity ~/Library/Mobile\ Documents/com~apple~CloudDocs/antigravity_backup_$(date +%Y%m%d)
 ```
 
 ### Option 2: Git (バージョン管理込み)
 
 ```bash
-cd /Volumes/PortableSSD/.antigravity
-git init
+cd ~/.antigravity
 git add -A
 git commit -m "backup: $(date +%Y-%m-%d)"
-git remote add origin git@github.com:YOUR_USER/antigravity-backup.git
-git push -u origin main
+git push origin main
 ```
 
 > ⚠️ `.env`ファイルは`.gitignore`に追加すること
 
 ### Option 3: Time Machine
 
-SSD全体をTime Machineのバックアップ対象に追加。
+ホームディレクトリ全体をTime Machineのバックアップ対象に追加。
 
 ---
 
 ## リカバリ手順
 
-### SSD紛失時
+### データ紛失時
 
-1. 新しいSSDを用意
-2. バックアップから`.antigravity/`を復元
-3. `/project-init`を実行
-4. `~/.secrets/antigravity/.env`を再設定
-
-### SSD故障時
-
-1. 可能なら故障SSDからデータ救出を試みる
-2. 不可能な場合はバックアップから復元
-3. 上記と同じ手順
+1. バックアップから`~/.antigravity/`を復元
+2. `/project-init`を実行
+3. `~/.secrets/antigravity/.env`を再設定
 
 ---
 
@@ -79,7 +70,7 @@ SSD全体をTime Machineのバックアップ対象に追加。
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>cp -R /Volumes/PortableSSD/.antigravity ~/Library/Mobile\ Documents/com~apple~CloudDocs/antigravity_backup_$(date +%Y%m%d)</string>
+        <string>cp -R ~/.antigravity ~/Library/Mobile\ Documents/com~apple~CloudDocs/antigravity_backup_$(date +%Y%m%d)</string>
     </array>
     <key>StartCalendarInterval</key>
     <dict>
@@ -91,6 +82,7 @@ SSD全体をTime Machineのバックアップ対象に追加。
 </dict>
 </plist>
 ```
+
 
 保存先: `~/Library/LaunchAgents/com.antigravity.backup.plist`
 

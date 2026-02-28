@@ -50,8 +50,8 @@ git push origin feature/my-workflow
 個人用ファイルは定期的にバックアップしてください：
 
 ```bash
-# SSDにバックアップ
-rsync -av --delete ~/.antigravity/personal/ /Volumes/PortableSSD/.antigravity/personal/
+# プライベートGitリポジトリでバックアップ
+cd ~/.antigravity/personal && git init && git push
 ```
 
 または、プライベートGitリポジトリで管理することも可能です。

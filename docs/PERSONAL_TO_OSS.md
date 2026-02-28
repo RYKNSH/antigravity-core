@@ -132,7 +132,7 @@ Antigravityには自動チェック機能があります：
 git status
 
 # 2. 個人情報検索
-grep -r "YOUR_NAME\|YOUR_EMAIL\|API_KEY" contrib/
+grep -r "YOUR_NAME\\|YOUR_EMAIL\\|API_KEY" contrib/
 
 # 3. Diffを確認
 git diff --cached
@@ -164,10 +164,7 @@ A: フィードバックを受けて改善できます。
 
 A: 以下の方法があります：
 ```bash
-# SSDにバックアップ
-rsync -av --delete ~/.antigravity/personal/ /Volumes/PortableSSD/.antigravity/personal/
-
-# またはプライベートGitリポジトリ
+# プライベートGitリポジトリでバックアップ
 cd ~/.antigravity/personal
 git init
 git remote add origin git@github.com:YOUR_USERNAME/antigravity-personal.git
