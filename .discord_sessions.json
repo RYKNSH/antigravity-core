@@ -1,0 +1,61 @@
+{
+  "sessions": {
+    "20260227_0337": {
+      "sessionId": "20260227_0337",
+      "channelId": "1476785258086273134",
+      "channelName": "session-20260227-secretary-buddy-test",
+      "projectName": "secretary-buddy-test",
+      "status": "archived",
+      "createdAt": "2026-02-27T03:37:22.637Z",
+      "archivedAt": "2026-02-27T03:37:38.477Z"
+    },
+    "20260227_0445": {
+      "sessionId": "20260227_0445",
+      "channelId": "1476802383072985230",
+      "channelName": "session-20260227-phase7-test",
+      "projectName": "phase7-test",
+      "status": "archived",
+      "createdAt": "2026-02-27T04:45:25.322Z",
+      "archivedAt": "2026-02-27T04:45:26.662Z"
+    },
+    "20260227_0512": {
+      "sessionId": "20260227_0512",
+      "channelId": "1476809273638916138",
+      "channelName": "session-20260227-secretary-buddy",
+      "projectName": "secretary-buddy",
+      "status": "archived",
+      "createdAt": "2026-02-27T05:12:47.962Z",
+      "archivedAt": "2026-02-27T05:13:09.050Z"
+    },
+    "0227_1421": {
+      "sessionId": "0227_1421",
+      "channelId": "1476811448742313984",
+      "channelName": "0227-Discord構造テスト",
+      "projectName": "SECRETARY BUDDY",
+      "taskLabel": "Discord構造テスト",
+      "status": "archived",
+      "createdAt": "2026-02-27T05:21:26.722Z",
+      "archivedAt": "2026-02-27T05:21:39.080Z"
+    },
+    "0227_1625": {
+      "sessionId": "0227_1625",
+      "channelId": "1476842673792094310",
+      "channelName": "0227-dev-0227",
+      "projectName": "SECRETARY BUDDY",
+      "taskLabel": "dev-0227",
+      "status": "active",
+      "createdAt": "2026-02-27T07:25:31.210Z"
+    }
+  },
+  "categories": {
+    "SECRETARY BUDDY": "1476811446091387051",
+    "NEW PROJECT 2026/2/27": "1476879970243448936"
+  },
+  "projects": {
+    "NEW PROJECT 2026/2/27": {
+      "categoryId": "1476879970243448936",
+      "controlChannelId": "1476879973808607347",
+      "createdAt": "2026-02-27T09:53:45.329Z"
+    }
+  }
+}
