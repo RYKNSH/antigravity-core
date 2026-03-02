@@ -23,6 +23,7 @@
 |------|-----------|
 | 実装完了 | `/verify` 自動 |
 | 変更6ファイル以上 | `/verify --deep` |
+| フロントエンド・UIの変更後 | `browser_subagent` を起動しコンソールエラーとUI検証を自動実行 |
 | verify通過+staging存在 | `/ship staging` 提案 |
 | 新APIエンドポイント | `/error-sweep` Contract重点チェック |
 | テスト品質スコア C以下 | `/test-evolve` 提案 |

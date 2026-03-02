@@ -88,10 +88,11 @@ pnpm lint && pnpm typecheck && pnpm test
 
 ### Phase 3: Frontend Layer 🌐
 **担当**: Browser Inspector
-**目的**: 見た目と操作性を確認
+**目的**: 見た目と操作性、エラーの有無を実機想定で確認
 
-- スクリーンショットを撮影して確認
-- 期待される表示と比較
+- **必須**: `browser_subagent` を起動し、対象ページを開く
+- **必須**: DevToolsコンソールにエラーや警告（JSエラー、未定義変数、404等）がないか徹底確認する
+- スクリーンショットを撮影して期待される表示と比較
 - レスポンシブデザインの確認（Mobile / Tablet / Desktop）
 
 **発見した問題があれば即座に修正**
