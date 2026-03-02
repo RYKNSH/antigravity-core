@@ -120,6 +120,23 @@ fi
 }
 
 # ══════════════════════════════════════════════════════
+# SECRET ZONE — 1Password CLIで.envを自動生成
+# .envが無ければ op inject で生成（マシン移動時の自動セットアップ）
+# ══════════════════════════════════════════════════════
+if [ ! -f ".env" ] && [ -f ".env.tpl" ]; then
+  if command -v op &>/dev/null && op account list &>/dev/null 2>&1; then
+    echo "🔑 .env not found — generating from 1Password..."
+    if op inject -i .env.tpl -o .env 2>/dev/null; then
+      echo "✅ .env generated ($(grep -cE '^[A-Z_]+=' .env) vars)"
+    else
+      echo "⚠️ op inject failed — run: bash scripts/setup-secrets.sh"
+    fi
+  else
+    echo "⚠️ .env not found. Run: bash scripts/setup-secrets.sh"
+  fi
+fi
+
+# ══════════════════════════════════════════════════════
 # FAST ZONE — ローカルI/Oのみ
 # ★ 全操作に timeout 付き → I/Oハングで wait が永久ブロックしない
 # 全ジョブ合計 < 5秒 を保証
