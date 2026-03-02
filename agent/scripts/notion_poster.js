@@ -141,6 +141,15 @@ async function main() {
     // 2. Prepare Payload — line-by-line to preserve article breathing pattern
     // Each text line → its own paragraph block
     // Each empty line → empty paragraph block (preserves spacing)
+    //
+    // ⚠️ PARAGRAPH GROUPING RULE (2026-03-02):
+    //   Correct: Related sentences are consecutive blocks (no empty between them).
+    //            Empty paragraphs ONLY between logical paragraph groups.
+    //   Wrong:   Every sentence followed by an empty paragraph (too spacy).
+    //   The source markdown must have proper grouping:
+    //     - Single \n between related sentences → consecutive paragraph blocks
+    //     - Double \n (empty line) between groups → empty paragraph block
+    //
     const bodyLines = lines.slice(startIndex);
     const blocks = [];
     let inCodeBlock = false;
