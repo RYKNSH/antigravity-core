@@ -121,16 +121,27 @@ fi
 
 # ══════════════════════════════════════════════════════
 # SECRET ZONE — 1Password CLIで.envを自動生成
-# .envが無ければ op inject で生成（マシン移動時の自動セットアップ）
+# shared (.env.shared.tpl) + project (.env.tpl) の2層マージ
 # ══════════════════════════════════════════════════════
-if [ ! -f ".env" ] && [ -f ".env.tpl" ]; then
+if [ ! -f ".env" ]; then
+  SHARED_TPL="$ANTIGRAVITY_DIR/.env.shared.tpl"
+  PROJECT_TPL=".env.tpl"
+
   if command -v op &>/dev/null && op account list &>/dev/null 2>&1; then
     echo "🔑 .env not found — generating from 1Password..."
-    if op inject -i .env.tpl -o .env 2>/dev/null; then
-      echo "✅ .env generated ($(grep -cE '^[A-Z_]+=' .env) vars)"
-    else
-      echo "⚠️ op inject failed — run: bash scripts/setup-secrets.sh"
+    _ok=true
+
+    # 1. Shared secrets
+    if [ -f "$SHARED_TPL" ]; then
+      op inject -i "$SHARED_TPL" -o .env 2>/dev/null || { echo "⚠️ shared inject failed"; _ok=false; }
     fi
+
+    # 2. Project-specific (append)
+    if [ -f "$PROJECT_TPL" ] && [ "$_ok" = true ]; then
+      op inject -i "$PROJECT_TPL" >> .env 2>/dev/null || echo "⚠️ project inject failed"
+    fi
+
+    [ "$_ok" = true ] && echo "✅ .env generated ($(grep -cE '^[A-Z_]+=' .env) vars)"
   else
     echo "⚠️ .env not found. Run: bash scripts/setup-secrets.sh"
   fi
