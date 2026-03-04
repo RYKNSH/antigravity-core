@@ -245,6 +245,29 @@ echo "> （❌「何から始めますか？」などとユーザーに聞かな
 # ══════════════════════════════════════════════════════
 MR_FILE="$ANTIGRAVITY_DIR/DECISION_USECASES.md"
 [ -f "$MR_FILE" ] && {
+  ### 5. Load Context (MRs)
+
+  # 直前のセッションで抽出されたMetal Rules (MRs) をロードし、本セッションでの判断基準として最優先で適用する。
+  # 特に **MR-08 (早急なコミットとリカバリ)** および **MR-25 (コマンドハング時の即時アプローチ変更)** は、システムの停止を防ぐために常にアクティブにする。
+
+  # ```bash
+  ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
+  MR_FILE="$ANTIGRAVITY_DIR/DECISION_USECASES.md"
+  ACTIVE_MRS_FILE="$ANTIGRAVITY_DIR/state/active_mrs.json"
+
+  mkdir -p "$ANTIGRAVITY_DIR/state"
+
+  # 必須MR (MR-08, MR-25) の抽出とアクティブ化
+  echo '{"active_mrs": [' > "$ACTIVE_MRS_FILE"
+  if [ -f "$MR_FILE" ]; then
+      grep -A 5 -E "(MR-08|MR-25)" "$MR_FILE" | grep -v "^--" | sed 's/^/"/; s/$/",/' >> "$ACTIVE_MRS_FILE"
+  fi
+  # 末尾のカンマ調整はシェルスクリプトで厳密に行うか、Node.js等のスクリプトでJSONを組み立てる。
+  # 簡易的に active_mrs.json にコンテキストを常駐させることで、以降の /goWF でのPre-Flight Checkに利用する。
+  echo ']}' >> "$ACTIVE_MRS_FILE"
+
+  echo "Loaded Active MRs (including MR-08, MR-25) against Terminal Hangs into state/active_mrs.json."
+  # ```
   echo ""
   echo "🧠 Meta Rules (Active):"
   grep "^### MR-" "$MR_FILE" | sed 's/^### /  /' 2>/dev/null
