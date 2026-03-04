@@ -7,8 +7,9 @@
 # ║         op inject -i .env.shared.tpl -o /tmp/.env.shared     ║
 # ╚══════════════════════════════════════════════════════════════╝
 
-# --- OpenAI ---
+# --- OpenAI & Gemini ---
 OPENAI_API_KEY={{ op://Antigravity/openai/api-key }}
+GEMINI_API_KEY={{ op://Antigravity/gemini/api-key }}
 
 # --- Notion ---
 NOTION_API_KEY={{ op://Antigravity/notion/api-key }}
