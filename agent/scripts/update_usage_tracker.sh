@@ -5,6 +5,11 @@
 
 set -euo pipefail  # BP-01: エラー即終了 + 未定義変数エラー + パイプ失敗伝播
 
+# BP-WATCHDOG: 全体タイムアウト（15秒）— SSD上のsed/grep遅延によるハング防止
+( sleep 15 && echo "⚠️ update_usage_tracker.sh: timeout 15s — force exit" >&2 && kill -TERM $$ 2>/dev/null ) &
+_WD_PID=$!
+trap 'kill "$_WD_PID" 2>/dev/null; rm -rf "${LOCK_DIR:-}" 2>/dev/null' EXIT
+
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 TRACKER_FILE="$ANTIGRAVITY_DIR/USAGE_TRACKER.md"
 WORKFLOW="${1:-unknown}"
@@ -39,8 +44,7 @@ while ! mkdir "$LOCK_DIR" 2>/dev/null; do
   fi
 done
 
-# 終了時にロックディレクトリを自動削除
-trap 'rm -rf "$LOCK_DIR" 2>/dev/null' EXIT
+# 終了時のロック解放は冒頭のtrapに統合済み
 
 {
 
