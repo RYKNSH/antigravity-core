@@ -30,20 +30,41 @@ if (fs.existsSync(envPath)) {
 }
 
 const PENPOT_URL = process.env.PENPOT_URL;
-const ACCESS_TOKEN = process.env.PENPOT_ACCESS_TOKEN;
+const PENPOT_EMAIL = process.env.PENPOT_EMAIL || process.env.PENPOT_ACCESS_TOKEN;
+const PENPOT_PASSWORD = process.env.PENPOT_PASSWORD;
+const COOKIE_JAR = '/tmp/penpot_session_cookies.txt';
 
-if (!PENPOT_URL || !ACCESS_TOKEN) {
-    console.error('[Penpot CLI] Error: PENPOT_URL または PENPOT_ACCESS_TOKEN が設定されていません。');
+if (!PENPOT_URL) {
+    console.error('[Penpot CLI] Error: PENPOT_URL が設定されていません。');
     console.error('  ~/.antigravity/.env に設定してください。');
     process.exit(1);
 }
 
-// ── ユーティリティ ──────────────────────────────────────────
+// ── セッション管理 ────────────────────────────────────────────
+
+function login() {
+    if (!PENPOT_EMAIL || !PENPOT_PASSWORD) {
+        console.error('[Penpot CLI] Error: PENPOT_EMAIL と PENPOT_PASSWORD が必要です。');
+        process.exit(1);
+    }
+    const cmd = `curl -sf -c "${COOKIE_JAR}" -X POST \
+      "${PENPOT_URL}/api/rpc/command/login-with-password" \
+      -H "Content-Type: application/json" \
+      -d '{"email":"${PENPOT_EMAIL}","password":"${PENPOT_PASSWORD}"}'`;
+    try {
+        execSync(cmd, { timeout: 15000 });
+    } catch (e) {
+        console.error('[Penpot CLI] ログイン失敗:', e.message);
+        process.exit(1);
+    }
+}
 
 function curl(method, endpoint, body = null) {
+    // セッションCookieがなければログイン
+    if (!fs.existsSync(COOKIE_JAR)) login();
     const url = `${PENPOT_URL}/api/rpc/command${endpoint}`;
-    let cmd = `curl -sf -X ${method} "${url}" \
-    -H "Authorization: Token ${ACCESS_TOKEN}" \
+    let cmd = `curl -sL -b "${COOKIE_JAR}" -X ${method} "${url}" \
+    -H "Accept: application/json" \
     -H "Content-Type: application/json"`;
     if (body) cmd += ` -d '${JSON.stringify(body)}'`;
     try {
@@ -55,6 +76,7 @@ function curl(method, endpoint, body = null) {
         process.exit(1);
     }
 }
+
 
 function printHelp() {
     console.log(`Penpot CLI — Antigravity Core
@@ -71,8 +93,13 @@ Usage:
 
 async function cmdProfile() {
     const data = curl('GET', '/get-profile');
-    console.log(`✅ ログイン中: ${data.fullname} (${data.email})`);
-    console.log(`   ID: ${data.id}`);
+    // Penpot APIはcamelCase JSONを返す (Accept: application/json時)
+    const name = data.fullname || data['~:fullname'] || '(不明)';
+    const email = data.email || data['~:email'] || '(不明)';
+    const id = data.id || data['~:id'] || '(不明)';
+    console.log(`✅ ログイン中: ${name} (${email})`);
+    console.log(`   ID: ${id}`);
+    console.log(`   defaultTeamId: ${data.defaultTeamId || data['~:defaultTeamId'] || '(不明)'}`);
 }
 
 async function cmdListFiles(teamId) {
