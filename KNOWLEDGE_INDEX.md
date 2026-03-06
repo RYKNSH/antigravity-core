@@ -14,6 +14,9 @@
 - `mcp_server_directory` - MCP設定
 - `remote_mac_mini_vibe_coding` - リモート開発
 
+### #google-workspace
+- `gws_google_workspace_cli` - gws CLI（MCP対応、Drive/Gmail/Calendar/Sheets等）
+
 ### #ai
 - `ai_coding_assistant_best_practices` - AI Coding設定
 - `autonomous_feedback_loop_fbl` - FBLパターン
@@ -46,3 +49,7 @@
 | pnpm | `antigravity_portable_dev_ecosystem` |
 | FBL | `autonomous_feedback_loop_fbl` |
 | Debug | `debug_patterns`, `galileo_log` |
+| Google | `gws_google_workspace_cli` |
+| Gmail | `gws_google_workspace_cli` |
+| Drive | `gws_google_workspace_cli` |
+| Calendar | `gws_google_workspace_cli` |
