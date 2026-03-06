@@ -1,4 +1,4 @@
-const https = require('https');
+const { curlRequest } = require('./lib/curl_client');
 const fs = require('fs');
 const path = require('path');
 

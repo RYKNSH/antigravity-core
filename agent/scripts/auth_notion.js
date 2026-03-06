@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
+const { curlRequest } = require('./lib/curl_client');
 const { exec } = require('child_process');
 const readline = require('readline');
 

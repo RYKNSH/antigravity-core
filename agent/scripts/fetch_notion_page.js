@@ -1,4 +1,4 @@
-const https = require('https');
+const { curlRequest } = require('./lib/curl_client');
 const path = require('path');
 const fs = require('fs');
 
@@ -55,19 +55,7 @@ function fetchPage(id) {
                 'Notion-Version': '2022-06-28'
             }
         };
-
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                if (res.statusCode === 200) {
-                    resolve(JSON.parse(data));
-                } else {
-                    reject(new Error(`Page Fetch Error: ${res.statusCode} ${data}`));
-                }
-            });
-        });
-        req.end();
+        try { resolve(curlRequest(options, null)); } catch (e) { reject(e); }
     });
 }
 
@@ -83,19 +71,7 @@ function fetchBlocks(id) {
                 'Notion-Version': '2022-06-28'
             }
         };
-
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                if (res.statusCode === 200) {
-                    resolve(JSON.parse(data));
-                } else {
-                    reject(new Error(`Block Fetch Error: ${res.statusCode} ${data}`));
-                }
-            });
-        });
-        req.end();
+        try { resolve(curlRequest(options, null)); } catch (e) { reject(e); }
     });
 }
 

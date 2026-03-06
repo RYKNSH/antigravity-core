@@ -1,4 +1,4 @@
-const https = require('https');
+const { curlRequest } = require('./lib/curl_client');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
@@ -38,30 +38,20 @@ function request(path, method, body) {
                 'Notion-Version': '2022-06-28'
             }
         };
-
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                if (res.statusCode >= 200 && res.statusCode < 300) {
-                    resolve(JSON.parse(data));
-                } else {
-                    reject({ statusCode: res.statusCode, body: data });
-                }
-            });
-        });
-        req.on('error', reject);
-        if (body) req.write(JSON.stringify(body));
-        req.end();
+        try {
+            resolve(curlRequest(options, body));
+        } catch (e) {
+            reject(e);
+        }
     });
 }
 
 function runDiscordPoster(pageId) {
     return new Promise((resolve, reject) => {
-        const scriptPath = path.join(__dirname, 'discord_poster.js');
-        // Use 'node' command. scriptPath should be absolute or correct relative.
-        // We assume discord_poster.js is in same dir.
-        exec(`node "${scriptPath}" ${pageId}`, (error, stdout, stderr) => {
+        const scriptPath = path.join(__dirname, 'discord_poster.sh');
+        // Use 'bash' command. scriptPath should be absolute or correct relative.
+        // We assume discord_poster.sh is in same dir.
+        exec(`bash "${scriptPath}" ${pageId}`, (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error posting ${pageId}:`, stderr);
                 reject(error);
@@ -117,7 +107,7 @@ async function main() {
         for (const page of pages) {
             const title = page.properties[TITLE_PROP]?.title[0]?.plain_text || "Untitled";
             const dateStr = page.properties[DATE_PROP]?.date?.start;
-            
+
             // Notion API date with time_zone returns full ISO string in JS usually?
             // Actually request returns whatever was saved. 
             // If we saved "2026-01-27T08:00:00" and time_zone "Asia/Tokyo", 
@@ -125,16 +115,16 @@ async function main() {
             // OR we must re-construct.
             // Let's rely on Date.parse handling.
             // If Notion returns "2026-01-27T08:00:00.000+09:00", Date.parse works.
-            
+
             if (!dateStr) continue;
 
             const scheduleTime = new Date(dateStr);
-            
+
             // Check if Due
             if (scheduleTime <= now) {
                 console.log(`🚀 DUE: "${title}" (Scheduled: ${dateStr})`);
                 console.log(`   Posting to Discord...`);
-                
+
                 try {
                     await runDiscordPoster(page.id);
                     await markAsPublished(page.id);

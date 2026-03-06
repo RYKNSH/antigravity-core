@@ -1,4 +1,4 @@
-const https = require('https');
+const { curlRequest } = require('./lib/curl_client');
 const fs = require('fs');
 const path = require('path');
 
@@ -32,21 +32,11 @@ function request(path, method, body) {
                 'Notion-Version': '2022-06-28'
             }
         };
-
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                if (res.statusCode >= 200 && res.statusCode < 300) {
-                    resolve(JSON.parse(data));
-                } else {
-                    reject({ statusCode: res.statusCode, body: data });
-                }
-            });
-        });
-        req.on('error', reject);
-        if (body) req.write(JSON.stringify(body));
-        req.end();
+        try {
+            resolve(curlRequest(options, body));
+        } catch (e) {
+            reject(e);
+        }
     });
 }
 

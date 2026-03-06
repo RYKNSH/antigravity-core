@@ -1,6 +1,6 @@
+const { curlRequest } = require('./lib/curl_client');
 const path = require('path');
 const fs = require('fs');
-const https = require('https');
 
 // Simple .env parser
 let envPath = path.join(process.cwd(), '.env');
@@ -69,27 +69,14 @@ for (let i = 0; i < lines.length; i++) {
 
 // --- HELPER FUNCTIONS ---
 
+
 function request(options, body) {
     return new Promise((resolve, reject) => {
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                if (res.statusCode >= 200 && res.statusCode < 300) {
-                    try {
-                        const json = JSON.parse(data);
-                        resolve(json);
-                    } catch (e) {
-                        resolve(data);
-                    }
-                } else {
-                    reject({ statusCode: res.statusCode, body: data });
-                }
-            });
-        });
-        req.on('error', reject);
-        if (body) req.write(JSON.stringify(body));
-        req.end();
+        try {
+            resolve(curlRequest(options, body));
+        } catch (e) {
+            reject(e);
+        }
     });
 }
 

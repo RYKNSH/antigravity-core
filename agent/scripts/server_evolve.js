@@ -23,7 +23,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const https = require('https');
+const { execSync } = require('child_process');
 
 const ANTIGRAVITY_DIR = process.env.ANTIGRAVITY_DIR || path.join(os.homedir(), '.antigravity');
 const DRY_RUN = process.argv.includes('--dry-run');
@@ -289,45 +289,23 @@ ${VALUE_HIERARCHY}
 // ══════════════════════════════════════════
 // 5. GitHub API
 // ══════════════════════════════════════════
-function githubRequest(method, endpoint, body) {
-    return new Promise((resolve, reject) => {
-        const options = {
-            hostname: 'api.github.com',
-            path: endpoint,
-            method,
-            headers: {
-                'Authorization': `Bearer ${GITHUB_TOKEN}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'antigravity-server-evolve/2.0',
-                'Content-Type': 'application/json',
-            },
-        };
-
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
-                catch (e) { resolve({ status: res.statusCode, body: data }); }
-            });
-        });
-
-        req.on('error', reject);
-        req.setTimeout(10000, () => { req.destroy(new Error('GitHub API timeout')); });
-
-        if (body) req.write(JSON.stringify(body));
-        req.end();
-    });
+function execGH(cmd) {
+    try {
+        return execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+    } catch (e) {
+        throw new Error(`gh execution failed: ${e.message}\n${e.stderr || ''}`);
+    }
 }
 
 async function issueExists(title) {
-    if (!GITHUB_TOKEN) return false;
-    const res = await githubRequest(
-        'GET',
-        `/repos/${REPO_OWNER}/${REPO_NAME}/issues?labels=bot%3A+evolve-proposal&state=open&per_page=100`
-    );
-    if (res.status !== 200 || !Array.isArray(res.body)) return false;
-    return res.body.some(issue => issue.title === title);
+    try {
+        const out = execGH(`gh issue list --repo ${REPO_OWNER}/${REPO_NAME} --state open --label "bot: evolve-proposal" --limit 100 --json title`);
+        const issues = JSON.parse(out);
+        return issues.some(issue => issue.title === title);
+    } catch (e) {
+        console.warn(`  ⚠️  issueExistsチェック失敗: ${e.message}`);
+        return false;
+    }
 }
 
 async function createIssue(proposal) {
@@ -336,17 +314,29 @@ async function createIssue(proposal) {
         return null;
     }
 
-    const res = await githubRequest('POST', `/repos/${REPO_OWNER}/${REPO_NAME}/issues`, {
-        title: proposal.title,
-        body: proposal.body,
-        labels: proposal.labels,
-    });
+    try {
+        // Write body to a temporary file to avoid shell escaping issues
+        const tmpFile = path.join(os.tmpdir(), `gh_issue_body_${Date.now()}.md`);
+        fs.writeFileSync(tmpFile, proposal.body, 'utf8');
 
-    if (res.status === 201) {
-        console.log(`  ✅ Issue作成: #${res.body.number} — ${proposal.title}`);
-        return res.body;
-    } else {
-        console.error(`  ❌ Issue作成失敗 (${res.status}):`, JSON.stringify(res.body).slice(0, 200));
+        let labelsArg = '';
+        if (proposal.labels && proposal.labels.length > 0) {
+            labelsArg = proposal.labels.map(l => `--label "${l}"`).join(' ');
+        }
+
+        const cmd = `gh issue create --repo ${REPO_OWNER}/${REPO_NAME} --title "${proposal.title}" --body-file "${tmpFile}" ${labelsArg}`;
+        const out = execGH(cmd);
+
+        try { fs.unlinkSync(tmpFile); } catch (e) { }
+
+        // Output of gh issue create is usually the URL of the new issue
+        const urlMatch = out.match(/issues\/(\d+)/);
+        const issueNum = urlMatch ? urlMatch[1] : '?';
+
+        console.log(`  ✅ Issue作成: #${issueNum} — ${proposal.title}`);
+        return { number: issueNum, url: out.trim() };
+    } catch (e) {
+        console.error(`  ❌ Issue作成失敗:`, e.message);
         return null;
     }
 }
@@ -397,11 +387,6 @@ async function main() {
 
     if (DRY_RUN) {
         console.log('\n[DRY RUN] Issue作成をスキップ');
-        return;
-    }
-
-    if (!GITHUB_TOKEN) {
-        console.warn('\n⚠️  GITHUB_TOKEN が未設定です');
         return;
     }
 
