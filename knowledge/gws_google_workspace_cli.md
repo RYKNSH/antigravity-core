@@ -7,11 +7,12 @@
 
 ## 概要
 
-Google Workspace向け公式CLIツール。**MCP（Model Context Protocol）ネイティブ対応**で、AIエージェント用に設計。Drive, Gmail, Calendar, Sheets, Docs, Chat等、40以上のAgent Skillを内包。
+Google Workspace向け公式CLIツール。Drive, Gmail, Calendar, Sheets, Docs, Chat等、全Workspace APIを尊を統一コマンドで操作できる。
+
+> **運用方針**: Antigravityでは**CLI直打ちが主運用**。`run_command` で `gws <command>` を直接実行する。MCP経由は不要。
 
 ### 特徴
-- **動的APIディスカバリ**: Google Discovery Serviceで実行時に全Workspace APIを自動サポート（→ツール更新不要で新API即時対応）
-- **MCP対応**: `gws mcp` でMCPサーバーとして起動可能
+- **動的APIディスカバリ**: Google Discovery Serviceで全Workspace APIを自動サポート
 - **認証**: OAuth + Google Cloud Project（ローカルキーリング保存）
 
 ## インストール
@@ -76,19 +77,16 @@ gws <service> --help  # サービス内コマンド一覧
 
 ## Antigravity内での使い方
 
-AIエージェント（Gemini CLI / Claude等）が `gws mcp` 経由でGoogle Workspaceを操作。
-- カレンダー作成・確認 → `gws calendar events list/insert`
-- Driveへのファイル保存 → `gws drive files create`
-- Sheets連携（データ書き込み等） → `gws sheets spreadsheets values append`
+AIエージェントは `run_command` で**gws CLIを直接呼び出す**。MCP経由は不要。
 
-## 既存ツールとの関係
+```bash
+# 例: AIが run_command で直接実行
+gws drive files list
+gws calendar events list --calendar-id primary
+gws gmail messages list --max-results 10
+gws sheets spreadsheets values get <id> <range>
+```
 
-| ツール | パッケージ | 特徴 |
-|--------|-----------|------|
-| `google-workspace`（MCP） | `@iflow-mcp/google-workspace-mcp-server` | サードパーティ、シンプル |
-| **`gws`（MCP）** | `@googleworkspace/cli` | **Google公式、APIカバレッジ広大** |
-
-両方を `mcp_config.json` に登録済み。用途に応じて使い分け可。
 
 ## 参考リンク
 - npm: https://www.npmjs.com/package/@googleworkspace/cli

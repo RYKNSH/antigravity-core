@@ -12,6 +12,7 @@
 ## 🔧 技術標準
 - TypeScript: `any` 禁止、strict mode必須
 - パッケージ管理: pnpm / テスト: Vitest / コミット: Conventional Commits
+- **CLI優先原則**: `run_command` が使える環境では、CLIが存在するサービスはMCPより優先して使用すること（例: GitHub→`gh`、Google Workspace→`gws`）。MCPはCLIがないサービス専用。
 
 ## 🔄 コマンド
 - **`/go`** ← 全自動（メタWF） / 「終わり」「また明日」→ セッション終了
