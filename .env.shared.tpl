@@ -57,3 +57,6 @@ DISCORD_BUDDY_API_KEY={{ op://Antigravity/discord-buddy/api-key }}
 # --- ECAI ---
 ECAI_USER={{ op://Antigravity/ecai/user }}
 ECAI_PASSWORD={{ op://Antigravity/ecai/password }}
+
+# --- EverWebinar ---
+EVERWEBINAR_API_KEY={{ op://Antigravity/everwebinar/api-key }}
