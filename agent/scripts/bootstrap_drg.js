@@ -43,27 +43,27 @@ function ensureDRGFile() {
     }
 }
 
-// ─── GitHub Scan (via fetch API) ─────────────────────────
-async function scanGitHub(username) {
+// ─── GitHub Scan (via gh CLI) ─────────────────────────
+function scanGitHub(username) {
     console.log(`\n📂 Scanning GitHub repos for ${username}...`);
+    const { execSync } = require('child_process');
     const repos = [];
     let page = 1;
 
     while (true) {
-        const url = `https://api.github.com/users/${username}/repos?per_page=100&page=${page}&sort=updated`;
-        const headers = { 'User-Agent': 'Antigravity-DRG-Bootstrap' };
-        if (process.env.GITHUB_TOKEN) {
-            headers['Authorization'] = `token ${process.env.GITHUB_TOKEN}`;
-        }
-
-        const res = await fetch(url, { headers });
-        if (!res.ok) {
-            console.error(`❌ GitHub API error: ${res.status}`);
+        let output;
+        try {
+            output = execSync(
+                `gh api "users/${username}/repos?per_page=100&page=${page}&sort=updated" --jq '.'`,
+                { encoding: 'utf8', timeout: 30000 }
+            );
+        } catch (err) {
+            console.error(`❌ GitHub API error (gh): ${err.message}`);
             break;
         }
 
-        const data = await res.json();
-        if (data.length === 0) break;
+        const data = JSON.parse(output);
+        if (!data || data.length === 0) break;
         repos.push(...data);
         page++;
     }

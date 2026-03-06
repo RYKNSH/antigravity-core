@@ -12,7 +12,7 @@ if (fs.existsSync(envPath)) {
     const envConfig = fs.readFileSync(envPath, 'utf8');
     envConfig.split('\n').forEach(line => {
         const match = line.match(/^([^=]+)=(.*)$/);
-        if (match) process.env[match[1].trim()] = match[2].trim().replace(/^["'](.*)["']$/, '$1');
+        if (match) process.env[match[1].trim()] = match[2].trim().replace(/^["'](.*)[\"']$/, '$1');
     });
 }
 
@@ -53,21 +53,9 @@ const options = {
     }
 };
 
-const req = https.request(options, (res) => {
-    let data = '';
-    res.on('data', chunk => data += chunk);
-    res.on('end', () => {
-        if (res.statusCode === 200) {
-            console.log('✅ Successfully updated Notion Database Schema with new properties.');
-        } else {
-            console.error(`❌ Error updating schema: ${res.statusCode} ${data}`);
-        }
-    });
-});
-
-req.on('error', (e) => {
-    console.error(`Problem with request: ${e.message}`);
-});
-
-req.write(JSON.stringify(updatePayload));
-req.end();
+try {
+    curlRequest(options, updatePayload);
+    console.log('✅ Successfully updated Notion Database Schema with new properties.');
+} catch (err) {
+    console.error(`❌ Error updating schema: ${err.statusCode || 'unknown'} ${err.body || err.message || err}`);
+}

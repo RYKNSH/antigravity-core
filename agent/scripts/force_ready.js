@@ -12,7 +12,7 @@ if (fs.existsSync(envPath)) {
     const envConfig = fs.readFileSync(envPath, 'utf8');
     envConfig.split('\n').forEach(line => {
         const match = line.match(/^([^=]+)=(.*)$/);
-        if (match) process.env[match[1].trim()] = match[2].trim().replace(/^["'](.*)["']$/, '$1');
+        if (match) process.env[match[1].trim()] = match[2].trim().replace(/^["'](.*)[\"']$/, '$1');
     });
 }
 
@@ -30,19 +30,7 @@ const options = {
     }
 };
 
-const req = https.request(options, (res) => {
-    let data = '';
-    res.on('data', chunk => data += chunk);
-    res.on('end', () => {
-        if (res.statusCode === 200) {
-            console.log("Successfully updated status to Ready");
-        } else {
-            console.error(`Error: ${res.statusCode} ${data}`);
-        }
-    });
-});
-
-req.write(JSON.stringify({
+const body = {
     properties: {
         "Status": {
             select: {
@@ -50,5 +38,11 @@ req.write(JSON.stringify({
             }
         }
     }
-}));
-req.end();
+};
+
+try {
+    const result = curlRequest(options, body);
+    console.log("Successfully updated status to Ready");
+} catch (err) {
+    console.error(`Error: ${err.statusCode || 'unknown'} ${err.body || err.message || err}`);
+}

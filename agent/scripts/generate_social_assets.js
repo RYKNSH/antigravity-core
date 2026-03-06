@@ -21,57 +21,33 @@ const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 // 2. Helper: Notion API
-async function notionRequest(endpoint, method, body) {
-    return new Promise((resolve, reject) => {
-        const options = {
-            hostname: 'api.notion.com',
-            path: endpoint,
-            method: method,
-            headers: {
-                'Authorization': `Bearer ${NOTION_API_KEY}`,
-                'Content-Type': 'application/json',
-                'Notion-Version': '2022-06-28'
-            }
-        };
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', c => data += c);
-            res.on('end', () => {
-                if (res.statusCode >= 200 && res.statusCode < 300) resolve(JSON.parse(data));
-                else reject(new Error(`Notion API Error ${res.statusCode}: ${data}`));
-            });
-        });
-        req.on('error', reject);
-        if (body) req.write(JSON.stringify(body));
-        req.end();
-    });
+function notionRequest(endpoint, method, body) {
+    const options = {
+        hostname: 'api.notion.com',
+        path: endpoint,
+        method: method,
+        headers: {
+            'Authorization': `Bearer ${NOTION_API_KEY}`,
+            'Content-Type': 'application/json',
+            'Notion-Version': '2022-06-28'
+        }
+    };
+    return curlRequest(options, body);
 }
 
 // 3. Helper: OpenAI API
-async function openaiRequest(endpoint, body) {
+function openaiRequest(endpoint, body) {
     if (!OPENAI_API_KEY) throw new Error("Missing OPENAI_API_KEY");
-    return new Promise((resolve, reject) => {
-        const options = {
-            hostname: 'api.openai.com',
-            path: endpoint,
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        };
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', c => data += c);
-            res.on('end', () => {
-                if (res.statusCode >= 200 && res.statusCode < 300) resolve(JSON.parse(data));
-                else reject(new Error(`OpenAI API Error ${res.statusCode}: ${data}`));
-            });
-        });
-        req.on('error', reject);
-        req.write(JSON.stringify(body));
-        req.end();
-    });
+    const options = {
+        hostname: 'api.openai.com',
+        path: endpoint,
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+        }
+    };
+    return curlRequest(options, body);
 }
 
 // 4. Main Logic
@@ -83,10 +59,10 @@ async function main() {
         // Criteria: Status=Ready AND (X_Post_Text is empty OR Social_Distribution_Status is not Done)
         // For simplicity, let's filter for Status=Ready for now and check properties in code
         const query = await notionRequest(`/v1/databases/${NOTION_DATABASE_ID}/query`, 'POST', {
-             filter: {
-                 property: "Status",
-                 select: { equals: "Ready" }
-             }
+            filter: {
+                property: "Status",
+                select: { equals: "Ready" }
+            }
         });
 
         const pages = query.results;
@@ -95,7 +71,7 @@ async function main() {
         for (const page of pages) {
             const title = page.properties['ドキュメント名']?.title?.[0]?.plain_text || "Untitled";
             const xText = page.properties['X_Post_Text']?.rich_text?.[0]?.plain_text;
-            
+
             // Skip if already has X text (assuming if X is there, others are too, or we re-run)
             // Or check a specific "Social_Distribution_Status"
             const distStatus = page.properties['Social_Distribution_Status']?.select?.name;
@@ -109,7 +85,7 @@ async function main() {
             // Fetch Content for context
             // (Simplified: using title only for now to save tokens, or implement fetch blocks if needed)
             // let content = ... (use existing fetch logic if needed) 
-            
+
             // --- 1. Text Generation ---
             let socialTexts = { twitter: "", facebook: "", threads: "" };
             if (OPENAI_API_KEY) {
@@ -123,7 +99,7 @@ async function main() {
                         ],
                         response_format: { type: "json_object" }
                     });
-                    
+
                     socialTexts = JSON.parse(completion.choices[0].message.content);
                 } catch (e) {
                     console.error('   ❌ OpenAI Text Gen Failed:', e.message);
@@ -140,11 +116,11 @@ async function main() {
             // --- 2. Image Generation ---
             let imageUrl = "";
             let imagePrompt = prompts.getImagePrompt(title, "");
-            
+
             // Note: Sending DALL-E image to Notion Cover requires the URL to be hosted/public. 
             // DALL-E URLs expire. We might just store the Prompt for now, OR upload to Notion if URL is valid.
             // Notion API 'cover' property takes an external URL.
-            
+
             if (OPENAI_API_KEY) {
                 console.log('   🎨 Generating image via DALL-E 3...');
                 try {
@@ -179,7 +155,7 @@ async function main() {
 
             // Prepare Page Update Payload
             const payload = { properties: updateProps };
-            
+
             // If we have an image, set it as Cover
             if (imageUrl) {
                 payload.cover = {

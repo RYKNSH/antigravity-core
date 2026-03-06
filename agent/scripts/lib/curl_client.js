@@ -30,7 +30,12 @@ function curlRequest(options, body = null) {
 
     try {
         // Execute curl synchronously
+        const _t0 = Date.now();
         const output = execSync(curlCmd, { encoding: 'utf8' });
+        const _elapsed = Date.now() - _t0;
+        if (_elapsed > 5000) {
+            console.warn(`[curl_client] slow response: ${options.hostname}${options.path} took ${_elapsed}ms`);
+        }
 
         if (tmpFile) {
             try { fs.unlinkSync(tmpFile); } catch (e) { }

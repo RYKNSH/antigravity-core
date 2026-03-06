@@ -47,3 +47,27 @@
 - ミス発生時は修正後、関連ルールファイルを更新
 - 新パターン発見時はナレッジ蓄積
 - checkout時の自己評価で課題 → このファイルに経験則追記
+
+## 🌐 外部通信ルール（I/O Boundary Layer）
+
+**全ての外部HTTPアクセスには必ずタイムアウトを設定すること。直接の `https.request` や `fetch()` は原則禁止。**
+
+### agent/scripts/ 配下のスクリプト
+- ✅ **`curlRequest()` を使用** — `lib/curl_client.js` 経由（curl, max-time 15s, retry 3）
+- ❌ `https.request()` 禁止
+- ❌ `require('https')` 禁止
+- ❌ タイムアウトなしの `fetch()` 禁止
+
+### heartbeat/ 配下（常駐プロセス）
+- ✅ **`AbortController` + `setTimeout` を必ずペアで使用**
+- Anthropic API: タイムアウト **30秒**
+- Discord Webhook: タイムアウト **15秒**
+- `execSync` 禁止（イベントループブロック）
+
+### CLI優先順位
+1. 公式CLI（`gh`, `supabase`, `railway`, `vercel`, `op`）
+2. `curl` 経由 (`curl_client.js`)
+3. `AbortController` + `fetch`（heartbeat/のみ）
+
+### 監視
+`curl_client.js` は 5秒超のレスポンスを `[curl_client] slow response` で警告ログ出力する。

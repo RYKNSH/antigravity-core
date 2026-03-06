@@ -12,7 +12,7 @@ if (fs.existsSync(envPath)) {
     const envConfig = fs.readFileSync(envPath, 'utf8');
     envConfig.split('\n').forEach(line => {
         const match = line.match(/^([^=]+)=(.*)$/);
-        if (match) process.env[match[1].trim()] = match[2].trim().replace(/^["'](.*)["']$/, '$1');
+        if (match) process.env[match[1].trim()] = match[2].trim().replace(/^["'](.*)[\"']$/, '$1');
     });
 }
 
@@ -29,23 +29,15 @@ const options = {
     }
 };
 
-const req = https.request(options, (res) => {
-    let data = '';
-    res.on('data', chunk => data += chunk);
-    res.on('end', () => {
-        if (res.statusCode === 200) {
-            const json = JSON.parse(data);
-            console.log(Object.keys(json.properties));
-            // Also print options for "ステータス" if exists
-            if (json.properties['ステータス']) {
-                console.log('Status options:', JSON.stringify(json.properties['ステータス'].status || json.properties['ステータス'].select));
-            }
-            if (json.properties['Status']) {
-                console.log('Status options:', JSON.stringify(json.properties['Status'].status || json.properties['Status'].select));
-            }
-        } else {
-            console.error(`Error: ${res.statusCode} ${data}`);
-        }
-    });
-});
-req.end();
+try {
+    const json = curlRequest(options);
+    console.log(Object.keys(json.properties));
+    if (json.properties['ステータス']) {
+        console.log('Status options:', JSON.stringify(json.properties['ステータス'].status || json.properties['ステータス'].select));
+    }
+    if (json.properties['Status']) {
+        console.log('Status options:', JSON.stringify(json.properties['Status'].status || json.properties['Status'].select));
+    }
+} catch (err) {
+    console.error(`Error: ${err.statusCode || 'unknown'} ${err.body || err.message || err}`);
+}

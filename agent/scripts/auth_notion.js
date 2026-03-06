@@ -31,7 +31,7 @@ function openBrowser(url) {
 }
 
 async function validateToken(token) {
-    return new Promise((resolve, reject) => {
+    try {
         const options = {
             hostname: 'api.notion.com',
             path: '/v1/users/me',
@@ -41,18 +41,11 @@ async function validateToken(token) {
                 'Notion-Version': '2022-06-28'
             }
         };
-
-        const req = https.request(options, (res) => {
-            if (res.statusCode === 200) {
-                resolve(true);
-            } else {
-                resolve(false);
-            }
-        });
-
-        req.on('error', (e) => resolve(false));
-        req.end();
-    });
+        curlRequest(options);
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
 
 async function main() {

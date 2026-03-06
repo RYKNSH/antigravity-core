@@ -25,36 +25,18 @@ if (fs.existsSync(envPath)) {
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 // 2. Helper: OpenAI API
-async function openaiRequest(endpoint, body) {
+function openaiRequest(endpoint, body) {
     if (!OPENAI_API_KEY) throw new Error("Missing OPENAI_API_KEY");
-    return new Promise((resolve, reject) => {
-        const options = {
-            hostname: 'api.openai.com',
-            path: endpoint,
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        };
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', c => data += c);
-            res.on('end', () => {
-                if (res.statusCode >= 200 && res.statusCode < 300) {
-                    try {
-                        resolve(JSON.parse(data));
-                    } catch (e) {
-                        reject(new Error(`Failed to parse response: ${e.message}`));
-                    }
-                }
-                else reject(new Error(`OpenAI API Error ${res.statusCode}: ${data}`));
-            });
-        });
-        req.on('error', reject);
-        req.write(JSON.stringify(body));
-        req.end();
-    });
+    const options = {
+        hostname: 'api.openai.com',
+        path: endpoint,
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+        }
+    };
+    return curlRequest(options, body);
 }
 
 // 3. Main Logic
