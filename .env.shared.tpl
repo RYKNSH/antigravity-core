@@ -60,3 +60,7 @@ ECAI_PASSWORD={{ op://Antigravity/ecai/password }}
 
 # --- EverWebinar ---
 EVERWEBINAR_API_KEY={{ op://Antigravity/everwebinar/api-key }}
+
+# --- Penpot (Design System — Community Production) ---
+PENPOT_URL={{ op://Antigravity/penpot/url }}
+PENPOT_ACCESS_TOKEN={{ op://Antigravity/penpot/access-token }}

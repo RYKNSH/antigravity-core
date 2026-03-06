@@ -1,0 +1,22 @@
+{
+    "name": "antigravity-remotion-templates",
+    "version": "1.0.0",
+    "description": "Antigravity コミュニティ向け Remotion 動画テンプレート集",
+    "scripts": {
+        "studio": "remotion studio src/index.ts",
+        "render:hook": "remotion render src/index.ts Hook --output out/hook.mp4",
+        "render:proof": "remotion render src/index.ts Proof --output out/proof.mp4",
+        "render:demo": "remotion render src/index.ts Demo --output out/demo.mp4",
+        "render:op-ed": "remotion render src/index.ts OpEd --output out/op-ed.mp4"
+    },
+    "dependencies": {
+        "react": "^18.0.0",
+        "react-dom": "^18.0.0",
+        "remotion": "^4.0.0",
+        "@remotion/cli": "^4.0.0"
+    },
+    "devDependencies": {
+        "@types/react": "^18.0.0",
+        "typescript": "^5.0.0"
+    }
+}

@@ -17,9 +17,9 @@ if [ -n "$PERSONAL_FILES" ]; then
   exit 1
 fi
 
-# Check 2: Secretsパターン（.env.shared.tpl はテンプレートなので除外）
+# Check 2: Secretsパターン（.env.shared.tpl / docker-compose.yml はテンプレートなので除外）
 SECRET_PATTERNS="API_KEY|SECRET|PASSWORD|TOKEN|PRIVATE_KEY|ACCESS_TOKEN"
-SECRET_HITS=$(git diff --cached -- ':!.env.shared.tpl' | grep -iE "($SECRET_PATTERNS)=")
+SECRET_HITS=$(git diff --cached -- ':!.env.shared.tpl' ':!media/penpot/docker-compose.yml' ':!media/penpot/.env.example' | grep -iE "($SECRET_PATTERNS)=")
 if [ -n "$SECRET_HITS" ]; then
   echo "⚠️  Warning: Potential secret detected"
   echo ""

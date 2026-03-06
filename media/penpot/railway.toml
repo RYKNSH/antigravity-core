@@ -1,0 +1,13 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile.railway"
+
+[deploy]
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+# Railway環境変数（railway.app の Variables UIで設定）
+# PENPOT_SECRET_KEY  : openssl rand -hex 32 で生成
+# PENPOT_PUBLIC_URI  : https://<your-railway-domain>
+# PENPOT_DB_USER     : penpot
+# PENPOT_DB_PASSWORD : (強力なパスワード)

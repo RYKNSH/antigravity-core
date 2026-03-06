@@ -20,10 +20,13 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-// .env 読み込み
+// .env 読み込み（nativeパース — dotenv不要）
 const envPath = path.join(process.env.HOME, '.antigravity', '.env');
 if (fs.existsSync(envPath)) {
-    require('dotenv').config({ path: envPath });
+    fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+        const m = line.match(/^([^#=\s][^=]*)=(.*)$/);
+        if (m) process.env[m[1].trim()] = m[2].trim();
+    });
 }
 
 const PENPOT_URL = process.env.PENPOT_URL;
