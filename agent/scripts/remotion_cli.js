@@ -5,11 +5,14 @@
  *
  * Usage:
  *   node remotion_cli.js list-templates
- *   node remotion_cli.js render <template> <config_json> [output.mp4]
+ *   node remotion_cli.js render <template> <config_json_or_file> [output.mp4]
  *   node remotion_cli.js preview <template>
  *
- * 例:
- *   node remotion_cli.js render hook '{"title":"今だけ","duration":30}' ./ad_hook.mp4
+ * 例（インラインJSON）:
+ *   node remotion_cli.js render hook '{"title":"今だけ","subtitle":"AIの力を手に"}' ./hook.mp4
+ *
+ * 例（JSONファイル指定）:
+ *   node remotion_cli.js render hook ./config/solopro.json ./hook.mp4
  */
 
 'use strict';
@@ -57,17 +60,25 @@ function cmdListTemplates() {
     });
 }
 
-function cmdRender(template, configJson, outputPath) {
-    if (!template || !configJson) {
-        console.error('template と config_json が必要です');
+function cmdRender(template, configArg, outputPath) {
+    if (!template || !configArg) {
+        console.error('template と config が必要です（JSON文字列またはファイルパス）');
         process.exit(1);
     }
 
+    // JSONファイルパスかインラインJSONかを判定
     let config;
     try {
-        config = JSON.parse(configJson);
+        if (configArg.endsWith('.json') && fs.existsSync(configArg)) {
+            const raw = fs.readFileSync(configArg, 'utf8');
+            const allConfigs = JSON.parse(raw);
+            // ファイルが全テンプレート設定を持つ場合、テンプレートキーで取得
+            config = allConfigs[template] || allConfigs;
+        } else {
+            config = JSON.parse(configArg);
+        }
     } catch (e) {
-        console.error('config_json のJSON解析に失敗しました:', e.message);
+        console.error('config のJSON解析に失敗しました:', e.message);
         process.exit(1);
     }
 
@@ -87,16 +98,19 @@ function cmdRender(template, configJson, outputPath) {
     console.log(`🎬 レンダリング開始: ${template} → ${out}`);
     console.log(`   設定: ${JSON.stringify(config)}`);
 
+    // composition IDマッピング（op-ed はそのままIDとして使用）
+    const compositionId = template; // index.tsx の Composition id に対応
+
     const result = spawnSync('npx', [
         'remotion', 'render',
-        path.join(REMOTION_PACKAGE, 'src', 'index.ts'),
-        template.charAt(0).toUpperCase() + template.slice(1), // コンポーネント名（PascalCase）
+        path.join(REMOTION_PACKAGE, 'src', 'index.tsx'),
+        compositionId,
         out,
         '--props', tmpConfig,
     ], {
         cwd: REMOTION_PACKAGE,
         stdio: 'inherit',
-        timeout: 120000,
+        timeout: 180000,
     });
 
     fs.unlinkSync(tmpConfig);
@@ -124,7 +138,7 @@ const [, , cmd, ...args] = process.argv;
 
 switch (cmd) {
     case 'list-templates': cmdListTemplates(); break;
-    case 'render': cmdRender(args[0], args[1], args[2]); break;
+    case 'render': cmdRender(args[0], args[1], args[2]); break;  // config = JSONファイルパス or インラインJSON
     case 'preview': cmdPreview(args[0]); break;
     default: printHelp();
 }
