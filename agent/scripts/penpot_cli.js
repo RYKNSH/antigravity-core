@@ -47,10 +47,11 @@ function login() {
         console.error('[Penpot CLI] Error: PENPOT_EMAIL と PENPOT_PASSWORD が必要です。');
         process.exit(1);
     }
+    const body = JSON.stringify({ email: PENPOT_EMAIL, password: PENPOT_PASSWORD });
     const cmd = `curl -sf -c "${COOKIE_JAR}" -X POST \
       "${PENPOT_URL}/api/rpc/command/login-with-password" \
       -H "Content-Type: application/json" \
-      -d '{"email":"${PENPOT_EMAIL}","password":"${PENPOT_PASSWORD}"}'`;
+      -d '${body}'`;
     try {
         execSync(cmd, { timeout: 15000 });
     } catch (e) {
