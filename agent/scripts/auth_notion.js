@@ -4,9 +4,9 @@ const { curlRequest } = require('./lib/curl_client');
 const { exec } = require('child_process');
 const readline = require('readline');
 
-let ENV_PATH = path.join(process.cwd(), '.env');
-const ANTIGRAVITY_ENV = process.env.ANTIGRAVITY_DIR ? path.join(process.env.ANTIGRAVITY_DIR, '.env') : path.join(require("os").homedir(), ".antigravity", ".env");
-const GLOBAL_ENV = path.join(require("os").homedir(), '.env');
+const { loadEnv } = require(require('path').join(__dirname, 'env_loader'));
+loadEnv();
+const ENV_PATH = require('path').join(process.cwd(), '.env');
 
 if (!fs.existsSync(ENV_PATH)) {
     if (fs.existsSync(ANTIGRAVITY_ENV)) ENV_PATH = ANTIGRAVITY_ENV;

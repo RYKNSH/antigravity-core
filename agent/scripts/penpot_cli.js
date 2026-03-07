@@ -20,18 +20,14 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-// .env 読み込み（nativeパース — dotenv不要）
-const envPath = path.join(process.env.HOME, '.antigravity', '.env');
-if (fs.existsSync(envPath)) {
-    fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
-        const m = line.match(/^([^#=\s][^=]*)=(.*)$/);
-        if (m) process.env[m[1].trim()] = m[2].trim();
-    });
-}
+const { loadEnv, getSecret } = require(path.join(__dirname, 'env_loader'));
 
-const PENPOT_URL = process.env.PENPOT_URL;
-const PENPOT_EMAIL = process.env.PENPOT_EMAIL || process.env.PENPOT_ACCESS_TOKEN;
-const PENPOT_PASSWORD = process.env.PENPOT_PASSWORD;
+// 1Password 優先で環境変数をロード
+loadEnv();
+
+const PENPOT_URL = getSecret('PENPOT_URL');
+const PENPOT_EMAIL = process.env.PENPOT_EMAIL || getSecret('PENPOT_ACCESS_TOKEN', { required: false });
+const PENPOT_PASSWORD = getSecret('PENPOT_PASSWORD', { required: false });
 const COOKIE_JAR = '/tmp/penpot_session_cookies.txt';
 
 if (!PENPOT_URL) {

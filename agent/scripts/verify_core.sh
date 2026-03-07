@@ -108,6 +108,37 @@ for wf in "$CORE_DIR/agent/workflows/"*.md; do
 done
 [ $WF_MISSING -eq 0 ] && pass "全ワークフロー構文OK"
 
+# ── 6. env_loader.js 統一チェック ──
+echo ""
+echo "🔑 [6/7] env_loader 統一チェック"
+ENV_VIOLATIONS=0
+for f in "$CORE_DIR/agent/scripts/"*.js; do
+    [ -f "$f" ] || continue
+    name=$(basename "$f")
+    [ "$name" = "env_loader.js" ] && continue
+    # .env を独自パースしているか検知
+    if grep -q 'readFileSync.*\.env' "$f" 2>/dev/null; then
+        if ! grep -q 'env_loader' "$f" 2>/dev/null; then
+            warn "$name: 独自.envパース検出 (env_loader.js 未使用)"
+            ENV_VIOLATIONS=$((ENV_VIOLATIONS + 1))
+        fi
+    fi
+done
+[ $ENV_VIOLATIONS -eq 0 ] && pass "全スクリプト env_loader.js 統一OK"
+
+# ── 7. PortableSSD 参照検知 ──
+echo ""
+echo "🔌 [7/7] 外部SSD参照チェック"
+SSD_REFS=0
+for f in "$CORE_DIR/agent/scripts/"*.{js,sh} "$CORE_DIR/agent/workflows/"*.md; do
+    [ -f "$f" ] || continue
+    if grep -q 'PortableSSD' "$f" 2>/dev/null; then
+        warn "$(basename "$f"): /Volumes/PortableSSD 参照残存"
+        SSD_REFS=$((SSD_REFS + 1))
+    fi
+done
+[ $SSD_REFS -eq 0 ] && pass "外部SSD参照なし"
+
 # ── 結果 ──
 echo ""
 echo "========================"

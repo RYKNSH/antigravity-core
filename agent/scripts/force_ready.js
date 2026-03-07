@@ -1,22 +1,12 @@
 const { curlRequest } = require('./lib/curl_client');
 const fs = require('fs');
 const path = require('path');
+const { loadEnv, getSecret } = require(require('path').join(__dirname, 'env_loader'));
 
-// Global Env Retrieval
-let envPath = path.join(process.cwd(), '.env');
-if (!fs.existsSync(envPath)) {
-    envPath = '${process.env.ANTIGRAVITY_DIR || path.join(require("os").homedir(), ".antigravity")}/.env';
-}
+// 1Password 優先で環境変数をロード
+loadEnv();
 
-if (fs.existsSync(envPath)) {
-    const envConfig = fs.readFileSync(envPath, 'utf8');
-    envConfig.split('\n').forEach(line => {
-        const match = line.match(/^([^=]+)=(.*)$/);
-        if (match) process.env[match[1].trim()] = match[2].trim().replace(/^["'](.*)[\"']$/, '$1');
-    });
-}
-
-const NOTION_API_KEY = process.env.NOTION_API_KEY;
+const NOTION_API_KEY = getSecret('NOTION_API_KEY');
 const PAGE_ID = "2f465ff1-3b15-81c2-8794-cc1053bb1132";
 
 const options = {

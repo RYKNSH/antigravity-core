@@ -1,36 +1,13 @@
-const { curlRequest } = require('./lib/curl_client');
-const path = require('path');
+const https = require('https');
 const fs = require('fs');
-
-// Simple .env parser
-let envPath = path.join(process.cwd(), '.env');
+const path = require('path');
 const os = require('os');
-if (!fs.existsSync(envPath)) {
-    // Fallback to global config
-    envPath = path.join(os.homedir(), '.antigravity', '.env');
-}
-if (!fs.existsSync(envPath)) {
-    envPath = path.join(process.env.HOME, '.env');
-}
+const { loadEnv, getSecret } = require(path.join(__dirname, 'env_loader'));
 
-if (fs.existsSync(envPath)) {
-    const envConfig = fs.readFileSync(envPath, 'utf8');
-    envConfig.split('\n').forEach(line => {
-        // Remove trailing comments and whitespace
-        const cleanLine = line.split('#')[0].trim();
-        const match = cleanLine.match(/^([^=]+)=(.*)$/);
-        if (match) {
-            const key = match[1].trim();
-            // Remove surround quotes (single or double) if present
-            const value = match[2].trim().replace(/^["'](.*)["']$/, '$1');
-            if (value !== '') {
-                process.env[key] = value;
-            }
-        }
-    });
-}
+// 1Password 優先で環境変数をロード
+loadEnv();
 
-const NOTION_API_KEY = process.env.NOTION_API_KEY;
+const NOTION_API_KEY = getSecret('NOTION_API_KEY');
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
 
 if (!NOTION_API_KEY || !NOTION_DATABASE_ID) {

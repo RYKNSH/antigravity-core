@@ -213,11 +213,17 @@ fi
 # ══════════════════════════════════════════════════════
 # 結果表示
 # ══════════════════════════════════════════════════════
-# ══════════════════════════════════════════════════════
-# CORE REALITY CHECK — 嘘検知を構造的に強制
-# ══════════════════════════════════════════════════════
-( timeout 15 bash "$ANTIGRAVITY_DIR/agent/scripts/verify_core.sh" 2>/dev/null ) || \
-  echo "⚠️ Core Reality Check failed or timed out"
+# verify_core: git変更があった場合のみフル実行（高速化）
+LAST_VERIFY_HASH="/tmp/verify_core_last_hash"
+CURRENT_HASH=$(cd "$ANTIGRAVITY_DIR" && git rev-parse HEAD 2>/dev/null || echo "unknown")
+PREV_HASH=$(cat "$LAST_VERIFY_HASH" 2>/dev/null || echo "none")
+if [ "$CURRENT_HASH" != "$PREV_HASH" ]; then
+  ( timeout 15 bash "$ANTIGRAVITY_DIR/agent/scripts/verify_core.sh" 2>/dev/null ) && \
+    echo "$CURRENT_HASH" > "$LAST_VERIFY_HASH" || \
+    echo "⚠️ Core Reality Check failed or timed out"
+else
+  echo "⏩ Core Reality Check skipped (no changes since last verify)"
+fi
 
 echo "✅ Check-in complete!" && df -h . | tail -1
 

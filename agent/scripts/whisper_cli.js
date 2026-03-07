@@ -21,16 +21,12 @@ const path = require('path');
 const fs = require('fs');
 const { execSync, spawnSync } = require('child_process');
 
-// ── .env 読み込み ─────────────────────────────────────────────
-const envPath = path.join(process.env.HOME, '.antigravity', '.env');
-if (fs.existsSync(envPath)) {
-    fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
-        const m = line.match(/^([^#=\s][^=]*)=(.*)$/);
-        if (m) process.env[m[1].trim()] = m[2].trim();
-    });
-}
+const { loadEnv, getSecret } = require(path.join(__dirname, 'env_loader'));
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+// 1Password 優先で環境変数をロード
+loadEnv();
+
+const OPENAI_API_KEY = getSecret('OPENAI_API_KEY');
 const WHISPER_MODEL = process.env.WHISPER_MODEL || 'large-v3';
 const WHISPER_LANG = process.env.WHISPER_LANG || 'ja';
 

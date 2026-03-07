@@ -1,22 +1,12 @@
 const { curlRequest } = require('./lib/curl_client');
 const path = require('path');
 const fs = require('fs');
+const { loadEnv, getSecret } = require(require('path').join(__dirname, 'env_loader'));
 
-// Simple .env parser
-let envPath = path.join(process.cwd(), '.env');
-if (!fs.existsSync(envPath)) {
-    envPath = '${process.env.ANTIGRAVITY_DIR || path.join(require("os").homedir(), ".antigravity")}/.env';
-}
+// 1Password 優先で環境変数をロード
+loadEnv();
 
-if (fs.existsSync(envPath)) {
-    const envConfig = fs.readFileSync(envPath, 'utf8');
-    envConfig.split('\n').forEach(line => {
-        const match = line.match(/^([^=]+)=(.*)$/);
-        if (match) process.env[match[1].trim()] = match[2].trim().replace(/^["'](.*)["']$/, '$1');
-    });
-}
-
-const NOTION_API_KEY = process.env.NOTION_API_KEY;
+const NOTION_API_KEY = getSecret('NOTION_API_KEY');
 
 if (!NOTION_API_KEY) {
     console.error("Error: NOTION_API_KEY is not set.");

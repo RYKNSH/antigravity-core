@@ -58,71 +58,9 @@ MAX_LOG_SIZE=1048576  # 1MB log rotation
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 DEV_DIR="$HOME/Desktop"
 
-# --- Active Project Detection (with timeout protection) ---
-# 実行中のdev サーバーやプロセスが使用しているディレクトリを検出
-# lsof がハングする可能性があるため全操作にタイムアウト付き
-get_active_project_dirs() {
-  ACTIVE_DIRS=()
-
-  # lsof をタイムアウト付きで安全に実行するヘルパー
-  _safe_lsof_cwd() {
-    local pid="$1"
-    local result
-    result=$(run_with_timeout 5 "lsof-$pid" lsof -p "$pid" 2>/dev/null | awk '/cwd/ {print $NF}' | head -1) || true
-    echo "$result"
-  }
-
-  # pgrep 自体にもタイムアウト (通常は瞬時だが念のため)
-  local pids
-  pids=$(run_with_timeout 5 "pgrep-devservers" pgrep -f "next dev|next start|vite|nuxt|uvicorn|flask|gunicorn|turbo run|turbo build|py.test|pytest" 2>/dev/null) || true
-  for pid in $pids; do
-    local cwd
-    cwd=$(_safe_lsof_cwd "$pid")
-    if [ -n "$cwd" ] && [[ "$cwd" == "$DEV_DIR"* ]]; then
-      ACTIVE_DIRS+=("$cwd")
-    fi
-  done
-
-  # node プロセスのcwd（next/vite等をカバーできなかった場合のfallback）
-  local node_pids
-  node_pids=$(run_with_timeout 5 "pgrep-node" pgrep -x "node" 2>/dev/null) || true
-  for pid in $node_pids; do
-    local cwd
-    cwd=$(_safe_lsof_cwd "$pid")
-    if [ -n "$cwd" ] && [[ "$cwd" == "$DEV_DIR"* ]]; then
-      ACTIVE_DIRS+=("$cwd")
-    fi
-  done
-
-  # 重複除去
-  if [ ${#ACTIVE_DIRS[@]} -gt 0 ]; then
-    local unique=()
-    local seen=""
-    for d in "${ACTIVE_DIRS[@]}"; do
-      if [[ "$seen" != *"$d"* ]]; then
-        unique+=("$d")
-        seen="$seen|$d"
-      fi
-    done
-    ACTIVE_DIRS=("${unique[@]}")
-    log "INFO" "Active projects detected: ${ACTIVE_DIRS[*]}"
-  fi
-}
-
-# ディレクトリがアクティブプロジェクト配下かチェック
-is_active_project() {
-  local target_dir="$1"
-  # 空配列ガード (set -u 対策)
-  if [ ${#ACTIVE_DIRS[@]} -eq 0 ]; then
-    return 1  # false: no active projects
-  fi
-  for active in "${ACTIVE_DIRS[@]}"; do
-    if [[ "$target_dir" == "$active"* ]] || [[ "$active" == "$target_dir"* ]]; then
-      return 0  # true: active
-    fi
-  done
-  return 1  # false: not active
-}
+# --- ヘルパー関数のロード ---
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/memory_guardian_lib.sh"
 
 # --- Flags ---
 DRY_RUN=false
@@ -156,53 +94,7 @@ log() {
   fi
 }
 
-# --- Safe Command Execution (with timeout) ---
-run_with_timeout() {
-  local timeout_sec="$1"; shift
-  local label="$1"; shift
-  if command -v gtimeout &>/dev/null; then
-    gtimeout "${timeout_sec}s" "$@" 2>/dev/null
-  elif command -v timeout &>/dev/null; then
-    timeout "${timeout_sec}s" "$@" 2>/dev/null
-  else
-    # fallback: background + wait + kill
-    "$@" &
-    local cmd_pid=$!
-    local elapsed=0
-    while kill -0 "$cmd_pid" 2>/dev/null; do
-      sleep 1
-      elapsed=$((elapsed + 1))
-      if [ "$elapsed" -ge "$timeout_sec" ]; then
-        kill -9 "$cmd_pid" 2>/dev/null || true
-        wait "$cmd_pid" 2>/dev/null || true
-        log "TIMEOUT" "$label timed out after ${timeout_sec}s — killed"
-        return 124
-      fi
-    done
-    wait "$cmd_pid" 2>/dev/null
-    return $?
-  fi
-  local rc=$?
-  if [ "$rc" -eq 124 ]; then
-    log "TIMEOUT" "$label timed out after ${timeout_sec}s"
-  fi
-  return $rc
-}
-
-# --- Safe find (with timeout) ---
-safe_find() {
-  run_with_timeout "$FIND_TIMEOUT" "find" find "$@"
-}
-
-# --- Safe rm (with timeout, I/O hang 対策) ---
-safe_rm() {
-  run_with_timeout "$CMD_TIMEOUT" "rm" rm "$@"
-}
-
-# --- Safe du (with timeout) ---
-safe_du() {
-  run_with_timeout "$CMD_TIMEOUT" "du" du "$@"
-}
+# (ヘルパー関数は memory_guardian_lib.sh に分離済み)
 
 # --- Log Rotation ---
 rotate_log() {
@@ -214,51 +106,6 @@ rotate_log() {
       log "INFO" "Log rotated (was ${size} bytes)"
     fi
   fi
-}
-
-# --- Memory Info (with timeout protection) ---
-get_memory_info() {
-  local page_size
-  page_size=$(run_with_timeout "$CMD_TIMEOUT" "sysctl-pagesize" sysctl -n hw.pagesize 2>/dev/null) || page_size=16384
-  page_size=${page_size:-16384}  # Apple Silicon default
-
-  local vm_output
-  vm_output=$(run_with_timeout "$CMD_TIMEOUT" "vm_stat" vm_stat 2>/dev/null) || vm_output=""
-  if [ -z "$vm_output" ]; then
-    log "WARN" "vm_stat timed out or failed, using safe defaults"
-    FREE_PERCENT=50
-    FREE_MB=4096
-    SWAP_USED_MB=0
-    COMPRESSOR_MB=0
-    return
-  fi
-
-  local free_pages speculative_pages inactive_pages total_pages
-  free_pages=$(echo "$vm_output" | awk '/Pages free/ {gsub(/\./,"",$3); print $3}')
-  speculative_pages=$(echo "$vm_output" | awk '/Pages speculative/ {gsub(/\./,"",$3); print $3}')
-  inactive_pages=$(echo "$vm_output" | awk '/Pages inactive/ {gsub(/\./,"",$3); print $3}')
-  local memsize
-  memsize=$(run_with_timeout "$CMD_TIMEOUT" "sysctl-memsize" sysctl -n hw.memsize 2>/dev/null) || memsize=8589934592
-  memsize=${memsize:-8589934592}  # 8GB fallback
-  total_pages=$((memsize / page_size))
-
-  # "available" = free + speculative + inactive (macOS can reclaim these)
-  local available_pages
-  available_pages=$(( ${free_pages:-0} + ${speculative_pages:-0} + ${inactive_pages:-0} ))
-
-  FREE_PERCENT=$(( available_pages * 100 / total_pages ))
-  FREE_MB=$(( available_pages * page_size / 1024 / 1024 ))
-
-  # SWAP info
-  local swap_info
-  swap_info=$(run_with_timeout "$CMD_TIMEOUT" "sysctl-swap" sysctl vm.swapusage 2>/dev/null) || swap_info=""
-  SWAP_USED_MB=$(echo "$swap_info" | awk '{for(i=1;i<=NF;i++) if($i=="used") {gsub(/M/,"",$(i+2)); printf "%.0f", $(i+2)}}')
-  SWAP_USED_MB=${SWAP_USED_MB:-0}
-
-  # Compressor info
-  COMPRESSOR_PAGES=$(echo "$vm_output" | awk '/Pages stored in compressor/ {gsub(/\./,"",$NF); print $NF}')
-  COMPRESSOR_PAGES=${COMPRESSOR_PAGES:-0}
-  COMPRESSOR_MB=$(( COMPRESSOR_PAGES * page_size / 1024 / 1024 ))
 }
 
 # --- Status Display ---
