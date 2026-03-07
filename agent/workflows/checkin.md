@@ -303,10 +303,12 @@ if [ -d "$ANTIGRAVITY_DIR/brain_log" ]; then
     timeout 10 bash -c '
       ANTIGRAVITY_DIR="'"$ANTIGRAVITY_DIR"'"
       UNRESOLVED_COUNT=0
-      for log_file in $(find "$ANTIGRAVITY_DIR/brain_log" -name "session_*.md" -type f 2>/dev/null | head -50); do
+      CUTOFF=$(date -v-14d +%s 2>/dev/null || date -d "14 days ago" +%s 2>/dev/null || echo 0)
+      for log_file in $(find "$ANTIGRAVITY_DIR/brain_log" -name "session_*.md" -type f -mtime -14 2>/dev/null | head -50); do
         while IFS= read -r task_line; do
           TASK_SUMMARY=$(echo "$task_line" | sed "s/^- \[ \] //" | head -c 80)
-          if ! grep -qF "$TASK_SUMMARY" "$ANTIGRAVITY_DIR/incidents.md" 2>/dev/null; then
+          # Fix: grep against **内容**: lines only to prevent re-transcription after status change
+          if ! grep -qF "**内容**: $TASK_SUMMARY" "$ANTIGRAVITY_DIR/incidents.md" 2>/dev/null; then
             LOG_NAME=$(basename "$log_file")
             {
               echo ""

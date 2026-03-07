@@ -4,4 +4,4 @@
 | Workflow | Count | Last Used |
 |----------|-------|-----------|
 | /checkout | 34 | 2026-03-07 |
-| /checkin | 6 | 2026-02-26 |
+| /checkin | 7 | 2026-03-07 |

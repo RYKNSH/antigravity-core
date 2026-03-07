@@ -1,0 +1,109 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "brand": {
+    "name": { "$value": "RYKNSH CORE", "$type": "string" },
+    "tagline": { "$value": "Power to the People", "$type": "string" }
+  },
+  "color": {
+    "background": {
+      "primary": { "$value": "#0A0A0A", "$type": "color", "$description": "メイン背景 / ほぼ真黒" },
+      "secondary": { "$value": "#111111", "$type": "color", "$description": "カード/セクション背景" },
+      "tertiary": { "$value": "#1A1A1A", "$type": "color", "$description": "ホバー/アクティブ背景" }
+    },
+    "text": {
+      "primary": { "$value": "#FFFFFF", "$type": "color", "$description": "メインテキスト" },
+      "secondary": { "$value": "#C0C0C0", "$type": "color", "$description": "サブテキスト / アクセント" },
+      "muted": { "$value": "#888888", "$type": "color", "$description": "控えめテキスト" }
+    },
+    "accent": {
+      "primary": { "$value": "#C0C0C0", "$type": "color", "$description": "シルバーアクセント" },
+      "highlight": { "$value": "#E0E0E0", "$type": "color", "$description": "ハイライト" },
+      "cta": { "$value": "#FFFFFF", "$type": "color", "$description": "CTA テキスト" }
+    },
+    "semantic": {
+      "success": { "$value": "#4CAF50", "$type": "color" },
+      "warning": { "$value": "#FF9800", "$type": "color" },
+      "error": { "$value": "#F44336", "$type": "color" }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "heading": { "$value": "'Noto Sans JP', sans-serif", "$type": "fontFamily" },
+      "body": { "$value": "'Noto Sans JP', sans-serif", "$type": "fontFamily" },
+      "mono": { "$value": "'JetBrains Mono', monospace", "$type": "fontFamily" }
+    },
+    "fontWeight": {
+      "bold": { "$value": 700, "$type": "fontWeight" },
+      "medium": { "$value": 500, "$type": "fontWeight" },
+      "regular": { "$value": 400, "$type": "fontWeight" }
+    },
+    "fontSize": {
+      "hero": { "$value": "72px", "$type": "dimension", "$description": "ヒーローセクション" },
+      "h1": { "$value": "48px", "$type": "dimension" },
+      "h2": { "$value": "36px", "$type": "dimension" },
+      "h3": { "$value": "24px", "$type": "dimension" },
+      "body": { "$value": "18px", "$type": "dimension" },
+      "caption": { "$value": "14px", "$type": "dimension" },
+      "eyebrow": { "$value": "12px", "$type": "dimension", "$description": "上部ラベル / letterSpacing: 0.2em" }
+    },
+    "lineHeight": {
+      "tight": { "$value": 1.2, "$type": "number" },
+      "normal": { "$value": 1.5, "$type": "number" },
+      "relaxed": { "$value": 1.8, "$type": "number" }
+    }
+  },
+  "spacing": {
+    "xs": { "$value": "4px", "$type": "dimension" },
+    "sm": { "$value": "8px", "$type": "dimension" },
+    "md": { "$value": "16px", "$type": "dimension" },
+    "lg": { "$value": "24px", "$type": "dimension" },
+    "xl": { "$value": "32px", "$type": "dimension" },
+    "2xl": { "$value": "48px", "$type": "dimension" },
+    "3xl": { "$value": "64px", "$type": "dimension" },
+    "4xl": { "$value": "96px", "$type": "dimension" }
+  },
+  "borderRadius": {
+    "none": { "$value": "0px", "$type": "dimension" },
+    "sm": { "$value": "4px", "$type": "dimension" },
+    "md": { "$value": "8px", "$type": "dimension" },
+    "lg": { "$value": "16px", "$type": "dimension" },
+    "full": { "$value": "9999px", "$type": "dimension" }
+  },
+  "shadow": {
+    "sm": { "$value": "0 1px 3px rgba(0,0,0,0.4)", "$type": "shadow" },
+    "md": { "$value": "0 4px 12px rgba(0,0,0,0.5)", "$type": "shadow" },
+    "lg": { "$value": "0 8px 32px rgba(0,0,0,0.6)", "$type": "shadow" },
+    "glow": { "$value": "0 0 20px rgba(192,192,192,0.15)", "$type": "shadow", "$description": "シルバーグロウ" }
+  },
+  "animation": {
+    "duration": {
+      "fast": { "$value": "150ms", "$type": "duration" },
+      "normal": { "$value": "300ms", "$type": "duration" },
+      "slow": { "$value": "500ms", "$type": "duration" },
+      "entrance": { "$value": "800ms", "$type": "duration" }
+    },
+    "easing": {
+      "default": { "$value": "cubic-bezier(0.4, 0, 0.2, 1)", "$type": "cubicBezier" },
+      "entrance": { "$value": "cubic-bezier(0, 0, 0.2, 1)", "$type": "cubicBezier" },
+      "exit": { "$value": "cubic-bezier(0.4, 0, 1, 1)", "$type": "cubicBezier" },
+      "spring": { "$value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "$type": "cubicBezier" }
+    }
+  },
+  "canvas": {
+    "vertical": {
+      "width": { "$value": 1080, "$type": "number" },
+      "height": { "$value": 1920, "$type": "number" },
+      "$description": "縦型SNS広告"
+    },
+    "square": {
+      "width": { "$value": 1080, "$type": "number" },
+      "height": { "$value": 1080, "$type": "number" },
+      "$description": "正方形SNS投稿"
+    },
+    "landscape": {
+      "width": { "$value": 1920, "$type": "number" },
+      "height": { "$value": 1080, "$type": "number" },
+      "$description": "横型 / LP / YouTube"
+    }
+  }
+}
