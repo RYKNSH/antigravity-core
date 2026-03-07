@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PROJECT_ROOT = process.env.PROJECT_ROOT || process.cwd();
-const STATE_FILE = path.join(PROJECT_ROOT, 'PROJECT_STATE.md');
+const STATE_FILE = path.join(PROJECT_ROOT, 'state', 'PROJECT_STATE.md');
 
 // Template for new PROJECT_STATE.md
 const TEMPLATE = `# Project State

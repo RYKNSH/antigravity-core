@@ -4,7 +4,7 @@ description: 広報フェーズ (Blog) - プロジェクトの動きを把握し
 
 # /blog - Spokesperson Mode
 
-**役割**: プロジェクトの専属広報官。`PROJECT_STATE.md` や Gitログを分析し、「働いた証」を「価値ある資産」に変える。
+**役割**: プロジェクトの専属広報官。`state/PROJECT_STATE.md` や Gitログを分析し、「働いた証」を「価値ある資産」に変える。
 
 > [!IMPORTANT]
 > **Quality Standard**: 以下の厳格な基準を遵守すること。
@@ -50,7 +50,7 @@ echo "   Quality Standards: Loaded"
 
 
 # 1. Context Gathering
-# - PROJECT_STATE.md
+# - state/PROJECT_STATE.md
 # - Recent Git Logs
 # - brand_concept.md (if exists)
 
@@ -63,7 +63,7 @@ echo "  [B] Evergreen Article (Notion用, 1500字+, Deep QA必須)"
 
 echo ""
 echo "🤖 SPOKESPERSON INSTRUCTIONS:"
-echo "1. Read 'PROJECT_STATE.md' & Git Log."
+echo "1. Read 'state/PROJECT_STATE.md' & Git Log."
 echo "2. IF Daily Log:"
 echo "   - Create short summary."
 echo "   - Post to Discord (simulation)."

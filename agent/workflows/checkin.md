@@ -255,7 +255,7 @@ echo "> （❌「何から始めますか？」などとユーザーに聞かな
 # ══════════════════════════════════════════════════════
 # Layer 1: メタルール要約読み込み
 # ══════════════════════════════════════════════════════
-MR_FILE="$ANTIGRAVITY_DIR/DECISION_USECASES.md"
+MR_FILE="$ANTIGRAVITY_DIR/docs/DECISION_USECASES.md"
 [ -f "$MR_FILE" ] && {
   ### 5. Load Context (MRs)
 
@@ -264,7 +264,7 @@ MR_FILE="$ANTIGRAVITY_DIR/DECISION_USECASES.md"
 
   # ```bash
   ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
-  MR_FILE="$ANTIGRAVITY_DIR/DECISION_USECASES.md"
+  MR_FILE="$ANTIGRAVITY_DIR/docs/DECISION_USECASES.md"
   ACTIVE_MRS_FILE="$ANTIGRAVITY_DIR/state/active_mrs.json"
 
   mkdir -p "$ANTIGRAVITY_DIR/state"
@@ -307,7 +307,7 @@ done
 [ -f ".sweep_patterns.md" ] && echo "📚 Patterns loaded"
 
 # ══════════════════════════════════════════════════════
-# brain_log スキャン → 未解決タスク → incidents.md 自動転記
+# brain_log スキャン → 未解決タスク → state/incidents.md 自動転記
 # ★ ハング対策: head -50 でファイル数上限、timeout 10秒で全体保護
 # ══════════════════════════════════════════════════════
 if [ -d "$ANTIGRAVITY_DIR/brain_log" ]; then
@@ -320,7 +320,7 @@ if [ -d "$ANTIGRAVITY_DIR/brain_log" ]; then
         while IFS= read -r task_line; do
           TASK_SUMMARY=$(echo "$task_line" | sed "s/^- \[ \] //" | head -c 80)
           # Fix: grep against **内容**: lines only to prevent re-transcription after status change
-          if ! grep -qF "**内容**: $TASK_SUMMARY" "$ANTIGRAVITY_DIR/incidents.md" 2>/dev/null; then
+          if ! grep -qF "**内容**: $TASK_SUMMARY" "$ANTIGRAVITY_DIR/state/incidents.md" 2>/dev/null; then
             LOG_NAME=$(basename "$log_file")
             {
               echo ""
@@ -333,22 +333,22 @@ if [ -d "$ANTIGRAVITY_DIR/brain_log" ]; then
               echo "> 未解決のまま次セッションに持ち越されたタスク。/incident で詳細記録推奨。"
               echo ""
               echo "---"
-            } >> "$ANTIGRAVITY_DIR/incidents.md"
+            } >> "$ANTIGRAVITY_DIR/state/incidents.md"
             UNRESOLVED_COUNT=$((UNRESOLVED_COUNT + 1))
           fi
         done < <(grep -E "^- \[ \]" "$log_file" 2>/dev/null | head -20)
       done
       [ "$UNRESOLVED_COUNT" -gt 0 ] && \
-        echo "📋 brain_log から未解決タスク ${UNRESOLVED_COUNT}件 を incidents.md に転記しました"
+        echo "📋 brain_log から未解決タスク ${UNRESOLVED_COUNT}件 を state/incidents.md に転記しました"
     '
   ) || echo "⚠️ brain_log scan timed out (skipped)"
 fi
 
 # インシデント確認（timeout 付き）
-[ -f "$ANTIGRAVITY_DIR/incidents.md" ] && {
-  OPEN_COUNT=$(timeout 3 grep -c "\[OPEN\]" "$ANTIGRAVITY_DIR/incidents.md" 2>/dev/null || echo 0)
+[ -f "$ANTIGRAVITY_DIR/state/incidents.md" ] && {
+  OPEN_COUNT=$(timeout 3 grep -c "\[OPEN\]" "$ANTIGRAVITY_DIR/state/incidents.md" 2>/dev/null || echo 0)
   echo "⚠️  Open incidents: $OPEN_COUNT"
-  [ "$OPEN_COUNT" -gt 0 ] && timeout 3 grep "\[OPEN\]" "$ANTIGRAVITY_DIR/incidents.md" | head -10
+  [ "$OPEN_COUNT" -gt 0 ] && timeout 3 grep "\[OPEN\]" "$ANTIGRAVITY_DIR/state/incidents.md" | head -10
 }
 
 # ══════════════════════════════════════════════════════

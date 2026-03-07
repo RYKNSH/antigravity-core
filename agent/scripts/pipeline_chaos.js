@@ -3,7 +3,7 @@
  * pipeline_chaos.js — Antigravity パイプラインChaos Engineering
  *
  * 目的: 実践でしか発生しないハングを意図的に再現・検知する
- * 対象: dependency_map.json の hang_correlation に定義された4パターン
+ * 対象: data/dependency_map.json の hang_correlation に定義された4パターン
  *
  * テストシナリオ:
  *   C1: git index.lock 残存 → git操作全停止
@@ -146,9 +146,9 @@ async function testC3() {
     console.log('\n📋 C3: 存在しないスクリプト参照テスト（P-01+P-02）');
 
     // 実際のcheck_dependency_map.jsが存在しないスクリプトに警告を出すか確認
-    const mapPath = path.join(ANTIGRAVITY_DIR, 'dependency_map.json');
+    const mapPath = path.join(ANTIGRAVITY_DIR, 'data/dependency_map.json');
     if (!fs.existsSync(mapPath)) {
-        fail('dependency_map.json が見つかりません');
+        fail('data/dependency_map.json が見つかりません');
         return;
     }
 

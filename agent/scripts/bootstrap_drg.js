@@ -20,7 +20,7 @@ const path = require('path');
 const os = require('os');
 
 const DRG_DIR = process.env.ANTIGRAVITY_DIR || path.join(os.homedir(), '.antigravity');
-const DRG_PATH = path.join(DRG_DIR, 'data_graph.json');
+const DRG_PATH = path.join(DRG_DIR, 'data', 'data_graph.json');
 const TEMPLATE_PATH = path.join(DRG_DIR, 'data_graph.template.json');
 
 // ─── Parse CLI args ──────────────────────────────────────

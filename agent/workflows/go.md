@@ -102,7 +102,7 @@ DRG読み込み成功時、以下を確認:
 
 > [!IMPORTANT]
 > DRGファイルが存在しない or パース失敗の場合:
-> 1. `data_graph.backup.json` からの復元を試みる
+> 1. `data/data_graph.backup.json` からの復元を試みる
 > 2. 復元も失敗 → `node bootstrap_drg.js` を実行して再構築
 > 3. 再構築後も失敗 → ユーザーに報告し、DRGなしで続行
 
@@ -304,7 +304,7 @@ ROADMAP.md / MILESTONE.md が存在する場合:
 > ⚡ 構造を理解し、理念＞ビジョン＞ミッションに合致しているか照合しろ。合致していたら即着手。
 
 次タスクの自律決定（構造理解 → 判断 → 着手）:
-1. NEXT_SESSION.md #1（最優先）
+1. state/NEXT_SESSION.md #1（最優先）
 2. 進行中の実装計画の次ステップ
 3. 上記がなければ → /checkout
 

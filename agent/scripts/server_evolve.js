@@ -241,7 +241,7 @@ ${VALUE_HIERARCHY}
 ## 💡 推奨アクション
 
 - \`safe-commands.md\` に \`${component}\` 固有のタイムアウトルールを追加
-- \`dependency_map.json\` の \`hang_risk\` を更新
+- \`data/dependency_map.json\` の \`hang_risk\` を更新
 - 再発防止ルールを該当WFに追加
 
 ## ⚡ MR-08: リカバリー優先

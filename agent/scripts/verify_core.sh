@@ -31,9 +31,9 @@ REQUIRED=(
     "agent/rules/code-standards.md"
     "agent/scripts/git_context.js"
     "agent/scripts/session_state.js"
-    "DECISION_USECASES.md"
-    "data_graph.json"
-    "dependency_map.json"
+    "docs/DECISION_USECASES.md"
+    "data/data_graph.json"
+    "data/dependency_map.json"
 )
 for f in "${REQUIRED[@]}"; do
     [ -f "$CORE_DIR/$f" ] && pass "$f" || fail "Missing: $f"
@@ -88,7 +88,7 @@ done
 # ── 4. JSON整合性 ──
 echo ""
 echo "📋 [4/5] JSON整合性"
-for jf in data_graph.json dependency_map.json; do
+for jf in data/data_graph.json data/dependency_map.json; do
     if [ -f "$CORE_DIR/$jf" ]; then
         python3 -c "import json; json.load(open('$CORE_DIR/$jf'))" 2>/dev/null \
             && pass "$jf" || fail "Invalid JSON: $jf"

@@ -89,7 +89,7 @@ if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   _do_commit() {
     cd "$ANTIGRAVITY_DIR" || return 1
     GIT_TERMINAL_PROMPT=0 git add agent/workflows/ agent/skills/ agent/scripts/ agent/rules/ \
-      README.md QUICKSTART.md BACKUP_STRATEGY.md KNOWLEDGE_INDEX.md AUTO_TRIGGERS.md ENVIRONMENTS.md 2>/dev/null
+      README.md docs/QUICKSTART.md docs/BACKUP_STRATEGY.md docs/KNOWLEDGE_INDEX.md docs/AUTO_TRIGGERS.md docs/ENVIRONMENTS.md 2>/dev/null
     GIT_TERMINAL_PROMPT=0 git diff --cached --quiet 2>/dev/null || \
       GIT_TERMINAL_PROMPT=0 git commit -m "auto-sync: $(date +%m%d%H%M)" 2>/dev/null
   }
@@ -124,7 +124,7 @@ done
 _smart_run 15 1 "context-snapshot" node "$ANTIGRAVITY_DIR/agent/scripts/git_context.js" snapshot
 
 # ─── 5. Session State & Evolve ────────────────────────
-[ -f "NEXT_SESSION.md" ] && cp NEXT_SESSION.md "$ANTIGRAVITY_DIR/brain_log/session_$(date +%m%d%H%M).md" 2>/dev/null
+[ -f "state/NEXT_SESSION.md" ] && cp state/NEXT_SESSION.md "$ANTIGRAVITY_DIR/brain_log/session_$(date +%m%d%H%M).md" 2>/dev/null
 _smart_run 10 1 "session-state" node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" snapshot
 _smart_run 10 1 "usage-tracker" "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" /checkout
 _smart_run 10 1 "evolve"        node "$ANTIGRAVITY_DIR/agent/scripts/evolve.js" --checkout

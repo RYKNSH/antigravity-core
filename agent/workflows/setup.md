@@ -1,11 +1,11 @@
 ---
-description: プロジェクトの初期化 - 環境セットアップ + PROJECT_STATE.md 生成 + Git環境設定
+description: プロジェクトの初期化 - 環境セットアップ + state/PROJECT_STATE.md 生成 + Git環境設定
 ---
 
 # /setup
 
 **役割**: 新しいプロジェクトを開始するためのセットアップを行う。
-環境構築 → `PROJECT_STATE.md` 生成 → Gitリポジトリ初期化。
+環境構築 → `state/PROJECT_STATE.md` 生成 → Gitリポジトリ初期化。
 
 > [!NOTE]
 > 旧 `/project-init` の機能はこのワークフローに統合されました。
@@ -41,7 +41,7 @@ fi
 
 ---
 
-## Phase 1: PROJECT_STATE.md 生成
+## Phase 1: state/PROJECT_STATE.md 生成
 
 ```bash
 ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"

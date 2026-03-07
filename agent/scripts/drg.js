@@ -15,8 +15,8 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 
-const DRG_PATH = path.join(os.homedir(), '.antigravity', 'data_graph.json');
-const BACKUP_PATH = path.join(os.homedir(), '.antigravity', 'data_graph.backup.json');
+const DRG_PATH = path.join(os.homedir(), '.antigravity', 'data', 'data_graph.json');
+const BACKUP_PATH = path.join(os.homedir(), '.antigravity', 'data', 'data_graph.backup.json');
 
 // --- G1.3: Schema Validation ---
 const REQUIRED_META_FIELDS = ['version', 'schema_version', 'last_synced'];

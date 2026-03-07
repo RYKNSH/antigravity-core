@@ -1,62 +1,54 @@
-# macOS
-._*
-.DS_Store
 
-# === SECRETS & PERSONAL DATA (NEVER PUSH) ===
-.env
-.env.*
-credentials/
-credentials/*
-SERVICE_REGISTRY.md
-SECRETS_REFERENCE.md
-projects.json
-*.pem
-*.key
-*.secret
-mcp_config.json
-USAGE_TRACKER.md
-brand_concept.md
-
-# === PERSONAL CONTENT (LOCAL ONLY) ===
-# Blog drafts and published articles - personal content
-blogs/
-# Session state and brain logs
-NEXT_SESSION.md
-brain_log/
-brain/checkpoint_logs/
-.session_state.json
-
-# === DRG MEMORY (LOCAL ONLY — G3.4/G8.1) ===
-memory/
-data_graph.json
-data_graph.backup.json
-data_graph.json.tmp.*
-feedback_store.json
-
-# === Personal directory ===
-personal/*
 !personal/.gitkeep
 !personal/README.md
-
-# === CONTEXT LOG (PRIVATE ONLY) ===
-context-log/
-
-# === RUNTIME STATE (LOCAL ONLY) ===
-queue/
-heartbeat/
-logs/
-.session_pids/
-
-# === Node ===
-node_modules/
-
 # === Build artifacts ===
-*.tgz
-
+# === CONTEXT LOG (PRIVATE ONLY) ===
+# === DRG MEMORY (LOCAL ONLY — G3.4/G8.1) ===
 # === Extensions (VSCode/IDE, too large for git) ===
-extensions/
+# === Node ===
+# === PERSONAL CONTENT (LOCAL ONLY) ===
+# === Personal directory ===
+# === RUNTIME STATE (LOCAL ONLY) ===
+# === SECRETS & PERSONAL DATA (NEVER PUSH) ===
+# Blog drafts and published articles - personal content
+# Session state and brain logs
+# macOS
+*.key
+*.pem
+*.secret
+*.tgz
+.DS_Store
+._*
 .bfg-report/
-
-worktrees/
+.env
+.env.*
+.session_pids/
+.session_state.json
+NEXT_SESSION.md
+SECRETS_REFERENCE.md
+SERVICE_REGISTRY.md
+USAGE_TRACKER.md
+blogs/
+brain/checkpoint_logs/
+brain_log/
+brand_concept.md
+context-log/
+credentials/
+credentials/*
+data_graph.backup.json
+data_graph.json
+data_graph.json.tmp.*
+extensions/
+feedback_store.json
+heartbeat/
+heartbeat/node_modules/
+logs/
+mcp_config.json
 media/penpot-mcp/
 media/remotion/
+memory/
+node_modules/
+personal/*
+projects.json
+queue/
+worktrees/
