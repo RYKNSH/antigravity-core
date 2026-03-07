@@ -207,3 +207,16 @@ echo "   skills:     $SK_COUNT"
 echo "   knowledge:  $KN_COUNT"
 echo ""
 echo "🎯 次のステップ: Gemini Code Assist で /go を実行"
+
+# ═══════════════════════════════════════════════════
+# 📦 Optional: Media submodules (Remotion, Penpot-MCP)
+# ═══════════════════════════════════════════════════
+echo ""
+echo "📦 Initializing media submodules..."
+git submodule update --init --recursive 2>/dev/null && {
+  echo "✅ Submodules initialized"
+  # Install dependencies if npm available
+  for sub in media/remotion media/penpot-mcp; do
+    [ -f "$sub/package.json" ] && (cd "$sub" && npm install --silent 2>/dev/null) && echo "  ✅ $sub dependencies installed"
+  done
+} || echo "⏩ No submodules configured"

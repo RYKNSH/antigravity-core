@@ -1,0 +1,7 @@
+[submodule "media/remotion"]
+	path = media/remotion
+	url = https://github.com/RYKNSH/antigravity-remotion.git
+[submodule "media/penpot-mcp"]
+	path = media/penpot-mcp
+	url = https://github.com/RYKNSH/antigravity-penpot-mcp.git
+	branch = develop

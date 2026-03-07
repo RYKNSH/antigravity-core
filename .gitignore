@@ -44,8 +44,6 @@ heartbeat/
 heartbeat/node_modules/
 logs/
 mcp_config.json
-media/penpot-mcp/
-media/remotion/
 memory/
 node_modules/
 personal/*
