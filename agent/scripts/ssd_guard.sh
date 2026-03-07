@@ -12,7 +12,7 @@ CMD="$@"
 
 if [ -z "$CMD" ]; then
   echo "Usage: ssd_guard.sh <timeout_seconds> <command> [args...]"
-  echo "Example: ssd_guard.sh 10 cp file.txt /Volumes/PortableSSD/dest/"
+  echo "Example: ssd_guard.sh 10 cp file.txt /path/to/slow/dest/"
   exit 1
 fi
 

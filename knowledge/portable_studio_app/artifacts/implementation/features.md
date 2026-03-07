@@ -27,7 +27,7 @@
       - `danger` (削除): `transparent` 背景、`var(--danger)` 境界線と文字。破壊的アクションであることを視覚的に警告。
   - **フッターアクション・パターン (Footer Actions)**: 大規模な Workspace コンポーネントの視認性を高めるため、主要な離脱アクションをメインコンテンツ下部の専用コンテナに配置。
     - **実装**: `marginTop: '3rem'`, `borderTop: '1px solid #2a2a30'`, `display: 'flex'`, `gap: '1rem'` を用いて、作業領域と操作ボタンを明確に分離。
-  - **SSD ルート配備プロトコル (SSD Artifact Deployment)**: 外付け SSD 環境での利便性を最大化するため、ビルド成果物（`.app`, `.dmg`）を内蔵ドライブの一時ディレクトリから SSD の第 1 階層（`/Volumes/PortableSSD/`）へ自動コピーして配備する。
+  - **SSD ルート配備プロトコル (SSD Artifact Deployment)**: 外付け SSD 環境での利便性を最大化するため、ビルド成果物（`.app`, `.dmg`）を内蔵ドライブの一時ディレクトリから SSD の第 1 階層（`~/.antigravity/_builds/`）へ自動コピーして配備する。
 
 ---
 

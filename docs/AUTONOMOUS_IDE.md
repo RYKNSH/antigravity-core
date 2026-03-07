@@ -235,7 +235,7 @@ graph LR
 ## ディレクトリ構造
 
 ```
-/Volumes/PortableSSD/.antigravity/
+~/.antigravity/
 ├── agent/
 │   ├── rules/           # グローバルルール
 │   │   └── user_global.md
