@@ -1,23 +1,12 @@
 const https = require('https');
-const fs = require('fs');
 const path = require('path');
+const { loadEnv, getSecret } = require(path.join(__dirname, 'env_loader'));
 
-// 1. Global Env Retrieval
-let envPath = path.join(process.cwd(), '.env');
-if (!fs.existsSync(envPath)) {
-    envPath = require('path').join(require('os').homedir(), '.antigravity/.env');
-}
+// 1Password 優先で環境変数をロード
+loadEnv();
 
-if (fs.existsSync(envPath)) {
-    const envConfig = fs.readFileSync(envPath, 'utf8');
-    envConfig.split('\n').forEach(line => {
-        const match = line.match(/^([^=]+)=(.*)$/);
-        if (match) process.env[match[1].trim()] = match[2].trim().replace(/^["'](.*)["']$/, '$1');
-    });
-}
-
-const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
-const NOTION_API_KEY = process.env.NOTION_API_KEY;
+const WEBHOOK_URL = getSecret('DISCORD_WEBHOOK_URL');
+const NOTION_API_KEY = getSecret('NOTION_API_KEY', { required: false });
 
 if (!WEBHOOK_URL) {
     console.error("Error: DISCORD_WEBHOOK_URL is not set.");

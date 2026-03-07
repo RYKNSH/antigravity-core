@@ -1,23 +1,12 @@
 const https = require('https');
-const fs = require('fs');
 const path = require('path');
+const { loadEnv, getSecret } = require(path.join(__dirname, 'env_loader'));
 
-// Global Env Retrieval
-let envPath = path.join(process.cwd(), '.env');
-if (!fs.existsSync(envPath)) {
-    envPath = require('path').join(require('os').homedir(), '.antigravity/.env');
-}
+// 1Password 優先で環境変数をロード
+loadEnv();
 
-if (fs.existsSync(envPath)) {
-    const envConfig = fs.readFileSync(envPath, 'utf8');
-    envConfig.split('\n').forEach(line => {
-        const match = line.match(/^([^=]+)=(.*)$/);
-        if (match) process.env[match[1].trim()] = match[2].trim().replace(/^["'](.*)["']$/, '$1');
-    });
-}
-
-const NOTION_API_KEY = process.env.NOTION_API_KEY;
-const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
+const NOTION_API_KEY = getSecret('NOTION_API_KEY');
+const NOTION_DATABASE_ID = getSecret('NOTION_DATABASE_ID');
 const DATE_PROP = "予約日時";
 
 function request(path, method, body) {

@@ -2,23 +2,14 @@ const { curlRequest } = require('./lib/curl_client');
 const fs = require('fs');
 const path = require('path');
 const prompts = require('./social_prompts');
+const { loadEnv, getSecret } = require(path.join(__dirname, 'env_loader'));
 
-// 1. Env Setup
-let envPath = path.join(process.cwd(), '.env');
-if (!fs.existsSync(envPath)) {
-    envPath = '${process.env.ANTIGRAVITY_DIR || path.join(require("os").homedir(), ".antigravity")}/.env';
-}
-if (fs.existsSync(envPath)) {
-    const envConfig = fs.readFileSync(envPath, 'utf8');
-    envConfig.split('\n').forEach(line => {
-        const match = line.match(/^([^=]+)=(.*)$/);
-        if (match) process.env[match[1].trim()] = match[2].trim().replace(/^["'](.*)["']$/, '$1');
-    });
-}
+// 1Password 優先で環境変数をロード
+loadEnv();
 
-const NOTION_API_KEY = process.env.NOTION_API_KEY;
-const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const NOTION_API_KEY = getSecret('NOTION_API_KEY');
+const NOTION_DATABASE_ID = getSecret('NOTION_DATABASE_ID');
+const OPENAI_API_KEY = getSecret('OPENAI_API_KEY', { required: false });
 
 // 2. Helper: Notion API
 function notionRequest(endpoint, method, body) {

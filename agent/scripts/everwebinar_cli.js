@@ -22,39 +22,13 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { loadEnv: envLoad, getSecret } = require(path.join(__dirname, 'env_loader'));
 
-// ─── .env 読み込み ───────────────────────────────────────────────────────────
+// ─── 1Password 優先で環境変数をロード ─────────────────────────────────────────
 
-function loadEnv() {
-    const candidates = [
-        path.join(process.cwd(), '.env'),
-        path.join(os.homedir(), '.antigravity', '.env'),
-        path.join(process.env.HOME || '', '.env'),
-    ];
-    for (const envPath of candidates) {
-        if (fs.existsSync(envPath)) {
-            fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
-                const clean = line.split('#')[0].trim();
-                const m = clean.match(/^([^=]+)=(.*)$/);
-                if (m) {
-                    const key = m[1].trim();
-                    const val = m[2].trim().replace(/^["'](.*)['"']$/, '$1');
-                    if (val) process.env[key] = val;
-                }
-            });
-            break;
-        }
-    }
-}
+envLoad();
 
-loadEnv();
-
-const API_KEY = process.env.EVERWEBINAR_API_KEY;
-if (!API_KEY) {
-    console.error('[EverWebinar CLI] Error: EVERWEBINAR_API_KEY が設定されていません。');
-    console.error('  ~/.antigravity/.env に EVERWEBINAR_API_KEY を設定してください。');
-    process.exit(1);
-}
+const API_KEY = getSecret('EVERWEBINAR_API_KEY');
 
 const BASE_URL = 'https://api.webinarjam.com/everwebinar';
 
