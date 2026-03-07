@@ -1,0 +1,194 @@
+{
+    "title": "Video Editing Pipeline & Studio Ecosystem (Videdit)",
+    "summary": "First Principlesに基づく映像編集エコシステム「Videdit」。監視用Telemetry Probeや座標解釈の正規化、macOS和文フォント描画（AppleSDGothicNeo）の保証に加え、ユーザーフィードバックに基づく文字起こし強化学習（DiffCollector）を標準化。2026-02-07には、プロジェクトの永続性と再利用性を保証する「Cloud-Hybrid Archiving (Pattern 311)」を完遂。Notion/Google Drive連携と自律操作用SDKの導入により、完了後のプロジェクト管理コストを最小化しています。",
+    "references": [
+        {
+            "type": "conversation_id",
+            "value": "1b120f8f-c351-4705-98c7-401d27d5622e"
+        },
+        {
+            "type": "conversation_id",
+            "value": "d34e285e-0abe-4e00-826d-14edc823632"
+        },
+        {
+            "type": "conversation_id",
+            "value": "4f3bdae6-6c09-4d69-9766-bc677dbfbd33"
+        },
+        {
+            "type": "conversation_id",
+            "value": "cdc4e1e0-7669-426e-8f45-87888e211f1e"
+        },
+        {
+            "type": "conversation_id",
+            "value": "archive_jetcut_debugging_20260204"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/analysis/two_phase_extractor.py"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/blueprint/generator.py"
+        },
+        {
+            "type": "file",
+            "value": "/Users/ryotarokonishi/.gemini/antigravity/brain/d34e285e-0abe-4e00-826d-14edc8232632/content_value_extraction_methodology.md"
+        },
+        {
+            "type": "file",
+            "value": "/Users/ryotarokonishi/.gemini/antigravity/brain/d34e285e-0abe-4e00-826d-14edc8232632/implementation_plan.md"
+        },
+        {
+            "type": "conversation_id",
+            "value": "telop_studio_integration_troubleshooting_20260204"
+        },
+        {
+            "type": "conversation_id",
+            "value": "telop_template_context_inheritance_20260204"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/packages/telop-components/src/TelopEditor.tsx"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/api.py"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/store/telopStore.ts"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/components/TelopDesigner.tsx"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/packages/telop-components/src/LayeredPreviewPlayer.tsx"
+        },
+        {
+            "type": "conversation_id",
+            "value": "626780f4-c9d2-46e5-802c-caeed28292f0"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_strict_one_line_refinement_20260205"
+        },
+        {
+            "type": "conversation_id",
+            "value": "1186b02c-c8fa-49bf-ba17-806a5cf22f2a"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/text/splitter.py"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/lib/api-client.ts"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/hooks/useReviewShorts.ts"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/components/ReviewModal.tsx"
+        },
+        {
+            "type": "conversation_id",
+            "value": "fddfd76b-2aff-46b9-b79c-05770ffddd32"
+        },
+        {
+            "type": "conversation_id",
+            "value": "841c5a1d-a972-4e1d-a986-9bfef08caff2"
+        },
+        {
+            "type": "conversation_id",
+            "value": "60cc3d73-6feb-421e-a1b7-f0a3dd7565f8"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_render_queue_stabilization_20260206"
+        },
+        {
+            "type": "conversation_id",
+            "value": "telop_rendering_debug_20260206"
+        },
+        {
+            "type": "conversation_id",
+            "value": "1633a61b-5efa-45b7-a815-42655b7b0abc"
+        },
+        {
+            "type": "conversation_id",
+            "value": "telop_text_persistence_audit_20260206"
+        },
+        {
+            "type": "conversation_id",
+            "value": "b06da400-10d5-437c-916e-6247292561b5"
+        },
+        {
+            "type": "conversation_id",
+            "value": "telop_text_persistence_verified_20260206"
+        },
+        {
+            "type": "conversation_id",
+            "value": "telop_shadow_fidelity_audit_20260206"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_approver_integrity_fix_20260206"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/config/fonts.json"
+        },
+        {
+            "type": "conversation_id",
+            "value": "telop_editable_templates_20260206"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/components/RenderQueue.tsx"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/rendering/renderer.py"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/learning/diff_collector.py"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/apps/dashboard/src/app/short-reviewer/page.tsx"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_bulk_export_optimization_20260206"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/core/render_worker.py"
+        },
+        {
+            "type": "file",
+            "value": "/Volumes/PortableSSD/STUDIO/Apps/Videdit/backend/core/render_queue.py"
+        },
+        {
+            "type": "file",
+            "value": "/Users/ryotarokonishi/.gemini/antigravity/knowledge/video_editing_pipeline_videdit/artifacts/archiving_system.md"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_project_archiving_20260207"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_runtime_recovery_20260207"
+        },
+        {
+            "type": "conversation_id",
+            "value": "videdit_auth_scripts_20260207"
+        }
+    ]
+}
