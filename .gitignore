@@ -50,3 +50,4 @@ personal/*
 projects.json
 queue/
 worktrees/
+agent/scripts/checkpoint/package-lock.json
