@@ -1,5 +1,3 @@
-version: "3.5"
-
 networks:
   penpot:
 
@@ -12,7 +10,7 @@ services:
     image: "penpotapp/frontend:latest"
     restart: always
     ports:
-      - 9001:80
+      - 9001:8080
     volumes:
       - penpot_assets:/opt/data/assets
     depends_on:
@@ -30,6 +28,7 @@ services:
       - penpot_assets:/opt/data/assets
     depends_on:
       - penpot-postgres
+      - penpot-redis
     networks:
       - penpot
     environment:
@@ -39,6 +38,7 @@ services:
       - PENPOT_DATABASE_URI=postgresql://penpot-postgres/penpot
       - PENPOT_DATABASE_USERNAME=${PENPOT_DB_USER:-penpot}
       - PENPOT_DATABASE_PASSWORD=${PENPOT_DB_PASSWORD:-penpot}
+      - PENPOT_REDIS_URI=redis://penpot-redis/0
       - PENPOT_ASSETS_STORAGE_BACKEND=assets-fs
       - PENPOT_STORAGE_ASSETS_FS_DIRECTORY=/opt/data/assets
       - PENPOT_TELEMETRY_ENABLED=false
@@ -46,10 +46,21 @@ services:
   penpot-exporter:
     image: "penpotapp/exporter:latest"
     restart: always
+    depends_on:
+      - penpot-backend
+      - penpot-redis
     networks:
       - penpot
     environment:
       - PENPOT_PUBLIC_URI=http://penpot-frontend
+      - PENPOT_REDIS_URI=redis://penpot-redis/0
+      - PENPOT_SECRET_KEY=${PENPOT_SECRET_KEY}
+
+  penpot-redis:
+    image: "redis:7-alpine"
+    restart: always
+    networks:
+      - penpot
 
   penpot-postgres:
     image: "postgres:15"

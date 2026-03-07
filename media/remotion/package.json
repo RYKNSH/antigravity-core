@@ -3,11 +3,16 @@
     "version": "1.0.0",
     "description": "Antigravity コミュニティ向け Remotion 動画テンプレート集",
     "scripts": {
-        "studio": "remotion studio src/index.ts",
-        "render:hook": "remotion render src/index.ts Hook --output out/hook.mp4",
-        "render:proof": "remotion render src/index.ts Proof --output out/proof.mp4",
-        "render:demo": "remotion render src/index.ts Demo --output out/demo.mp4",
-        "render:op-ed": "remotion render src/index.ts OpEd --output out/op-ed.mp4"
+        "studio": "remotion studio src/index.tsx",
+        "render:hook": "remotion render src/index.tsx hook --output out/hook.mp4",
+        "render:hook-sq": "remotion render src/index.tsx hook-square --output out/hook-square.mp4",
+        "render:proof": "remotion render src/index.tsx proof --output out/proof.mp4",
+        "render:proof-sq": "remotion render src/index.tsx proof-square --output out/proof-square.mp4",
+        "render:demo": "remotion render src/index.tsx demo --output out/demo.mp4",
+        "render:demo-sq": "remotion render src/index.tsx demo-square --output out/demo-square.mp4",
+        "render:op-ed": "remotion render src/index.tsx op-ed --output out/op-ed.mp4",
+        "render:op-ed-sq": "remotion render src/index.tsx op-ed-square --output out/op-ed-square.mp4",
+        "render:all": "npm run render:hook && npm run render:hook-sq && npm run render:proof && npm run render:proof-sq && npm run render:demo && npm run render:demo-sq && npm run render:op-ed && npm run render:op-ed-sq"
     },
     "dependencies": {
         "react": "^18.0.0",
