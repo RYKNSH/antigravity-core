@@ -245,6 +245,18 @@ echo "✅ Check-in complete!" && df -h . | tail -1
 }
 
 # ══════════════════════════════════════════════════════
+# SYSTEM_ALERTS 異常検知（バックグラウンドプロセスの死等）
+# ══════════════════════════════════════════════════════
+[ -f "$ANTIGRAVITY_DIR/state/SYSTEM_ALERTS.md" ] && {
+  if [ -s "$ANTIGRAVITY_DIR/state/SYSTEM_ALERTS.md" ]; then
+    echo ""
+    echo "🚨🚨🚨 SYSTEM ALERTS DETECTED (Background Failures) 🚨🚨🚨"
+    cat "$ANTIGRAVITY_DIR/state/SYSTEM_ALERTS.md"
+    echo "🚨🚨🚨 Please investigate and clear state/SYSTEM_ALERTS.md to resolve. 🚨🚨🚨"
+  fi
+}
+
+# ══════════════════════════════════════════════════════
 # NEXT_SESSION 読み込み後の行動原則（構造的遷移）
 # ══════════════════════════════════════════════════════
 echo ""

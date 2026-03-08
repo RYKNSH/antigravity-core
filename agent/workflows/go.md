@@ -71,6 +71,14 @@ if [ -f "$ACTIVE_MRS_FILE" ]; then
     cat "$ACTIVE_MRS_FILE" | grep "title" | sed 's/^/"/; s/$/",/'
     echo "🚨 IMPORTANT: If you experienced a terminal HANG or were CANCELLED by the user recently, DO NOT repeat the exact same \`run_command\`. Switch your approach (e.g., use code editing tools or MCP). This is strictly enforced by MR-08 and MR-25."
 fi
+
+# --- System Alerts Check ---
+SYSTEM_ALERTS_FILE="$HOME/.antigravity/state/SYSTEM_ALERTS.md"
+if [ -s "$SYSTEM_ALERTS_FILE" ]; then
+    echo "🚨🚨🚨 [PRE-FLIGHT WARNING]: SYSTEM ALERTS DETECTED 🚨🚨🚨"
+    cat "$SYSTEM_ALERTS_FILE"
+    echo "🚨 AI MUST INVESTIGATE BACKGROUND SYSTEM FAILURES OR CLEAR THIS FILE TO PROCEED SAFELY."
+fi
 ```
 
 > [!TIP]

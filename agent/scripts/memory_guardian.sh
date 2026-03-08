@@ -18,7 +18,7 @@ set -uo pipefail
 
 # --- Configuration (Dynamic Thresholds) ---
 # RAM量に応じて閾値を動的に決定
-RAM_BYTES=$(sysctl -n hw.memsize 2>/dev/null || echo 8589934592)
+RAM_BYTES=$(sysctl -n hw.memsize 2>/dev/null || awk '/MemTotal/ {print $2 * 1024}' /proc/meminfo 2>/dev/null || echo 8589934592)
 RAM_GB=$((RAM_BYTES / 1024 / 1024 / 1024))
 
 if [ "$RAM_GB" -le 8 ]; then
@@ -50,7 +50,7 @@ FIND_TIMEOUT=20      # find コマンドのタイムアウト (秒)
 LOCK_STALE=600       # 古いロックファイルの判定閾値 (秒=10分)
 
 LOG_FILE="/tmp/memory_guardian.log"
-LOCK_FILE="/tmp/memory_guardian.lock"
+LOCK_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}/.locks/memory_guardian.lock"
 STATE_FILE="/tmp/memory_guardian.state"
 MAX_LOG_SIZE=1048576  # 1MB log rotation
 
@@ -162,10 +162,12 @@ fi
 
 # --- Lock (stale lock auto-recovery) ---
 acquire_lock() {
-  if [ -f "$LOCK_FILE" ]; then
+  mkdir -p "${ANTIGRAVITY_DIR:-$HOME/.antigravity}/.locks" 2>/dev/null || true
+  
+  if [ -d "$LOCK_DIR" ]; then
     local lock_pid lock_ts now diff
-    lock_pid=$(head -1 "$LOCK_FILE" 2>/dev/null || echo "")
-    lock_ts=$(tail -1 "$LOCK_FILE" 2>/dev/null || echo "0")
+    lock_pid=$(head -1 "$LOCK_DIR/pid" 2>/dev/null || echo "")
+    lock_ts=$(head -1 "$LOCK_DIR/ts" 2>/dev/null || echo "0")
     now=$(date +%s)
 
     # PID が生きていてもロック取得から LOCK_STALE 秒超なら強制回収
@@ -176,21 +178,34 @@ acquire_lock() {
         kill -9 "$lock_pid" 2>/dev/null || true
         log "WARN" "Killed stale guardian process PID $lock_pid"
       fi
-      rm -f "$LOCK_FILE"
+      rm -rf "$LOCK_DIR"
     elif [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
       log "WARN" "Another instance running (PID: $lock_pid, age: ${diff}s), exiting"
       exit 0
     else
       # PID dead, clean up
-      rm -f "$LOCK_FILE"
+      rm -rf "$LOCK_DIR"
     fi
   fi
-  # ロックファイルに PID + タイムスタンプを記録
-  printf '%s\n%s\n' $$ "$(date +%s)" > "$LOCK_FILE"
+  
+  # Try to create directory atomically
+  if mkdir "$LOCK_DIR" 2>/dev/null; then
+    echo $$ > "$LOCK_DIR/pid"
+    date +%s > "$LOCK_DIR/ts"
+  else
+    log "WARN" "Failed to acquire lock. Another instance running?"
+    exit 0
+  fi
 }
 
 release_lock() {
-  rm -f "$LOCK_FILE"
+  if [ -f "$LOCK_DIR/pid" ]; then
+    local pid
+    pid=$(cat "$LOCK_DIR/pid" 2>/dev/null || echo "")
+    if [ "$pid" = "$$" ]; then
+      rm -rf "$LOCK_DIR"
+    fi
+  fi
 }
 
 cleanup_and_exit() {
@@ -205,6 +220,9 @@ freed_mb=0
 status=TIMEOUT
 abort_reason=$reason
 EOF
+  # Telemetry emission
+  mkdir -p "${ANTIGRAVITY_DIR:-$HOME/.antigravity}/state"
+  echo "- [$(date -u +"%Y-%m-%dT%H:%M:%SZ")] [System Error] memory_guardian.sh aborted: $reason" >> "${ANTIGRAVITY_DIR:-$HOME/.antigravity}/state/SYSTEM_ALERTS.md"
   release_lock
   exit 1
 }
@@ -235,17 +253,25 @@ check_interval() {
 action_level1() {
   log "ACTION" "=== Level 1: Prevention ==="
 
-  # 1. purge (macOS memory compression flush) — タイムアウト付き
+  # 1. purge (macOS) / drop_caches (Linux) — タイムアウト付き
   if [ "$DRY_RUN" = false ]; then
-    if run_with_timeout "$CMD_TIMEOUT" "purge(sudo)" sudo -n purge; then
-      log "ACTION" "purge executed (sudo)"
-    elif run_with_timeout "$CMD_TIMEOUT" "purge" purge; then
-      log "ACTION" "purge executed (no sudo)"
+    if [ "$(uname)" = "Darwin" ]; then
+      if run_with_timeout "$CMD_TIMEOUT" "purge(sudo)" sudo -n purge; then
+        log "ACTION" "purge executed (sudo)"
+      elif run_with_timeout "$CMD_TIMEOUT" "purge" purge; then
+        log "ACTION" "purge executed (no sudo)"
+      else
+        log "WARN" "purge failed or timed out"
+      fi
     else
-      log "WARN" "purge failed or timed out"
+      if run_with_timeout "$CMD_TIMEOUT" "drop_caches(sudo)" sudo -n sh -c 'sync; echo 3 > /proc/sys/vm/drop_caches'; then
+        log "ACTION" "drop_caches executed (sudo)"
+      else
+        log "WARN" "drop_caches failed or timed out"
+      fi
     fi
   else
-    log "DRY-RUN" "Would execute: purge"
+    log "DRY-RUN" "Would execute: purge / drop_caches"
   fi
 
   # 2. Antigravity browser_recordings (48h+)

@@ -12,10 +12,21 @@ HASH=$(git rev-parse --short HEAD)
 TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # Append/update last_code_commit fields
-grep -q "^last_code_commit:" "$HEAD_FILE" 2>/dev/null \
-  && sed -i '' "s/^last_code_commit:.*/last_code_commit: $HASH/" "$HEAD_FILE" \
-  || echo "last_code_commit: $HASH" >> "$HEAD_FILE"
+if grep -q "^last_code_commit:" "$HEAD_FILE" 2>/dev/null; then
+  sed -i.bak "s/^last_code_commit:.*/last_code_commit: $HASH/" "$HEAD_FILE" && rm -f "$HEAD_FILE.bak"
+else
+  echo "last_code_commit: $HASH" >> "$HEAD_FILE"
+fi
 
-grep -q "^last_code_commit_at:" "$HEAD_FILE" 2>/dev/null \
-  && sed -i '' "s/^last_code_commit_at:.*/last_code_commit_at: $TS/" "$HEAD_FILE" \
-  || echo "last_code_commit_at: $TS" >> "$HEAD_FILE"
+if grep -q "^last_code_commit_at:" "$HEAD_FILE" 2>/dev/null; then
+  sed -i.bak "s/^last_code_commit_at:.*/last_code_commit_at: $TS/" "$HEAD_FILE" && rm -f "$HEAD_FILE.bak"
+else
+  echo "last_code_commit_at: $TS" >> "$HEAD_FILE"
+fi
+
+# Assert success, otherwise generate telemetry alert
+if [ $? -ne 0 ]; then
+  mkdir -p "$HOME/.antigravity/state"
+  echo "- [$(date -u +"%Y-%m-%dT%H:%M:%SZ")] [System Error] post-commit hook failed to update CONTEXT_HEAD" >> "$HOME/.antigravity/state/SYSTEM_ALERTS.md"
+fi
+
