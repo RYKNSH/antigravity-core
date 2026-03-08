@@ -126,7 +126,7 @@ _smart_run 15 1 "context-snapshot" node "$ANTIGRAVITY_DIR/agent/scripts/git_cont
 # ─── 5. Session State & Evolve ────────────────────────
 [ -f "state/NEXT_SESSION.md" ] && cp state/NEXT_SESSION.md "$ANTIGRAVITY_DIR/brain_log/session_$(date +%m%d%H%M).md" 2>/dev/null
 _smart_run 10 1 "session-state" node "$ANTIGRAVITY_DIR/agent/scripts/session_state.js" snapshot
-_smart_run 10 1 "usage-tracker" "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.sh" /checkout
+_smart_run 10 1 "usage-tracker" node "$ANTIGRAVITY_DIR/agent/scripts/update_usage_tracker.js" /checkout
 _smart_run 10 1 "evolve"        node "$ANTIGRAVITY_DIR/agent/scripts/evolve.js" --checkout
 
 # ─── 5.5. brain_log 構造化MD出力（INCIDENT_FORMAT.md形式） ─────────
