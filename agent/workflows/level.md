@@ -26,3 +26,9 @@ fi
 | L1 | Supervised | Design + Destructive |
 | L2 | Auto | Destructive only |
 | L3 | Full | Production only |
+
+---
+
+## Toolchain
+
+**Shortcuts**: `/l0`, `/l1`, `/l2`, `/l3`

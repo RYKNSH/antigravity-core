@@ -155,3 +155,10 @@ Execution Rules = (
 ---
 
 > **詳細チェックリスト**: [error-sweep-checks.md](file:////Users/ryotarokonishi/.antigravity/docs/wf-reference/error-sweep-checks.md)
+
+---
+
+## Toolchain
+
+**Skills**: `code-review`
+**Knowledge**: `debug_patterns`

@@ -259,3 +259,10 @@ git add -A && git commit -m "ux-audit: checkpoint before auto-fix"
 > - 本番URLへのLighthouse実行（ローカルのみ）
 > - CSSの大幅な色変更（color-contrast修正はHSL微調整のみ）
 > - HTML構造の大幅変更（セマンティクス修正は属性追加のみ）
+
+---
+
+## Toolchain
+
+**Skills**: `ux-performance-audit`
+**Knowledge**: `high_fidelity_ux_audit_patterns`

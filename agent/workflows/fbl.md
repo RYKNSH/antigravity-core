@@ -234,3 +234,10 @@ echo "[$(date)] Fixed: $ISSUE" >> fbl_audit.log
 > - 本番環境へのデプロイ
 > - シークレット/環境変数の変更
 > - ファイルの削除（テスト用一時ファイル除く）
+
+---
+
+## Toolchain
+
+**Skills**: `webapp-testing`, `ux-performance-audit`
+**Knowledge**: `high_fidelity_ux_audit_patterns`, `autonomous_feedback_loop_fbl`

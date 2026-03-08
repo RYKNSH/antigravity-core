@@ -251,3 +251,9 @@ WHITEPAPER.md に以下のセクションを**必須で**追加:
 | ユーザーがビジョンを明確化できない | Round追加。5ラウンド超えても不明瞭→PAUSE |
 | debate が3回Block | 問題箇所を特定→部分修正→再debate |
 | ロードマップのタスク粒度が大きすぎる | サブタスクに分解（1タスク ≤ 1日目安） |
+
+---
+
+## Toolchain
+
+**Knowledge**: `openclaw_autonomous_ai_architecture`

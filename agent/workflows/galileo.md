@@ -288,3 +288,10 @@ Phase 3（逆仮説）と Phase 4（再構築）をスキップ。
 > [!NOTE]
 > これらのペルソナは `/galileo` 専用であり、`persona-orchestration` の管理対象外。
 > 固定チームとして常に同じ構成で実行される。
+
+---
+
+## Toolchain
+
+**Skills**: `first-principles`
+**Knowledge**: `galileo_log`

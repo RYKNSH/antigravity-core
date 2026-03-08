@@ -224,3 +224,10 @@ echo "🔍 Verify Chain: $SIZE (Risk Score: $RISK_SCORE — Files: $SCORE_A, Typ
 | FBL 修正ループ上限 | → `/debug-deep` |
 | Error Sweep critical | → 即修正 → 再検証 |
 | Test Quality < B | → `/test-evolve` Phase 5 で改善 |
+
+---
+
+## Toolchain
+
+**Skills**: `code-review`, `webapp-testing`
+**Knowledge**: `high_fidelity_ux_audit_patterns`

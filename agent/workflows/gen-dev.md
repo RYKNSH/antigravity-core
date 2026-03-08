@@ -160,3 +160,9 @@ write_to_file ツールの引数:
 | ROADMAP.md 不在 | `/whitepaper` Phase 3 の実行を提案 |
 | `.agent/workflows/` 作成失敗 | エラー報告 + 手動作成手順提示 |
 | コマンド名衝突 | ユーザーに代替名を確認 |
+
+---
+
+## Toolchain
+
+**Knowledge**: `openclaw_autonomous_ai_architecture`

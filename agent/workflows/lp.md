@@ -47,4 +47,10 @@ view_file ~/.gemini/antigravity/skills/high-conversion-lp-architect/SKILL.md
 
 ### Step 4: 構造生成（オプション）
 
-ユーザーが実装を望む場合、`/generate-lp-structure` を実行してHTMLコードを生成する。
+ユーザーが実装を望む場合、`frontend-design` スキル（`~/.gemini/antigravity/skills/frontend-design/SKILL.md`）を読み込み、構成案に基づいてHTML/CSSコードを直接生成する。
+
+---
+
+## Toolchain
+
+**Skills**: `high-conversion-lp-architect`, `frontend-design`

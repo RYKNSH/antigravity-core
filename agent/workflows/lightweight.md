@@ -10,7 +10,6 @@ Antigravityセッション開始前にシステムを軽量化。
 ```
 /checkin Phase 1 = 基本クリーンアップ（毎セッション）
 /lightweight = メモリ軽量化（オンデマンド）
-/cleanup-48h = ディープクリーンアップ（定期実行）
 Memory Guardian = 5分間隔の自動メモリ監視デーモン（常時稼働）
 ```
 
@@ -83,3 +82,12 @@ memory_guardian.sh --dry-run
 
 > [!TIP]
 > Guardian が常時稼働しているため、再起動やアプリ終了は不要。
+
+---
+
+## Toolchain
+
+**Scripts**: `memory_guardian.sh`, `memory_guardian_lib.sh`, `memory_status.sh`
+**Skills**: `context-compression`
+**Knowledge**: `antigravity_portable_dev_ecosystem`
+**Related WF**: `/context-compression`（コンテキストが重い場合）

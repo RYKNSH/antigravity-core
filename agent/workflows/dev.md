@@ -31,3 +31,9 @@ pnpm dev
 lsof -i :<ポート番号> | grep LISTEN
 kill -9 <PID>
 ```
+
+---
+
+## Toolchain
+
+**Knowledge**: `remote_mac_mini_vibe_coding`

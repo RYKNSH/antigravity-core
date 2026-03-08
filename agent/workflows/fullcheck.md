@@ -189,3 +189,10 @@ npx stryker run 2>/dev/null || echo "Stryker not configured — manual review"
 | `/fullcheck` | 手動 |
 | `フルチェック` / `完全チェック` / `全スコープ` | 自動（Proactive Trigger） |
 | `/ship --fullcheck` | ship前統合 |
+
+---
+
+## Toolchain
+
+**Skills**: `code-review`, `webapp-testing`, `test-quality-engine`, `ux-performance-audit`
+**Knowledge**: `high_fidelity_ux_audit_patterns`, `debug_patterns`

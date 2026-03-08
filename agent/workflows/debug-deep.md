@@ -214,3 +214,11 @@ git add -A && git commit -m "debug-deep: checkpoint before approach change"
 | `/error-sweep` 1st round 3回失敗 | 自動 |
 
 **真のPAUSE（ユーザーエスカレーション）はプログレッシブ拡張全段階（合計13回）失敗 + ディープリサーチでも情報不足の時のみ。**
+
+---
+
+## Toolchain
+
+**Skills**: `first-principles`, `bottleneck-hunter`
+**Knowledge**: `debug_patterns`
+**Related WF**: `/incident`（障害記録）

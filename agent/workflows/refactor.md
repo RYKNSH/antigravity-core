@@ -203,3 +203,9 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 
 リファクタリング完了後、`/verify --quick` を自動実行。
 機能変更を伴わない変更でも、リグレッションがないことを確実に担保。
+
+---
+
+## Toolchain
+
+**Skills**: `architecture`, `code-review`

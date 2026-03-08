@@ -380,3 +380,10 @@ echo ""
 # Watchdog cleanup（正常終了時）
 kill $WATCHDOG_PID 2>/dev/null || true
 ```
+
+---
+
+## Toolchain
+
+**Scripts**: `session_state.js`, `git_context.js`, `collect_session_data.js`, `memory_guardian.sh`, `memory_status.sh`
+**Knowledge**: `antigravity_portable_dev_ecosystem`

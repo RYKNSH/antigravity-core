@@ -50,3 +50,9 @@ This mode enforces a "Read-First" policy and requires a specific JSON output for
   ]
 }
 ```
+
+---
+
+## Toolchain
+
+**Scripts**: `project_state.js`, `setup.js`

@@ -1,8 +1,24 @@
 const { curlRequest } = require('./lib/curl_client');
 const fs = require('fs');
 const path = require('path');
-const prompts = require('./social_prompts');
 const { loadEnv, getSecret } = require(path.join(__dirname, 'env_loader'));
+
+// Social prompts (inline — 旧 social_prompts.js を統合)
+const prompts = {
+  getSocialSystemPrompt() {
+    return `You are a social media expert. Given an article title (and optionally content),
+generate engaging social media posts in JSON format with keys: twitter, facebook, threads.
+- twitter: Max 280 chars, include relevant hashtags
+- facebook: 2-3 sentences, conversational tone
+- threads: 1-2 sentences, casual and engaging
+Respond ONLY with valid JSON.`;
+  },
+  getImagePrompt(title, content) {
+    return `Create a modern, minimalist blog cover image for an article titled "${title}". 
+Use abstract geometric shapes, soft gradients, and a professional tech aesthetic. 
+No text in the image. Clean, editorial style.`;
+  }
+};
 
 // 1Password 優先で環境変数をロード
 loadEnv();

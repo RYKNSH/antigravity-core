@@ -182,3 +182,10 @@ echo "✅ Checkout complete!" && df -h . | tail -1
 ## 📋 NEXT_SESSION.md
 1. [タスク]
 2. [注意]
+
+---
+
+## Toolchain
+
+**Scripts**: `session_state.js`, `git_context.js`, `evolve.js`, `update_usage_tracker.sh`, `sync_private.js`
+**Knowledge**: `developer_behavioral_patterns_and_audit`

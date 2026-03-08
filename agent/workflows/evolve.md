@@ -33,3 +33,11 @@ node ~/.antigravity/agent/scripts/evolve.js
 ## 3. 分析結果の記録
 
 分析結果を `SELF_EVOLUTION.md` の「進化履歴」に追記することを推奨します。
+
+---
+
+## Toolchain
+
+**Scripts**: `evolve.js`, `server_evolve.js`
+**Skills**: `skill-creator`
+**Knowledge**: `learning_store`

@@ -324,3 +324,9 @@ fi
 | `/whitepaper` | refine 後、ビジョン・戦略文書にまとめる場合 |
 | `/go` | ユーザーが明示的に実装開始を決断した場合のみ |
 | `/debate deep` | 同一の議論プロセス + 実装連携ありバージョン |
+
+---
+
+## Toolchain
+
+**Skills**: `persona-orchestration`, `first-principles`

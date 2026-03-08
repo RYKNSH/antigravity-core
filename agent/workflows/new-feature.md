@@ -195,3 +195,10 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 
 - テスト全パス → `/ship` 可能
 - テスト失敗 → Step 6 に戻って修正
+
+---
+
+## Toolchain
+
+**Skills**: `architecture`, `react-best-practices`, `code-review`
+**Knowledge**: `ai_coding_assistant_best_practices`

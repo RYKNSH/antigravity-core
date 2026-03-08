@@ -52,105 +52,100 @@
 
 ---
 
-## ワークフロー体系 (21件)
+## ワークフロー体系 (46件)
 
 ### 🔄 ライフサイクル管理
 | コマンド | 説明 | 自動化レベル |
 |---------|------|-------------|
+| `/go` | 統合メタワークフロー | 🟢 Full Auto |
+| `/work` | /goへリダイレクト（後方互換） | 🟢 Full Auto |
 | `/checkin` | セッション開始・環境初期化 | 🟢 Full Auto |
 | `/checkout` | セッション終了・データ整理 | 🟢 Full Auto |
-| `/cleanup-48h` | 48h経過キャッシュ削除 | 🟢 Full Auto |
 | `/lightweight` | システム軽量化 | 🟢 Full Auto |
+| `/level` | 自律レベル切替 | 🟢 Full Auto |
+| `/l0`〜`/l3` | レベル即時切替 | 🟢 Full Auto |
 
 ### 🛠️ 開発フロー
 | コマンド | 説明 | 自動化レベル |
 |---------|------|-------------|
+| `/spec` | 新機能仕様策定 | 🟡 Semi Auto |
+| `/new-feature` | 新機能開発 | 🟡 Semi Auto |
+| `/bug-fix` | バグ修正 | 🟡 Semi Auto |
+| `/refactor` | リファクタリング | 🟡 Semi Auto |
 | `/dev` | 開発サーバー起動 | 🟢 Full Auto |
 | `/build` | 本番ビルド | 🟢 Full Auto |
 | `/test` | テスト実行 | 🟢 Full Auto |
 | `/deploy` | 本番デプロイ | 🟡 Semi Auto |
 | `/db-migrate` | DBマイグレーション | 🟡 Semi Auto |
-
-### 🎯 タスクフロー
-| コマンド | 説明 | 自動化レベル |
-|---------|------|-------------|
-| `/new-feature` | 新機能開発 | 🟡 Semi Auto |
-| `/bug-fix` | バグ修正 | 🟡 Semi Auto |
-| `/refactor` | リファクタリング | 🟡 Semi Auto |
+| `/ship` | リリース準備一括実行 | 🟡 Semi Auto |
 
 ### ✅ 品質保証
 | コマンド | 説明 | 自動化レベル |
 |---------|------|-------------|
+| `/verify` | Risk-Based検証チェーン | 🟢 Full Auto |
 | `/fbl` | Feedback Loop (120%品質) | 🟢 Full Auto |
-| `/verification-loop` | 軽量検証ループ | 🟢 Full Auto |
+| `/error-sweep` | 徹底エラーチェック | 🟢 Full Auto |
 | `/debate` | Multi-Persona Debate | 🟡 Semi Auto |
+| `/debug-deep` | ディープデバッグ | 🟡 Semi Auto |
+| `/fullcheck` | 全30レイヤー品質チェック | 🟢 Full Auto |
+| `/test-evolve` | テスト自己進化ループ | 🟢 Full Auto |
+| `/ux-audit` | UXパフォーマンス監査 | 🟢 Full Auto |
+
+### 🧠 戦略・ビジョン
+| コマンド | 説明 | 自動化レベル |
+|---------|------|-------------|
+| `/whitepaper` | ホワイトペーパー共創 | 🟡 Semi Auto |
+| `/gen-dev` | ロードマップ→タスク自動生成 | 🟡 Semi Auto |
+| `/vision-os` | 3巨頭ビジョン駆動開発 | 🟡 Semi Auto |
+| `/refine` | 純粋議論ワークフロー | 🟡 Semi Auto |
+| `/galileo` | ガリレオテスト | 🟡 Semi Auto |
+| `/think` | 構造化思考 | 🟡 Semi Auto |
+| `/lp` | 成約率特化LP構成案 | 🟡 Semi Auto |
 
 ### 📢 発信・学習
 | コマンド | 説明 | 自動化レベル |
 |---------|------|-------------|
+| `/blog` | 記事作成 | 🟡 Semi Auto |
 | `/checkpoint_to_blog` | 作業→ブログ変換 | 🟡 Semi Auto |
 | `/publish` | 記事配信ワークフロー | 🟡 Semi Auto |
 | `/learn_from_blog` | 記事から学習 | 🟡 Semi Auto |
 
-### 🌐 環境管理
+### 🔧 環境・進化
 | コマンド | 説明 | 自動化レベル |
 |---------|------|-------------|
-| `/project-init` | プロジェクト初期化 | 🟡 Semi Auto |
-| `/clone-environment` | 環境複製 | 🟡 Semi Auto |
+| `/setup` | プロジェクト初期化・環境セットアップ | 🟡 Semi Auto |
+| `/context-compression` | コンテキスト圧縮 | 🟢 Full Auto |
+| `/evolve` | 自己進化・改善提案 | 🟢 Full Auto |
+| `/evolve-wiz` | 進化型ウィザード | 🟡 Semi Auto |
+| `/incident` | インシデント記録 | 🟢 Full Auto |
 
 ---
 
-## スキル体系 (12件)
+## スキル体系 (25件)
 
 ### 🧠 思考スキル
-| スキル | 発動条件 | 出力 |
-|-------|---------|------|
-| `first-principles` | 「なぜ」「根本原因」キーワード | 5-Why分析結果 |
-| `architecture` | 設計決定が必要な時 | ADR文書 |
-| `bottleneck-hunter` | パフォーマンス問題 | ボトルネック特定 |
+`first-principles` `architecture` `bottleneck-hunter`
 
 ### ⚡ 実行スキル
-| スキル | 発動条件 | 出力 |
-|-------|---------|------|
-| `autonomous-execution` | 複雑なタスク | タスクツリー・実行ログ |
-| `code-review` | コード変更後 | レビューレポート |
+`autonomous-execution` `code-review` `context-compression`
 
 ### 🎭 協調スキル
-| スキル | 発動条件 | 出力 |
-|-------|---------|------|
-| `persona-orchestration` | 品質検証・複雑な判断 | Multi-Persona議論 |
+`persona-orchestration` `skill-creator`
 
 ### 🔧 運用スキル
-| スキル | 発動条件 | 出力 |
-|-------|---------|------|
-| `docker-autonomous-ops` | Docker操作 | コンテナ管理 |
-| `homebrew-autonomous-ops` | パッケージ管理 | システム設定 |
-| `workspace-config-audit` | 設定ファイル監査 | 設定レポート |
+`docker-autonomous-ops` `homebrew-autonomous-ops` `railway-autonomous-ops` `workspace-config-audit` `immortal-agent-core`
 
 ### 📡 連携スキル
-| スキル | 発動条件 | 出力 |
-|-------|---------|------|
-| `mcp-best-practices` | MCP開発 | サーバー設定 |
-| `llm-api-best-practices` | LLM API統合 | API設定 |
-| `discord-best-practices` | Discord Bot開発 | Bot実装 |
+`mcp-best-practices` `mcp-builder` `llm-api-best-practices` `discord-best-practices`
+
+### 🎨 フロントエンド・品質
+`frontend-design` `react-best-practices` `high-conversion-lp-architect` `webapp-testing` `supabase-postgres-best-practices` `test-quality-engine` `ux-performance-audit` `world-class-test-patterns`
 
 ---
 
-## ナレッジ体系 (11件)
+## ナレッジ体系 (23件)
 
-| ナレッジ | カバー範囲 |
-|---------|-----------|
-| `antigravity_portable_dev_ecosystem` | SSD開発環境・運用標準 |
-| `ai_coding_assistant_best_practices` | AI Coding設定・ルール |
-| `video_editing_pipeline_videdit` | Videditパイプライン |
-| `discord_buddy_ecosystem` | Discord Buddy全体 |
-| `hype_buddy` | Hype Buddy実装 |
-| `artistory_studio` | ARTISTORY STUDIO |
-| `portable_studio_app` | Portable Studio |
-| `database_management_and_deployment` | DB運用パターン |
-| `mcp_server_directory` | MCPサーバー一覧 |
-| `high_fidelity_ux_audit_patterns` | UX監査パターン |
-| `soloprostudio_social_knowledge_ecosystem` | 発信戦略・ナラティブ |
+`ai_coding_assistant_best_practices` `antigravity_portable_dev_ecosystem` `artistory_studio` `autonomous_feedback_loop_fbl` `database_management_and_deployment` `debug_patterns` `developer_behavioral_patterns_and_audit` `discord_buddy_ecosystem` `galileo_log` `gh_github_cli.md` `gws_google_workspace_cli.md` `high_fidelity_ux_audit_patterns` `learning_store` `mcp_server_directory` `openclaw_autonomous_ai_architecture` `persona_orchestration_system` `portable_studio_app` `remote_mac_mini_vibe_coding` `social_knowledge` `soloprostudio_social_knowledge_ecosystem` `test_evolution_patterns` `video_editing_pipeline_videdit` `x_cli_twitter.md`
 
 ---
 
@@ -172,7 +167,7 @@ graph LR
 
 **プロジェクト立ち上げ時:**
 ```
-/project-init → 初期設定完了
+/setup → 初期設定完了
 ```
 
 **通常の開発日:**
@@ -205,7 +200,7 @@ graph LR
 **ルーティン起点のワークフロー自動起動:**
 | ルーティン | 自動起動するワークフロー |
 |-----------|-------------------------|
-| `/checkin` | cleanup-48h, sync workflows/skills |
+| `/checkin` | lightweight, sync workflows/skills |
 | `/checkpoint_to_blog` | git commit, blog generation, notion upload |
 | `/checkout` | self-evaluation, kaizen implementation |
 
@@ -239,18 +234,18 @@ graph LR
 ├── agent/
 │   ├── rules/           # グローバルルール
 │   │   └── user_global.md
-│   ├── workflows/       # 21件のワークフロー
+│   ├── workflows/       # 46件のワークフロー
+│   │   ├── go.md
 │   │   ├── checkin.md
 │   │   ├── checkout.md
-│   │   ├── fbl.md
 │   │   └── ...
-│   ├── skills/          # 12件のスキル
+│   ├── skills/          # 25件のスキル
 │   │   ├── first-principles/
 │   │   ├── autonomous-execution/
 │   │   ├── persona-orchestration/
 │   │   └── ...
-│   └── scripts/         # ユーティリティスクリプト
-└── knowledge/           # 11件のナレッジアイテム
+│   └── scripts/         # 43件のユーティリティスクリプト
+└── knowledge/           # 24件のナレッジアイテム
     ├── antigravity_portable_dev_ecosystem/
     ├── ai_coding_assistant_best_practices/
     └── ...

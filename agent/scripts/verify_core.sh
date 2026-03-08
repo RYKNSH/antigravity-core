@@ -133,6 +133,8 @@ SSD_REFS=0
 for f in "$CORE_DIR/agent/scripts/"*.{js,sh} "$CORE_DIR/agent/workflows/"*.md; do
     [ -f "$f" ] || continue
     if grep -q 'PortableSSD' "$f" 2>/dev/null; then
+        # verify_core.sh自身はチェックコードを含むため除外
+        [ "$(basename "$f")" = "verify_core.sh" ] && continue
         warn "$(basename "$f"): /Volumes/PortableSSD 参照残存"
         SSD_REFS=$((SSD_REFS + 1))
     fi

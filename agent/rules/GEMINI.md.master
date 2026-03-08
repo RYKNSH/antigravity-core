@@ -59,26 +59,33 @@
 
 ## 🗺️ グローバルリソース (~/.antigravity/)
 
-### ワークフロー (41件) → `agent/workflows/`
+### ワークフロー (46件) → `agent/workflows/`
 **Meta（セッション制御・ルーティング）**: `/go` `/work` `/checkin` `/checkout` `WORKFLOW_ROUTER` `WORKFLOW_CONTRACTS`
 **Core（開発サイクル）**: `/spec` `/new-feature` `/bug-fix` `/refactor` `/test` `/fbl` `/verify` `/error-sweep` `/debate` `/debug-deep` `/ship` `/build` `/deploy` `/db-migrate` `/dev`
-**Utility（環境・コンテンツ・進化）**: `/blog` `/publish` `/learn_from_blog` `/cleanup-48h` `/lightweight` `/project-init` `/evolve` `/evolve-wiz` `/vision-os` `/galileo` `/context-compression` `/level` `/l0` `/l1` `/l2` `/l3` `/trust-level`
+**Strategy（戦略・ビジョン）**: `/whitepaper` `/gen-dev` `/vision-os` `/refine` `/galileo`
+**Utility（環境・コンテンツ・進化）**: `/blog` `/publish` `/learn_from_blog` `/checkpoint_to_blog` `/lightweight` `/context-compression` `/evolve` `/evolve-wiz` `/level` `/l0` `/l1` `/l2` `/l3` `/setup` `/incident` `/think` `/lp` `/fullcheck` `/test-evolve` `/ux-audit`
 
-### スキル (12件) → `agent/skills/`
-`architecture` `autonomous-execution` `bottleneck-hunter` `code-review` `discord-best-practices` `docker-autonomous-ops` `first-principles` `homebrew-autonomous-ops` `llm-api-best-practices` `mcp-best-practices` `persona-orchestration` `workspace-config-audit` 
+### スキル (25件) → `agent/skills/`
+`architecture` `autonomous-execution` `bottleneck-hunter` `code-review` `context-compression` `discord-best-practices` `docker-autonomous-ops` `first-principles` `frontend-design` `high-conversion-lp-architect` `homebrew-autonomous-ops` `immortal-agent-core` `llm-api-best-practices` `mcp-best-practices` `mcp-builder` `persona-orchestration` `railway-autonomous-ops` `react-best-practices` `skill-creator` `supabase-postgres-best-practices` `test-quality-engine` `ux-performance-audit` `webapp-testing` `workspace-config-audit` `world-class-test-patterns`
 
-### スクリプト (29件) → `agent/scripts/`
-**Notion連携**: `auth_notion.js` `fetch_notion_page.js` `notion_poster.js` 
-**Discord連携**: `discord_poster.js` `verify_discord_webhook.js` 
-**ソーシャル**: `check_social_keys.js` `gas_publisher.js` `generate_social_assets.js` `inspect_social_props.js` `social_prompts.js`
-**セッション管理**: `session_state.js` `collect_session_data.js` `extract_context.js`
-**その他**: `chaos_monkey.js` `skill_hunter.js` `review_board.js` `update_db_schema.js`
+### スクリプト (43件) → `agent/scripts/`
+**Notion連携**: `auth_notion.js` `fetch_notion_page.js` `notion_poster.js`
+**Discord連携**: `discord_poster.js` `verify_discord_webhook.sh`
+**ソーシャル**: `gas_publisher.js` `generate_social_assets.js`
+**セッション管理**: `session_state.js` `collect_session_data.js` `git_context.js`
+**DRG・進化**: `drg.js` `bootstrap_drg.js` `evolve.js` `server_evolve.js` `pipeline_chaos.js`
+**ペルソナ**: `jensen_ceo.js` `steve_job.js` `elon_musk.js` `update_persona_stats.js`
+**環境・設定**: `env_loader.js` `setup.js` `project_state.js` `fuzzymatch.js` `sync_private.js`
+**メディア・CLI**: `ffmpeg_cli.js` `remotion_cli.js` `whisper_cli.js` `image_cli.js` `penpot_cli.js` `everwebinar_cli.js`
+**スケジュール**: `schedule_posts.js` `promote_drafts.js` `clear_schedules.js` `force_ready.js`
+**品質・ガード**: `verify_core.sh` `git_guard.sh` `ssd_guard.sh` `memory_guardian.sh` `memory_guardian_lib.sh` `memory_status.sh`
+**その他**: `chaos_monkey.js` `skill_hunter.js` `update_usage_tracker.sh`
 
-### ナレッジ (19件) → `knowledge/`
-`ai_coding_assistant_best_practices` `antigravity_portable_dev_ecosystem` `artistory_studio` `autonomous_feedback_loop_fbl` `database_management_and_deployment` `debug_patterns` `developer_behavioral_patterns_and_audit` `discord_buddy_ecosystem` `galileo_log` `high_fidelity_ux_audit_patterns` `learning_store` `mcp_server_directory` `openclaw_autonomous_ai_architecture` `persona_orchestration_system` `portable_studio_app` `remote_mac_mini_vibe_coding` `social_knowledge` `soloprostudio_social_knowledge_ecosystem` `video_editing_pipeline_videdit`
+### ナレッジ (23件) → `knowledge/`
+`ai_coding_assistant_best_practices` `antigravity_portable_dev_ecosystem` `artistory_studio` `autonomous_feedback_loop_fbl` `database_management_and_deployment` `debug_patterns` `developer_behavioral_patterns_and_audit` `discord_buddy_ecosystem` `galileo_log` `gh_github_cli.md` `gws_google_workspace_cli.md` `high_fidelity_ux_audit_patterns` `learning_store` `mcp_server_directory` `openclaw_autonomous_ai_architecture` `persona_orchestration_system` `portable_studio_app` `remote_mac_mini_vibe_coding` `social_knowledge` `soloprostudio_social_knowledge_ecosystem` `test_evolution_patterns` `video_editing_pipeline_videdit` `x_cli_twitter.md`
 
-### ドキュメント → `~/.antigravity/`
-`QUICKSTART.md` `BACKUP_STRATEGY.md` `KNOWLEDGE_INDEX.md` `AUTO_TRIGGERS.md` `USAGE_TRACKER.md` `NEXT_SESSION.md`
+### ドキュメント (24件) → `~/.antigravity/docs/`
+`AUTO_TRIGGERS.md` `AUTONOMOUS_IDE.md` `BACKUP_STRATEGY.md` `brand_concept.md` `brand_concept.template.md` `CODE_OF_CONDUCT.md` `CONTRIBUTING.md` `DECISION_USECASES.md` `ENVIRONMENTS.md` `INCIDENT_FORMAT.md` `KNOWLEDGE_INDEX.md` `LICENSE-FAQ.md` `MILESTONES.md` `PERSONAL_TO_OSS.md` `PHILOSOPHY.md` `QUICKSTART.md` `ROADMAP.md` `SECRETS_REFERENCE.md` `SELF_EVOLUTION.md` `SELF_EVOLVING_USECASES.md` `SERVICE_REGISTRY.md` `TASKS.md` `USAGE_TRACKER.md` `WHITEPAPER.md`
 
 ## ✓ 確認
 このルールを読んだ場合「✓ Antigravity Rules Loaded」と表示

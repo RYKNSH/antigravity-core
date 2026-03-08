@@ -339,3 +339,11 @@ ROADMAP.md / MILESTONE.md が存在する場合:
 `/spec` でSPEC.md生成完了後:
 - **L0-L1**: 「/go で実装を開始しますか？」と提案
 - **L2-L3**: 自動で `/go` を実行
+
+---
+
+## Toolchain
+
+**Scripts**: `env_loader.js`, `session_state.js`, `git_context.js`, `fuzzymatch.js`, `drg.js`, `bootstrap_drg.js`
+**Skills**: `autonomous-execution`, `code-review`
+**Knowledge**: `ai_coding_assistant_best_practices`, `antigravity_portable_dev_ecosystem`

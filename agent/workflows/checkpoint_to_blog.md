@@ -142,3 +142,10 @@ git push
 簡潔な活動報告を作成し、Discord に投稿して完了。
 Evergreen Article への昇格は次回以降で判断。
 
+---
+
+## Toolchain
+
+**Scripts**: `auth_notion.js`, `notion_poster.js`, `discord_poster.js`, `generate_social_assets.js`
+**Knowledge**: `social_knowledge`, `soloprostudio_social_knowledge_ecosystem`
+

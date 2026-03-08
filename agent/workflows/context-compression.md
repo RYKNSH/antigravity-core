@@ -122,8 +122,8 @@ echo "🧠 コンテキスト圧縮中..."
 # 1. セッション情報収集
 node $ANTIGRAVITY_DIR/agent/scripts/collect_session_data.js
 
-# 2. 重要情報抽出
-CONTEXT=$(node $ANTIGRAVITY_DIR/agent/scripts/extract_context.js)
+# 2. 重要情報抽出（インラインロジック — 独立スクリプト未実装）
+# CONTEXT=$(...) は collect_session_data.js の出力を加工して生成
 
 # 3. 圧縮データ保存
 echo "$CONTEXT" > .session_archive/$(date +%Y%m%d_%H%M%S).json
@@ -192,7 +192,8 @@ if [ $SCORE -ge 5 ]; then
       ;;
     2)
       # コンテキスト保存
-      node $ANTIGRAVITY_DIR/agent/scripts/save_blog_context.js
+      # ブログコンテキスト保存（インラインロジック — 独立スクリプト未実装）
+      # セッションアーカイブに直接保存する形式で処理
       echo "✅ 次回セッションで提案します"
       ;;
     3)
@@ -206,19 +207,23 @@ fi
 
 ## 実装ファイル
 
-### 新規作成
+### 実装済み
 
 **`agent/scripts/collect_session_data.js`**:
 - Git履歴収集
 - アーティファクト収集
 - メトリクス計算
 
-**`agent/scripts/extract_context.js`**:
+### インラインロジック（スクリプト未分離）
+
+以下のロジックは独立スクリプトとして実装されておらず、`/checkout` ワークフロー内でインラインで処理される:
+
+**コンテキスト抽出** (`extract_context` 相当):
 - 重要情報抽出
 - ブログ候補判定
 - Pending Tasks抽出
 
-**`agent/scripts/save_blog_context.js`**:
+**ブログコンテキスト保存** (`save_blog_context` 相当):
 - ブログソース保存
 - アーティファクトコピー
 - メタデータ保存
@@ -243,3 +248,10 @@ fi
 
 > [!NOTE]
 > これにより、「忘れる」ことが構造的に不可能になります。
+
+---
+
+## Toolchain
+
+**Scripts**: `collect_session_data.js`
+**Skills**: `context-compression`

@@ -143,3 +143,11 @@ pnpm build
 
 > [!CAUTION]
 > `/ship production` は必ずチームレビュー後に実行してください
+
+---
+
+## Toolchain
+
+**Scripts**: `git_guard.sh`
+**Skills**: `code-review`
+**Knowledge**: `gh_github_cli.md`

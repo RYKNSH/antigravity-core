@@ -50,3 +50,11 @@ ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 node "$ANTIGRAVITY_DIR/agent/scripts/setup.js"
 ```
 
+---
+
+## Toolchain
+
+**Scripts**: `setup.js`
+**Skills**: `homebrew-autonomous-ops`, `mcp-best-practices`, `workspace-config-audit`
+**Knowledge**: `antigravity_portable_dev_ecosystem`, `ai_coding_assistant_best_practices`, `mcp_server_directory`, `remote_mac_mini_vibe_coding`
+

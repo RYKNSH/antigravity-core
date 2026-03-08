@@ -50,7 +50,7 @@ git push origin main
 ### データ紛失時
 
 1. バックアップから`~/.antigravity/`を復元
-2. `/project-init`を実行
+2. `/setup`を実行
 3. `~/.secrets/antigravity/.env`を再設定
 
 ---

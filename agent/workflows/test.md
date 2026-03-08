@@ -35,3 +35,10 @@ pnpm test:coverage
 ```bash
 pnpm test:watch
 ```
+
+---
+
+## Toolchain
+
+**Skills**: `world-class-test-patterns`, `test-quality-engine`
+**Knowledge**: `test_evolution_patterns`

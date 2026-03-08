@@ -56,11 +56,11 @@ User: /evolve
 Agent: 
   📊 過去30日の分析結果:
   - 最も使用されたWF: /checkin (45回), /dev (32回)
-  - 未使用WF: /clone-environment, /db-migrate
+   - 未使用WF: （なし — 全WF稼働中）
   - エラー頻発: notion_poster.js (認証エラー 3回)
   
   💡 改善提案:
-  1. /clone-environment を /project-init に統合
+   1. /clone-environment を /setup に統合（実施済み）
   2. notion_poster.js に自動リトライ機能追加
   3. /dev に自動ポート検出を追加
   

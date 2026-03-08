@@ -19,7 +19,28 @@
 
 const fs = require('fs');
 const path = require('path');
-const { atomicWrite, safeReadJSON, atomicWriteJSON } = require('./file_utils');
+
+// file_utils (inline — crash-safe ファイル操作)
+function atomicWrite(filePath, content) {
+  const tmpPath = filePath + '.tmp';
+  fs.writeFileSync(tmpPath, content, 'utf8');
+  fs.renameSync(tmpPath, filePath);
+}
+
+function safeReadJSON(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(content);
+  } catch (e) {
+    return null;
+  }
+}
+
+function atomicWriteJSON(filePath, data) {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  atomicWrite(filePath, JSON.stringify(data, null, 2));
+}
 
 const ANTIGRAVITY_DIR = process.env.ANTIGRAVITY_DIR || path.join(process.env.HOME, '.antigravity');
 const STATE_FILE = path.join(ANTIGRAVITY_DIR, '.session_state.json');

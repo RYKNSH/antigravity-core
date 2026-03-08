@@ -139,3 +139,11 @@ SPEC.md 完成後、実装への遷移を自動提案:
 # L2-L3: 自動実行
 ✅ SPEC.md 完成 → /go 自動実行...
 ```
+
+---
+
+## Toolchain
+
+**Skills**: `architecture`
+**Knowledge**: `ai_coding_assistant_best_practices`
+**Related WF**: `/lp`（LP企画の場合）
