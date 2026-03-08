@@ -327,3 +327,11 @@ ${ANTIGRAVITY_DIR:-$HOME/.antigravity}/agent/
 ## 10. Evolution Log
 
 - **2026-02-01**: 初版作成。ディベート実験で効果を確認。Skeptic, Empathy Coach, Storyteller, Closer を Intern として登録。
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

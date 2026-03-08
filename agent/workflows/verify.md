@@ -15,7 +15,7 @@ description: 実装後の検証を一括実行 — Risk-Based Verify Chain + Alw
 ```
 /go Phase 4 → /verify（Risk-Based判定）
 /verify Quick → Pre-Flight + fbl quick + test-evolve scoring
-/verify Standard → + error-sweep + test-evolve quick
+/verify Standard → + Error Sweep module + test-evolve quick
 /verify Deep → + test-evolve standard + debate quick
 /verify 失敗 → /go Phase 5 セルフリペア → /debug-deep
 Auto-Escalation: 品質B未満3コミット連続 → 強制Deep
@@ -89,7 +89,7 @@ fi
 
 1. Phase 1: Pre-Flight
 2. `/fbl`（全Phase 0-7）
-3. `/error-sweep`（コードレベル不整合検出）
+3. **Module: Error Sweep** 実行（コードレベル不整合の徹底検出）
 4. `/test-evolve quick`（Phase 0+3+4+6 — カバレッジ+スコア+学習）
 5. 完了レポート
 
@@ -110,7 +110,7 @@ fi
 > 🏥 **Health Check Protocol 適用**
 
 1. Deep の全ステップ実行
-2. `/fullcheck` Tier 4-6 追加チェック（レジリエンス、レート制限、カオス、コントラクト等）
+2. **Module: Full Check** 実行（Tier 4-6 追加チェック：レジリエンス、レート制限、カオス、コントラクト等）
 3. 全30レイヤー Sweep Report
 4. Verdict: 🏆 WORLD-CLASS / 🟢 PRODUCTION-READY / 🟡 NEEDS-WORK / 🔴 BLOCKED
 
@@ -227,7 +227,28 @@ echo "🔍 Verify Chain: $SIZE (Risk Score: $RISK_SCORE — Files: $SCORE_A, Typ
 
 ---
 
+## Internal Modules
+
+### Module: Error Sweep (Standard/Deep Mode)
+テストが通るだけでなく、実装の食い違いを顕微鏡レベルで検出します。
+
+1. **Living Standards**: `.sweep_patterns.md` やグローバル標準からチェックルールを動的合成
+2. **Static Analysis**: `strict: true`, `any`, `as`, `ts-ignore`, デッドコードの検出 (未使用 import 等)
+3. **Dependency Auditor**: フロント・バック間の型契約、不要モジュールの検出
+4. **Security Sentinel**: OWASP Top 10、機密情報の漏洩チェック (\`grep_search\` 等を活用)
+
+### Module: Full Check (Full Mode)
+Tier 4〜6 の厳格な追加チェックを実行します。
+
+- **Layer 11-14 (Resilience & Concurrency)**: `fetch` の timeout 漏れ、`useEffect` cleanup 漏れ、冪等性 (`upsert`) 検証
+- **Layer 15-20 (Operations)**: レート制限ハンドリング (`429`)、タイムゾーンの安全性、N+1 クエリチェック、構造化ログ有無
+- **Layer 21-30 (World-class)**: カオスシミュレーション、エラー時フォールバック、ミューテーションテスト検証等
+
+出力結果は `🏆 WORLD-CLASS` から `🔴 BLOCKED` までの4段階で評価します。
+
+---
+
 ## Toolchain
 
-**Skills**: `code-review`, `webapp-testing`
-**Knowledge**: `high_fidelity_ux_audit_patterns`
+**Skills**: `code-review`, `webapp-testing`, `test-quality-engine`, `ux-performance-audit`
+**Knowledge**: `high_fidelity_ux_audit_patterns`, `debug_patterns`

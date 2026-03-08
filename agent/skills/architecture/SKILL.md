@@ -135,3 +135,11 @@ First Principles に基づき、表面的なパターンの適用ではなく、
 - [ ] バンドエイドになっていないか？
 - [ ] ADRに文書化したか？
 - [ ] ステークホルダーの合意を得たか？
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

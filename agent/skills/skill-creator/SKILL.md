@@ -52,3 +52,11 @@ name: skill-name
 description: 1-2文の説明（AIがこのスキルを呼ぶべきかの判断に使用）
 ---
 ```
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

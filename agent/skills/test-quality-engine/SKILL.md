@@ -212,3 +212,11 @@ Total = AD × 0.20 + MP × 0.15 + EC × 0.25 + DT × 0.15 + IS × 0.15 + SP × 0
 - プロジェクトの性質によって重み配分を調整可能
 - 6次元全てを改善しようとせず、**最もインパクトの大きい1-2次元に集中**する
 - スコアカードは `.test_evolution_patterns.md` に履歴として蓄積する
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

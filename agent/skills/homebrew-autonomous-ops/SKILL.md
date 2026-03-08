@@ -60,3 +60,11 @@ The agent uses the Homebrew MCP tools (exposed by `brew mcp-server`) to:
 
 - **Conflict Check:** Before installing, check if the package or a conflicting alternative is already installed.
 - **Sudo Avoidance:** Homebrew is designed to run without `sudo`. Never attempt to force root privileges for standard brew operations.
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

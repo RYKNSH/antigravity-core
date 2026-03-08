@@ -66,3 +66,11 @@ version: "1.0.0"
 - `js-index-maps` — 繰り返し検索にMap構築
 - `js-combine-iterations` — 複数filter/mapを1ループに
 - `js-set-map-lookups` — O(1)検索にSet/Map
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

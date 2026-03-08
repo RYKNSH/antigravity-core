@@ -44,3 +44,11 @@ source: anthropics/skills (公式)
 ❌ ありがちな配色（白背景に紫グラデーション）
 ❌ 予測可能なレイアウト＆コンポーネントパターン
 ❌ コンテキストに特化しない無個性なデザイン
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

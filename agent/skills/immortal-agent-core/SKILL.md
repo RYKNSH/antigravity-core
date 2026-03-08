@@ -96,3 +96,11 @@ public async start() {
 
 - **クラッシュテスト**: `touch .agent/debug_crash` (即座にプロセス終了 → 再起動)
 - **フリーズテスト**: `touch .agent/debug_hang` (120秒停止 → タイムアウト検知 → 再起動)
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

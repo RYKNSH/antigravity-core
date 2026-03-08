@@ -69,3 +69,11 @@ The agent uses the installed Docker MCP tools to perform these actions:
 1.  **Container Exits Immediately:** Check logs (`docker_logs`). Usually missing env var or volume permission issue.
 2.  **Connection Refused:** Check `docker_inspect` for port mappings and network assignment. Ensure host port is not colliding.
 3.  **Data Missing:** specific volume mount points. Verify host path exists.
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

@@ -196,3 +196,11 @@ with sync_playwright() as p:
 - **Accessibility は妥協しない**: Grade B (85) 以上を必須ラインとする
 - Performance の数値は初回ロードで測定。キャッシュ済みでのスコアに騙されない
 - axe-core の `critical` + `serious` は FBL の Self-Repair 対象に含める
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

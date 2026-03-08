@@ -92,3 +92,11 @@ private normalizeName(name: string): string {
 - **Action**: "Claim" the oldest created instance (stable ID).
 - **Cleanup**: Delete all *other* matching instances immediately.
 - This ensures a strict 1-to-1 mapping between Schema and Server.
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

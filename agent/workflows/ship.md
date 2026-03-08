@@ -146,8 +146,32 @@ pnpm build
 
 ---
 
+## Internal Modules
+
+### Module: Database Migration
+DBスキーマ変更の適用手順（Phase 2 で自動実行、または手動フォールバック時）
+
+- **Drizzle**: `pnpm db:push` (本番: `--accept-data-loss`)
+- **Prisma**: `pnpm prisma migrate dev` (本番: `migrate deploy`)
+- **Supabase**: `supabase db push` (本番: `--include-all`)
+
+### Module: Deployment Operations
+プロジェクトのインフラに応じたデプロイとロールバックコマンド。
+
+#### Vercel (Front-end)
+- **Deploy**: `git push origin main` または `npx vercel --prod`
+- **Rollback**: Dashboard から "Promote to Production"、または `git revert HEAD`
+
+#### Railway (Back-end)
+- **Deploy**: `git push origin main` または `railway up --environment production`
+- **Rollback**: Dashboard から対象デプロイを "Rollback"
+
+**Post-Deployment Checks**: デプロイ後はヘルスチェック (`/api/health`)、エラー率、レスポンスタイムの監視を行うこと。
+
+---
+
 ## Toolchain
 
 **Scripts**: `git_guard.sh`
-**Skills**: `code-review`
-**Knowledge**: `gh_github_cli.md`
+**Skills**: `code-review`, `docker-autonomous-ops`, `railway-autonomous-ops`, `supabase-postgres-best-practices`
+**Knowledge**: `gh_github_cli.md`, `database_management_and_deployment`

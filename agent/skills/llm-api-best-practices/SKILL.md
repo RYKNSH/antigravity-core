@@ -401,3 +401,11 @@ const safetySettings = [
 - [ ] APIキーがコードにハードコードされていない
 - [ ] 機密情報がプロンプトに含まれていない
 - [ ] レスポンスのサニタイズが行われている
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None

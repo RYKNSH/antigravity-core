@@ -48,3 +48,11 @@ with sync_playwright() as p:
 - 必ずブラウザをcloseする
 - セレクタ: `text=`, `role=`, CSS, ID
 - 動的アプリでは `networkidle` 待機必須
+
+---
+
+## Toolchain
+
+**Scripts**: None
+**Knowledge**: None
+**Related WF**: None
