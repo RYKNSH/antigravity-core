@@ -1,0 +1,46 @@
+
+services:
+  daemon-core:
+    build: .
+    container_name: daemon_core
+    restart: always
+    volumes:
+      # ~/.antigravity/ を Volume マウント — State Hydration の核心
+      - $HOME/.antigravity:/antigravity
+      # SSH キー + Host home (Mac 側操作用)
+      - $HOME:/host_home:ro
+    environment:
+      - ANTIGRAVITY_DIR=/antigravity
+      - HOST_HOME=/host_home
+      - MAC_HOST_IP=host.docker.internal
+      # Phase 6: LLM API キーは .env ファイルで管理してください
+    healthcheck:
+      # action_ttl を超えたら死んでいると判定 → Docker が自動再起動
+      test:
+        - "CMD"
+        - "node"
+        - "-e"
+        - |
+          const fs = require('fs');
+          const STATE = '/antigravity/.session_state.json';
+          if (!fs.existsSync(STATE)) process.exit(0);
+          const d = JSON.parse(fs.readFileSync(STATE, 'utf8'));
+          const cur = d.current || {};
+          if (cur.action_ttl && cur.action_updated_at) {
+            const diff = (Date.now() - new Date(cur.action_updated_at)) / 1000;
+            if (diff > cur.action_ttl) { console.error('TTL exceeded'); process.exit(1); }
+          }
+          process.exit(0);
+      interval: 15s
+      timeout: 5s
+      retries: 2
+      start_period: 10s
+    # Mac ← コンテナ の通信用
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - daemon-net
+
+networks:
+  daemon-net:
+    driver: bridge
