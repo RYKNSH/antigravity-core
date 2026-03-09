@@ -507,14 +507,43 @@ ${hint ? `## COO からのヒント\n${hint}` : ''}
   return { success: false, reason: 'budget_exhausted', loops: loopCount, llmCalls: llmCallCount };
 }
 
+// ─── Self-Reinforcing Learning ループ トリガー (Phase 7) ──────────────────────
+const LEARNING_SCRIPTS = {
+  L3: path.join(ANTIGRAVITY_DIR, 'agent/scripts/skill-upgrader.js'),
+  L4: path.join(ANTIGRAVITY_DIR, 'agent/scripts/coo-optimizer.js'),
+  L5: path.join(ANTIGRAVITY_DIR, 'agent/scripts/knowledge-distiller.js'),
+};
+
+async function triggerLearningLoops(completedCount, hasCooReports) {
+  // L3: 5タスクごとに knowledge → SKILL.md 昇格
+  if (completedCount % 5 === 0 && fs.existsSync(LEARNING_SCRIPTS.L3)) {
+    log('[Learning] L3: skill-upgrader 起動');
+    try { execSync(`node ${LEARNING_SCRIPTS.L3}`, { timeout: 30000, stdio: 'pipe' }); }
+    catch (e) { log(`[Learning] L3 failed: ${e.message}`, 'WARN'); }
+  }
+  // L5: 10タスクごとに knowledge → distilled/ 蒸留
+  if (completedCount % 10 === 0 && fs.existsSync(LEARNING_SCRIPTS.L5)) {
+    log('[Learning] L5: knowledge-distiller 起動');
+    try { execSync(`node ${LEARNING_SCRIPTS.L5}`, { timeout: 60000, stdio: 'pipe' }); }
+    catch (e) { log(`[Learning] L5 failed: ${e.message}`, 'WARN'); }
+  }
+  // L4: COOレポートがあれば COO 自己最適化
+  if (hasCooReports && fs.existsSync(LEARNING_SCRIPTS.L4)) {
+    log('[Learning] L4: coo-optimizer 起動');
+    try { execSync(`node ${LEARNING_SCRIPTS.L4}`, { timeout: 30000, stdio: 'pipe' }); }
+    catch (e) { log(`[Learning] L4 failed: ${e.message}`, 'WARN'); }
+  }
+}
+
 // ─── メインポーリングループ ────────────────────────────────────────────────────
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function mainLoop() {
-  log('🚀 Daemon Core starting... (Phase 6: Headless LLM Agent Engine)');
+  log('🚀 Daemon Core starting... (Phase 7: Self-Reinforcing Learning Loops ACTIVE)');
   log(`   STATE_FILE: ${STATE_FILE}`);
   log(`   MCP_HOST  : ${MCP_HOST}:${MCP_PORT}`);
   log(`   GEMINI    : ${GEMINI_API_KEY ? 'API key loaded' : 'NOT SET (mock mode)'}`);
+  log('   Learning  : L1(Blacklist) L2(Knowledge) L3(Skills) L4(COO) L5(Distill) ALL ACTIVE');
 
   while (true) {
     try {
@@ -555,6 +584,11 @@ async function mainLoop() {
       writeState(updatedState);
 
       log(`[Main] Task ${task.id}: ${result.success ? '✅ Done' : `❌ Failed (${result.reason})`}`);
+
+      // ─── Phase 7: Self-Reinforcing Learning ループ ─────────────────────────
+      const completedCount = updatedState.completed_tasks.length;
+      const hasCooReports = (updatedState.coo_reports || []).length > 0;
+      await triggerLearningLoops(completedCount, hasCooReports);
 
     } catch (e) {
       log(`[Main] Unexpected error: ${e.message}`, 'ERROR');
