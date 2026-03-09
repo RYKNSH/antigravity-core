@@ -64,12 +64,21 @@ function createDefaultState() {
       parent_workflow: null, // ネストされたWF呼び出し時の親
       started_at: null,
       project: null,        // e.g. "videdit", "discord-buddy"
-      project_path: null    // e.g. "${CORE_ROOT}/apps/example"
+      project_path: null,   // e.g. "${CORE_ROOT}/apps/example"
+      action: null,         // 現在実行中の具体的なアクション（The Immortal Architecture）
+      action_ttl: null,     // アクションの想定実行時間(秒)
+      action_updated_at: null, // アクション開始時刻
+      pid: null             // エージェントプロセスのPID
     },
 
     // 保留中のタスク
     pending_tasks: [
       // { task: "説明", priority: 1, status: "pending"|"in_progress"|"done"|"blocked", created_at: "..." }
+    ],
+
+    // 致命的エラーブラックリスト (The Immune System)
+    fatal_blacklist: [
+      // { action: "git fetch", reason: "D-state hang", timestamp: "..." }
     ],
 
     // セッション中の設計判断（Compaction対策）
@@ -234,9 +243,71 @@ switch (command) {
     state.current.workflow = wf;
     state.current.phase = phase;
     state.current.started_at = new Date().toISOString();
+    // ワークフロー切り替え時に現在のアクションをクリア
+    state.current.action = null;
+    state.current.action_ttl = null;
     state.metrics.workflows_executed++;
     writeState(state);
     console.log(`🔄 Workflow: ${wf} [${phase || 'start'}]`);
+    break;
+  }
+
+  case 'set-action': {
+    const action = args[0];
+    const ttl = parseInt(args[1] || '60', 10);
+    const state = readState();
+    if (!state) {
+      console.error('❌ No active session state');
+      process.exit(1);
+    }
+    state.current.action = action;
+    state.current.action_ttl = ttl;
+    state.current.action_updated_at = new Date().toISOString();
+    
+    // PIDも最新の呼び出し元PIDで上書きする（必要があれば後でThe Overseerが使う）
+    // NOTE: shellから呼び出されるのでnodeのPIDではなくPPIDを保存するべきかもしれないが
+    // ひとまず仕様として action_pid のような形で保存
+    state.current.pid = parseInt(args[2] || process.env.ANTIGRAVITY_PID || process.ppid, 10);
+    
+    writeState(state);
+    console.log(`⏱️ Action set: "${action}" (TTL: ${ttl}s, PID: ${state.current.pid})`);
+    break;
+  }
+
+  case 'clear-action': {
+    const state = readState();
+    if (!state) {
+      process.exit(1);
+    }
+    state.current.action = null;
+    state.current.action_ttl = null;
+    writeState(state);
+    console.log(`✅ Action cleared`);
+    break;
+  }
+
+  case 'add-fatal-blacklist': {
+    const action = args[0];
+    const reason = args[1] || 'Watchdog timeout / SIGKILL';
+    let state = readState();
+    if (!state) {
+      // 状態がない場合は作成（通常は死んだ後なので存在するはず）
+      console.error('⚠️ No active session state, creating one to save blacklist');
+      state = createDefaultState();
+    }
+    if (!state.fatal_blacklist) {
+      state.fatal_blacklist = [];
+    }
+    state.fatal_blacklist.push({
+      action,
+      reason,
+      timestamp: new Date().toISOString()
+    });
+    // アクションをクリア
+    state.current.action = null;
+    state.current.action_ttl = null;
+    writeState(state);
+    console.log(`💀 Fatal Action Blacklisted: "${action}" reason: ${reason}`);
     break;
   }
 
