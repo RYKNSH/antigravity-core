@@ -53,7 +53,7 @@ function writeState(state) { writeJSON(STATE_FILE, state); }
 
 // ─── Gemini API ───────────────────────────────────────────────────────────────
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 async function callGemini(prompt, systemInstruction = '') {
   if (!GEMINI_API_KEY) {
@@ -226,7 +226,15 @@ async function evaluateQualityGates(gates) {
   const results = [];
   for (const gate of gates) {
     if (gate.type === 'command') {
-      const { stdout, stderr, exitCode } = await runCommand(gate.cmd);
+      // コンテナ内で直接実行（MCP を経由しない）
+      let stdout = '', stderr = '', exitCode = 0;
+      try {
+        stdout = execSync(gate.cmd, { encoding: 'utf8', timeout: 30000 });
+      } catch (e) {
+        stdout = e.stdout || '';
+        stderr = e.stderr || e.message || '';
+        exitCode = e.status || 1;
+      }
       const passed = exitCode === 0;
       results.push({ gate, passed, stdout, stderr });
       if (passed) score += 10;
@@ -242,6 +250,7 @@ async function evaluateQualityGates(gates) {
   }
   return { score, results, allPassed: results.every(r => r.passed) };
 }
+
 
 // ─── Knowledge 書き込み (L2) ──────────────────────────────────────────────────
 async function saveToKnowledge(task, outcome, errorHistory) {
@@ -347,7 +356,15 @@ async function reactLoop(task, contract) {
   ).then(r => r.filter(Boolean));
 
   const systemInstruction = `あなたは Daemon Core — 自律的に実装を完遂する AI エンジンです。
-タスクを完了するために、ツール呼び出しを含む具体的なアクションを提案してください。
+毎回のレスポンスで必ず1つのアクションJSONを出力してください。
+
+## 行動原則（厳守）
+1. **タスクに必要なファイルパスが既にわかっている場合、read_file は不要**。直接 write_file を実行せよ。
+2. **同じファイルやパスの read_file を2回以上実行してはならない**。
+3. **ls, pwd など探索コマンドを繰り返してはならない**。1回で十分。
+4. **修正内容が明確なら最初のアクションで write_file を実行せよ**。情報収集ループは禁止。
+5. write_file 後は必ずテストコマンドを run_command で実行してパスを確認せよ。
+6. テストが全パスしたら {"action": "done", "summary": "完了"} を出力せよ。
 
 ## メタルール
 ${metaRules || '品質最優先。テストが全てパスするまでループする。'}
@@ -385,9 +402,21 @@ ${fileContexts.slice(0, 3).join('\n\n') || 'なし'}
 ${hint ? `## COO からのヒント\n${hint}` : ''}
 
 ## 指示
-次のアクションを1つ、JSON 形式で出力してください。
-テストを実行して品質ゲートが全てパスすれば {"action": "done"} を出力する。
-詰まっていれば {"action": "stuck"} を出力する。`;
+次のアクションを1つ、JSON 形式で **必ず** 出力してください。
+余計なテキストは不要。JSONブロックのみ出力すること。
+
+**重要ルール**:
+${hint ? `- COO からのヒントがある → **必ず最初に write_file を実行する**。read_file や run_command を先に実行してはいけない。` : ''}
+- ファイルを読み込むのは1回だけにすること。同じパスの read_file を2回以上実行しないこと。
+- ls や pwd などの探索コマンドを繰り返さないこと。
+- テストを実行して品質ゲートが全てパスすれば {"action": "done", "summary": "完了"} を出力する。
+- どうしても詰まった場合は {"action": "stuck", "reason": "詰まった理由"} を出力する。
+
+**出力フォーマット例**（必ずこの形式で）:
+\`\`\`json
+{"action": "write_file", "path": "e2e-demo/math.js", "content": "コード"}
+\`\`\``;
+
 
     let llmResponse;
     try {
@@ -402,17 +431,39 @@ ${hint ? `## COO からのヒント\n${hint}` : ''}
 
     log(`[ReAct] LLM response (${llmResponse.length} chars): ${llmResponse.substring(0, 200)}…`);
 
-    // ── ACT ──
-    const actionMatch = llmResponse.match(/\{[\s\S]*?"action"\s*:\s*"[^"]+[\s\S]*?\}/);
-    if (!actionMatch) {
+    // ── ACT ── JSON 抽出（3段階フォールバック）
+    let jsonStr = null;
+
+    // Strategy 1: ```json ... ``` コードブロックを抽出（Gemini の典型的出力）
+    const codeBlockMatch = llmResponse.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonStr = codeBlockMatch[1].trim();
+    }
+
+    // Strategy 2: 最後の完全な { ... } ブロック（ネストなし）
+    if (!jsonStr) {
+      const allBraces = [...llmResponse.matchAll(/\{[^{}]*\}/g)];
+      if (allBraces.length > 0) {
+        jsonStr = allBraces[allBraces.length - 1][0];
+      }
+    }
+
+    // Strategy 3: 元の正規表現（フォールバック）
+    if (!jsonStr) {
+      const m = llmResponse.match(/\{[\s\S]*?"action"\s*:\s*"[^"]+/);
+      if (m) jsonStr = m[0] + '"}'; // 最低限の閉じカッコ補完
+    }
+
+    if (!jsonStr) {
       log('[ReAct] No action JSON found in response. Retrying.', 'WARN');
       errorHistory.push({ type: 'no_action', message: llmResponse.substring(0, 200) });
       continue;
     }
 
     let action;
-    try { action = JSON.parse(actionMatch[0]); } catch (e) {
-      log(`[ReAct] JSON parse error: ${e.message}`, 'WARN');
+    try { action = JSON.parse(jsonStr); } catch (e) {
+      log(`[ReAct] JSON parse error: ${e.message} | raw: ${jsonStr.substring(0, 100)}`, 'WARN');
+      errorHistory.push({ type: 'parse_error', message: e.message });
       continue;
     }
 
@@ -456,8 +507,31 @@ ${hint ? `## COO からのヒント\n${hint}` : ''}
         errorHistory.push({ type: 'write_intercepted', message: observation });
       } else {
         observation = `Written: ${action.path}`;
+
+        // Auto Test: Quality Gate コマンドを自動実行して即時評価
+        if (gates.length > 0) {
+          await sleep(300); // ファイルシステムのフラッシュ待機
+          log('[ReAct] Auto-running quality gate after write_file...');
+          const autoEval = await evaluateQualityGates(gates);
+          if (autoEval.allPassed) {
+            log('[ReAct] ✅ All quality gates PASSED (auto-test after write). Task complete!');
+            await saveToKnowledge(task.task, autoEval, errorHistory);
+            return { success: true, loops: loopCount, llmCalls: llmCallCount };
+          } else {
+            const failedGates = autoEval.results.filter(r => !r.passed);
+            const failInfo = failedGates.map(r => {
+              const stderr = (r.stderr || '').substring(0, 300);
+              const stdout = (r.stdout || '').substring(0, 200);
+              return `[FAIL] ${r.gate.cmd}\nSTDOUT: ${stdout}\nSTDERR: ${stderr}`;
+            }).join('\n\n');
+            observation = `Written: ${action.path}\n\n[Auto Test FAILED]\n${failInfo}\n\n→ コードを修正して再度 write_file してください。`;
+            lastScore = autoEval.score;
+            watcher.record(lastScore);
+          }
+        }
       }
     }
+
 
     else if (action.action === 'run_command') {
       // Blacklist チェック
@@ -467,16 +541,36 @@ ${hint ? `## COO からのヒント\n${hint}` : ''}
       } else {
         const { stdout, stderr, exitCode } = await runCommand(action.cmd);
         observation = `Exit: ${exitCode}\nSTDOUT:\n${stdout.substring(0, 1000)}\nSTDERR:\n${stderr.substring(0, 500)}`;
+
         if (exitCode !== 0) {
           errorHistory.push({ type: 'command_error', message: `${action.cmd}: ${stderr.substring(0, 200)}` });
           updateBlacklist(stderr.substring(0, 120));
+          watcher.record(lastScore);
+        } else {
+          // exit 0 = コマンド成功 → スコア加算
+          const isQualityGateCmd = gates.some(g => g.type === 'command' && g.cmd === action.cmd);
+          const baseScore = isQualityGateCmd ? 10 : 1;
+          lastScore += baseScore;
+          watcher.record(lastScore);
+          log(`[ReAct] Command succeeded (exit 0). Score: ${lastScore}`);
+
+          // Quality Gate コマンドが成功した場合 → 自動で全体評価して done 遷移
+          if (isQualityGateCmd || stdout.includes('✅') || stdout.toLowerCase().includes('all tests passed')) {
+            log('[ReAct] Test success detected — auto-evaluating quality gates...');
+            const autoEval = await evaluateQualityGates(gates);
+            if (autoEval.allPassed) {
+              log('[ReAct] ✅ All quality gates PASSED (auto-detected). Task complete!');
+              await saveToKnowledge(task.task, autoEval, errorHistory);
+              return { success: true, loops: loopCount, llmCalls: llmCallCount };
+            } else {
+              observation += `\n\n[Quality Gate 部分PASS: ${autoEval.score}点] 残り: ${autoEval.results.filter(r => !r.passed).map(r => r.gate.cmd).join(', ')}`;
+              lastScore = autoEval.score;
+            }
+          }
         }
-        // スコア更新（テスト通過数をスコアとして使う簡易実装）
-        const passCount = (stdout.match(/passing/i) || [])[0] ? parseInt(stdout.match(/(\d+) passing/i)?.[1] || '0') : 0;
-        if (passCount > lastScore) lastScore = passCount;
-        watcher.record(lastScore);
       }
     }
+
 
     // ── Stagnation Watcher ──
     if (watcher.isStagnant()) {
