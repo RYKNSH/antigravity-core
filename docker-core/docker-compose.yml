@@ -9,11 +9,12 @@ services:
       - $HOME/.antigravity:/antigravity
       # SSH キー + Host home (Mac 側操作用)
       - $HOME:/host_home:ro
+    env_file:
+      - .env
     environment:
       - ANTIGRAVITY_DIR=/antigravity
       - HOST_HOME=/host_home
       - MAC_HOST_IP=host.docker.internal
-      # Phase 6: LLM API キーは .env ファイルで管理してください
     healthcheck:
       # action_ttl を超えたら死んでいると判定 → Docker が自動再起動
       test:
