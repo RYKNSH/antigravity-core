@@ -136,6 +136,23 @@ async function callGemini(prompt, systemInstruction = '') {
       const parsed = JSON.parse(response);
       const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) throw new Error('Empty response from Gemini API');
+      // ── cost_tracker: usageMetadata 計測 ──
+      const usage = parsed?.usageMetadata;
+      if (usage) {
+        try {
+          const total = (usage.promptTokenCount || 0) + (usage.candidatesTokenCount || 0);
+          // Gemini 2.5 Flash: input $0.075/1M tokens, output $0.30/1M tokens
+          const costUsd = ((usage.promptTokenCount || 0) * 0.075 + (usage.candidatesTokenCount || 0) * 0.30) / 1_000_000;
+          const tracker = fs.existsSync(COST_TRACKER_FILE)
+            ? JSON.parse(fs.readFileSync(COST_TRACKER_FILE, 'utf8'))
+            : { total_cost_usd: 0, total_tokens: 0, total_calls: 0 };
+          tracker.total_cost_usd = (tracker.total_cost_usd || 0) + costUsd;
+          tracker.total_tokens = (tracker.total_tokens || 0) + total;
+          tracker.total_calls = (tracker.total_calls || 0) + 1;
+          tracker.last_updated = new Date().toISOString();
+          fs.writeFileSync(COST_TRACKER_FILE, JSON.stringify(tracker, null, 2));
+        } catch { /* cost tracking failure must not block main flow */ }
+      }
       return text;
     } catch (e) {
       log(`Gemini API attempt ${attempt}/${MAX_RETRIES} failed: ${e.message}`, 'WARN');
@@ -283,6 +300,8 @@ const GIT_WRITE_PATTERNS = [
   /\bgit\s+force-push\b/,
   /--force\b.*git\b/,
   /\brm\s+-rf\s+\/\b/, // ルートレベル強制削除も禁止
+  /\brm\s+(-rf?|-fr?)\s+.*\/antigravity\b/, // /antigravity/ディレクトリ削除禁止
+  /\bchmod\s+(777|a\+[rwx])/, // 世界書き許可禁止
   // P1: /host_homeのセキュリティ保護 —— Macホームディレクトリフルアクセスをブロック
   /\bcat\s+\/host_home\/.ssh\b/,
   /\bcp\s+.*\/host_home\/.ssh\b/,
