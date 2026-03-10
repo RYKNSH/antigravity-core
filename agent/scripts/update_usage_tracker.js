@@ -76,8 +76,16 @@ async function main() {
         try {
             await fs.access(TRACKER_FILE);
         } catch {
-            console.error(`❌ USAGE_TRACKER.md not found at ${TRACKER_FILE}`);
-            process.exit(1);
+            // USAGE_TRACKER.md が存在しない場合は自動作成して続行
+            console.warn(`⚠️ USAGE_TRACKER.md not found — 自動作成します: ${TRACKER_FILE}`);
+            const initContent = `# USAGE_TRACKER — Workflow Usage Counts\n\n| Workflow | Count | Last Used |\n|----------|-------|-----------|\n`;
+            try {
+                await fs.writeFile(TRACKER_FILE, initContent);
+                console.log(`✅ USAGE_TRACKER.md を初期化しました`);
+            } catch (createErr) {
+                console.error(`❌ USAGE_TRACKER.md 作成失敗: ${createErr.message}`);
+                process.exit(0); // 作成失敗でも後続を止めない
+            }
         }
 
         lockAcquired = await acquireLock();

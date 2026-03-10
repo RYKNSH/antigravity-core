@@ -262,10 +262,36 @@ function updateBlacklist(errorMsg) {
   writeJSON(BLACKLIST_FILE, bl);
 }
 
+// ─── Architectural Rule: Daemon Coreがgit操作(push/commit/merge等)を実行してはいない ──
+// Reference: daemon-delegate.md / WORKFLOW_CONTRACTS.md
+// Git操作はAntigravity Core(人間側AIエージェント)の専権事項。
+// DaemonはファイルI/O・テスト・ローカルビルドのみ担当。
+const GIT_WRITE_PATTERNS = [
+  /\bgit\s+push\b/,
+  /\bgit\s+commit\b/,
+  /\bgit\s+merge\b/,
+  /\bgit\s+rebase\b/,
+  /\bgit\s+tag\b/,
+  /\bgit\s+reset\b/,
+  /\bgit\s+revert\b/,
+  /\bgit\s+cherry-pick\b/,
+  /\bgit\s+force-push\b/,
+  /--force\b.*git\b/,
+  /\brm\s+-rf\s+\/\b/, // ルートレベル強制削除も禁止
+];
+
+function isGitWriteBlocked(cmd) {
+  if (!cmd) return false;
+  return GIT_WRITE_PATTERNS.some(re => re.test(cmd));
+}
+
 function isBlacklisted(cmd) {
+  // Architectural Hard Block — blacklistより優先
+  if (isGitWriteBlocked(cmd)) return true;
   const { patterns } = loadBlacklist();
   return patterns.some(p => cmd.includes(p.pattern));
 }
+
 
 // ─── Quality Gate 評価 ────────────────────────────────────────────────────────
 async function evaluateQualityGates(gates) {
