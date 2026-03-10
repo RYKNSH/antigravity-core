@@ -50,9 +50,9 @@ function getKnowledgeMetrics() {
 // ─── 蒸留対象判定 ────────────────────────────────────────────────────────────
 function shouldDistill(metrics) {
   if (FORCE) return true;
-  const log = loadDistillLog();
+  const distillLog = loadDistillLog();
   const completedTasks = readStateTaskCount();
-  const lastDistilledAt = log.last_distilled_at ? new Date(log.last_distilled_at) : new Date(0);
+  const lastDistilledAt = distillLog.last_distilled_at ? new Date(distillLog.last_distilled_at) : new Date(0);
   const hoursSince = (Date.now() - lastDistilledAt) / 3600000;
 
   if (metrics.totalSizeKB >= SIZE_THRESHOLD) {

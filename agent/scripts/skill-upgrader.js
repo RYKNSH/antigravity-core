@@ -102,12 +102,12 @@ function upgradeSkill(domain, patterns) {
     existing = fs.readFileSync(skillFile, 'utf8');
   }
 
-  const log = loadUpgradeLog();
+  const upgLog = loadUpgradeLog();
   const newRules = [];
 
   for (const p of patterns) {
     const ruleId = `rule_${Buffer.from(p.pattern).toString('base64').substring(0, 12)}`;
-    if (log.promoted_rules?.includes(ruleId)) continue; // 既に昇格済み
+    if (upgLog.promoted_rules?.includes(ruleId)) continue; // 既に昇格済
     if (existing.includes(p.pattern.substring(0, 40))) continue; // 重複チェック
 
     const ruleText = p.type === 'success'
@@ -129,12 +129,12 @@ function upgradeSkill(domain, patterns) {
     fs.writeFileSync(skillFile, appended);
 
     // ログ更新
-    const upgLog = loadUpgradeLog();
-    if (!upgLog.promoted_rules) upgLog.promoted_rules = [];
-    for (const r of newRules) upgLog.promoted_rules.push(r.ruleId);
-    upgLog.last_upgraded = new Date().toISOString();
-    upgLog.total_rules = (upgLog.total_rules || 0) + newRules.length;
-    saveUpgradeLog(upgLog);
+    const newUpgLog = loadUpgradeLog();
+    if (!newUpgLog.promoted_rules) newUpgLog.promoted_rules = [];
+    for (const r of newRules) newUpgLog.promoted_rules.push(r.ruleId);
+    newUpgLog.last_upgraded = new Date().toISOString();
+    newUpgLog.total_rules = (newUpgLog.total_rules || 0) + newRules.length;
+    saveUpgradeLog(newUpgLog);
   }
 
   log(`[${domain}] ${newRules.length} 件のルールを昇格${DRY_RUN ? ' (dry-run)' : ''}`);
