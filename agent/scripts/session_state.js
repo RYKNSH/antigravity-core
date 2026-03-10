@@ -233,6 +233,7 @@ switch (command) {
     }
     // 前のWFを履歴に追加
     if (state.current.workflow) {
+      state.history = state.history || [];
       state.history.push({
         workflow: state.current.workflow,
         phase: state.current.phase,
@@ -381,6 +382,7 @@ switch (command) {
     // 完了マーク
     state.current.workflow = null;
     state.current.phase = 'session_complete';
+    state.history = state.history || [];
     state.history.push({
       workflow: '/checkout',
       phase: 'complete',
