@@ -149,3 +149,61 @@ graph LR
 | 7.1.6 | **L5 Knowledge Distillation Loop**: `knowledge/` 蒸留エンジン実装（重複検出→圧縮→`knowledge/distilled/` 保存→`archived/` 退避） | 大 | 7.1.2 |
 | 7.1.7 | **Knowledge Pruning**: 重要度低ナレッジの自動アーカイブ化（ノイズ制御） | 小 | 7.1.6 |
 | 7.1.8 | E2Eテスト: 同じエラーが2回目に回避 / `distilled/` に原則保存 / SKILL引き継ぎを全層確認 | 大 | 7.1.5, 7.1.7 |
+
+---
+
+## MS 8.1: COO-Lite + TEO + QES基盤（Phase A — 今週実装可能）
+
+**完了条件**: StagnationをCOO-Liteが自律回復を試み、全タスクのスコアが4軸でTEOに記録される
+
+```mermaid
+graph LR
+  A[bootstrap-goals.js] --> B[TEOスキーマ定義]
+  B --> C[4軸スコア計測]
+  C --> D[COO-Lite実装]
+  D --> E[COO-Lite E2Eテスト]
+  E --> F[MS8.1完了]
+```
+
+| # | タスク | 工数 | 依存 |
+|---|--------|------|------|
+| 8.1.1 | `bootstrap-goals.js` 実装（現状コードベースから初期目標値を自動測定） | 小 | — |
+| 8.1.2 | TEOスキーマ定義（`.quality/teo_schema.json`）+ proper-lockfile導入 | 小 | 8.1.1 |
+| 8.1.3 | 4軸スコア計測（quality: テスト合格率 / efficiency: LLMコスト / speed: Lighthouse / lightness: bundle KB）をDaemon実行後に自動記録 | 中 | 8.1.2 |
+| 8.1.4 | COO-Lite実装（stagnation時にCOO_MODEL上位切り替え + DECISION_USECASES.md注入）| 中 | 8.1.3 |
+| 8.1.5 | COO rate limit実装（max 3回/タスク、クールダウン30分、stagnation 10回でSuspend）| 小 | 8.1.4 |
+| 8.1.6 | Environment Check実装（コンテナ内で可能な範囲: volume/env/API疎通確認）| 小 | 8.1.4 |
+| 8.1.7 | QES重みファイル初期化（`qes_weights_global.json`: テスト=公理アンカー、他はデフォルト値）| 小 | 8.1.3 |
+| 8.1.8 | E2E: StagnationでCOO-Liteが呼ばれ、TEOに4軸スコアが記録されることを確認 | 中 | 8.1.5, 8.1.6, 8.1.7 |
+
+---
+
+## MS 8.2: E/S/L Loops + Priority Arbiter + QES帰納更新
+
+**完了条件**: 4軸の改善提案が競合時にQESで自律調停され、重みが実データから帰納更新される
+
+| # | タスク | 工数 | 依存 |
+|---|--------|------|------|
+| 8.2.1 | E-Loop実装（LLMコスト/タスク・コード複雑度のトレンド追跡と改善提案）| 中 | MS8.1完了 |
+| 8.2.2 | S-Loop実装（Lighthouse・API p95をworker_threadsで非同期計測）| 中 | MS8.1完了 |
+| 8.2.3 | L-Loop実装（bundle KB・メモリをworker_threadsで非同期計測）| 中 | MS8.1完了 |
+| 8.2.4 | QES予測フィルタ実装（各Loop提案前にルールベースでestimateQES、risk_level 4ルールテーブル）| 中 | 8.2.1〜8.2.3 |
+| 8.2.5 | Priority Arbiter実装（QES換算スコアで競合調停、採択結果をTEOに記録）| 中 | 8.2.4 |
+| 8.2.6 | QES重み帰納更新バッチ実装（軸スコア変化の最小二乗法、週次実行）| 大 | 8.2.5 |
+| 8.2.7 | 2層QES重みスコープ実装（グローバル中央値 + プロジェクト固有ブレンド）| 小 | 8.2.6 |
+| 8.2.8 | E2E: 競合提案がQESで調停され、重みが更新されることを10タスク後に確認 | 大 | 8.2.7 |
+
+---
+
+## MS 8.3: COO Container + Quality Guardian + Sensor Layer（Trinity完成）
+
+**完了条件**: CEOがIDEを閉じた状態でTrinity（CEO→COO Container→Daemon）が完全自律運転する
+
+| # | タスク | 工数 | 依存 |
+|---|--------|------|------|
+| 8.3.1 | coo-loop.js実装（.coo_reports.jsonポーリング + Gemini Pro判断 + hint書き戻し）| 大 | MS8.2完了 |
+| 8.3.2 | COO独立Dockerコンテナ化（coo-docker/: Dockerfile + compose）| 中 | 8.3.1 |
+| 8.3.3 | Quality Guardianの閾値自己更新実装（クランプ±5点/週 + Saturation Mode）| 大 | MS8.2完了 |
+| 8.3.4 | Sensor Layer実装（Signal Type 1〜3: CEO直接 / QES精度フィードバック / 内部トレンド）| 大 | 8.3.3 |
+| 8.3.5 | 3層サーキットブレーカー実装（急性 / 慢性 / カタストロフィック）| 中 | 8.3.2, 8.3.3 |
+| 8.3.6 | E2E Trinity完全自律テスト: IDE閉鎖状態でStagnation→COO Container介入→回復を確認 | 大 | 8.3.1〜8.3.5 |

@@ -136,3 +136,77 @@
 - **内容**: ① 同じエラーが2回目に回避される ② `distilled/` に蒸留原則が保存される ③ SKILLが次セッションに引き継がれる の3点を連続テストで確認
 - **依存**: 7.1.5, 7.1.7
 - **完了チェック**: 3点全て自動テストが PASS する
+
+---
+
+## Phase 8: Four-Loop Quality Governance タスク一覧
+
+> **Phase A（今週着手可能）: MS 8.1 — COO-Lite + TEO + QES基盤**
+
+### タスク 8.1.1: bootstrap-goals.js 実装
+- **工数**: 小 | **担当**: `~/.antigravity/agent/scripts/bootstrap-goals.js`（新規）
+- **内容**: 現状コードベースを計測して初期品質目標値を自動設定する
+  - テスト合格率を npm test から取得
+  - Lighthouse スコアを初回計測
+  - bundle KB を計測
+  - 取得値 × 0.9 or ABSOLUTE_FLOORS の大きい方を初期閾値として保存
+- **完了チェック**: `.quality/goals.json` が生成されており、現在値より低い目標値が設定されていない
+
+### タスク 8.1.2: TEOスキーマ + proper-lockfile導入
+- **工数**: 小 | **担当**: `docker-core/`
+- **内容**: `.quality/teo_{task_id}.json` スキーマ定義 + proper-lockfile パッケージを追加
+- **TEOスキーマ**:
+  ```json
+  {
+    "task_id": "",
+    "completed_at": "",
+    "scores": { "quality": 0, "efficiency": 0, "speed": 0, "lightness": 0 },
+    "qes_delta": 0,
+    "stagnation_count": 0,
+    "coo_calls": 0,
+    "worker_measurements": {}
+  }
+  ```
+- **完了チェック**: タスク完了後に .quality/ にTEOファイルが生成される
+
+### タスク 8.1.3: 4軸スコア計測の実装
+- **工数**: 中 | **担当**: `docker-core/quality-scorer.js`（新規）
+- **内容**: 各軸の計測実装
+  - quality: `npm test` の pass rate
+  - efficiency: Daemon ログから LLM コール数 × 単価
+  - speed: Lighthouse CI（10タスクごと、worker_threadsで非同期）
+  - lightness: bundle-analyzer で KB 計測（worker_threadsで非同期）
+- **完了チェック**: TEO の scores が全て 0 以外で記録される
+
+### タスク 8.1.4: COO-Lite 実装
+- **工数**: 中 | **担当**: `docker-core/coo-lite.js`（新規）
+- **内容**:
+  - Stagnation検知（同一タスクでN回連続エラー）をhookポイントとして定義
+  - Environment Check先行実行（volume / env / API疎通）
+  - 環境正常 → `process.env.COO_MODEL` の上位モデルで DECISION_USECASES.md を systemInstruction に注入して分析
+  - COO-Lite LLM Adapter（`ANTIGRAVITY_DIR` 環境変数でパス解決）
+- **完了チェック**: Stagnation時に上位モデルが呼ばれ、hintがTEOに記録される
+
+### タスク 8.1.5: COO rate limit 実装
+- **工数**: 小 | **担当**: `docker-core/coo-lite.js`
+- **内容**: max_coo_calls_per_task=3、クールダウン30分、stagnation 10回でSuspend＋CEOへ通知
+- **完了チェック**: 4回目以降のCOO呼び出しが抑制される
+
+### タスク 8.1.6: Environment Check 実装
+- **工数**: 小 | **担当**: `docker-core/environment-check.js`（新規）
+- **内容**: コンテナ内で実行可能な4チェック
+  - volume_mount: ANTIGRAVITY_DIR/docs/DECISION_USECASES.md の存在確認
+  - env_variables: GEMINI_API_KEY, ANTIGRAVITY_DIR の存在確認
+  - file_permissions: ANTIGRAVITY_DIR への書き込み権限確認
+  - api_reachability: Gemini API エンドポイントへの疎通確認
+- **完了チェック**: 環境問題がある場合に COO を呼ばずに issue 報告する
+
+### タスク 8.1.7: QES 初期化ファイル作成
+- **工数**: 小 | **担当**: `~/.antigravity/quality/qes_weights_global.json`（新規）
+- **内容**: アンカー値（test_added=2.0, test_deleted=-10.0）と帰納更新対象のデフォルト値を設定
+- **完了チェック**: `.quality/qes_weights_global.json` が存在し、Daemon が読み込める
+
+### タスク 8.1.8: E2E テスト（Phase A 完了ゲート）
+- **工数**: 中 | **依存**: 8.1.1〜8.1.7
+- **内容**: Stagnation → Environment Check → COO-Lite → hint記録 → TEO 4軸スコア確認 の一連の流れをテスト
+- **完了チェック**: 全ステップが自動で通過し、TEO に stagnation_count, coo_calls, scores が記録される

@@ -344,3 +344,100 @@ L1〜L4 で蓄積された生知識をそのまま溜め込み続けると、コ
 1. **可逆性 (Reversibility)**: 蒸留前の生データは `knowledge/archived/` に保管。圧縮した原則が間違いだった場合に巻き戻せる
 2. **実証ベース (Evidence-Backed)**: 少なくとも5件の独立した事例に支持された場合のみ「濃縮原則」に昇格
 3. **定期実行 (Scheduled)**: タスク完了N件ごと、または `knowledge/` が一定サイズを超えた時に自動トリガー
+
+---
+
+## 12. Four-Loop Quality Governance — 自律品質強化学習閉ループ
+
+> **追記日**: 2026-03-10
+> **ディベート**: /debate deep × 4サイクル（28欠陥解消、収束条件達成）
+> **起点**: 「人間+IDEがボトルネック」という課題から設計した完全自律品質システム
+
+### 12.1 問題の定義
+
+MS 5.1〜7.1 で「実装・学習ループ」は閉じた。しかし**品質の評価軸が単一（npm test pass/fail）**であり、「最高品質・最高効率・最高速・最軽量」という4次元での自律的な洗練が存在しなかった。また品質判断に人間（COO）の介在が必要で、IDEを閉じるとシステムが止まる問題も残っていた。
+
+### 12.2 四層品質管理アーキテクチャ
+
+```
+CEO（理念・予算・blacklist初期値の宣言のみ）
+  ↓ Smart Contract定義（1回）
+COO-Lite [Phase A: 即実装可能]
+  └ Stagnation時のタスクレベル即時思考支援（最大3回）
+  └ 超えた場合 → COO Containerへエスカレーション
+COO Container [Phase B: MS 8.1にて実装]
+  └ プロジェクトレベルの戦略対応・非同期監督
+Daemon Core（不眠不休の実装ループ）
+  └ タスク実行 → TEO生成（Task Evaluation Object）
+Quality Guardian
+  └ 4軸ゲート評価（quality / efficiency / speed / lightness）
+  └ 閾値: クランプ±5点/週で発振防止
+  └ Saturation Mode → ROI最大化モードへ移行
+E-Loop / S-Loop / L-Loop（逐次実行、重い計測はworker_threads非同期）
+  └ 提案前にQES予測フィルタ（ルールベース、LLMコストゼロ）
+Priority Arbiter（QES換算スコアで競合調停）
+Sensor Layer（4シグナル型で閾値・重みを自己更新）
+```
+
+### 12.3 QES（Quality Equivalent Score）
+
+全ての品質・効率・速度・軽量の改善を単一スケールに換算する基準。
+
+```json
+{
+  "anchors": {
+    "test_added":  2.0,    // 公理（固定アンカー）
+    "test_deleted": -10.0  // 公理（固定ペナルティ）
+  },
+  "learned_weights": {
+    "lightness_kb":    -0.1,  // 実績データから帰納更新
+    "speed_latency_ms": -0.08,
+    "efficiency_cost":  -300
+  },
+  "_mode": "cold_start",  // cold_start → warm → calibrated
+  "_cold_start_until": 20
+}
+```
+
+**重みの学習**: 各タスク後の軸スコア変化（4次元ベクトル）とQES全体変化の相関を最小二乗法で帰納的に校正。LLM呼び出しなし。
+
+**2層スコープ**: グローバル（全プロジェクト中央値）+ プロジェクト固有（タスク数に応じてブレンド比率が変化）。
+
+### 12.4 競合調停プロトコル
+
+E-Loop・S-Loop・L-LoopがQES競合した場合、Priority Arbiterが採択・棄却を決定する。
+
+```
+採択条件: ΣΔ QES > 0
+  例: bundle+50KB(-5) + latency-80ms(+6.4) = net +1.4 → 採択
+  例: bundle+50KB(-5) + latency-30ms(+2.4) = net -2.6 → 棄却
+```
+
+### 12.5 COO-Lite実装（Phase A）
+
+**役割**: Stagnationのタスクレベル即時対応（思考支援のみ）
+**制約**: タスクあたり最大3回、クールダウン30分
+**コンテキスト**: DECISION_USECASES.md をsystemInstructionに注入
+**前処理**: Environment Check（コンテナ内で可能な範囲）を先行実行
+**モデル**: 環境変数 `COO_MODEL` で切り替え可能（LLM抽象化）
+
+### 12.6 サーキットブレーカー
+
+| Layer | 検知条件 | 対処 |
+|-------|---------|------|
+| 急性 | TEO破損 / 閾値異常 / COO暴走 | 自動ロールバック + COO通知 |
+| 慢性 | QESスコア週次単調減少 | CEOレポート + L5蒸留トリガー |
+| カタストロフィック | APIキー無効 / 月次予算超過 | 強制停止 + CEO介入要求 |
+
+### 12.7 「永遠の洗練」の定義
+
+**誤**: スコアを永遠に上げ続ける（物理的に不可能）
+**正**: 改善余地がある限り自律的に発見・実施し、改善余地がなくなったらCEOに判断を戻す
+
+飽和状態（MAX_THRESHOLD到達）ではSaturation Mode（ROI最大化）に移行。ROIがゼロ収束した時点で「このプロジェクトは技術的に成熟しました。次の改善はビジネス判断が必要です」とCEOへ報告する。
+
+### 12.8 インフラ制約（明示的境界）
+
+- Macの電源が切れるとシステム全体が停止する（現フェーズの意図的制約）
+- Mac起動後30秒以内に自動回復を保証（restart: always + launchd）
+- proper-lockfileのDocker Mac動作は要検証フラグ付き仮説として実装時に確認する
