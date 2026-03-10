@@ -61,6 +61,8 @@ const SELF_TASK_FAIL_FILE  = path.join(ANTIGRAVITY_DIR, '.self_task_failures.jso
 // Outbox Pattern: タスク実行中の証拠ファイル置き場
 const OUTBOX_DIR = path.join(ANTIGRAVITY_DIR, 'outbox');
 if (!fs.existsSync(OUTBOX_DIR)) fs.mkdirSync(OUTBOX_DIR, { recursive: true });
+// P1: coo_reportsをstate.jsonから分離 —— Core(AIエージェント)が競合なく読めるように
+const COO_REPORTS_FILE = path.join(ANTIGRAVITY_DIR, '.coo_reports.json');
 
 // ─── パス解決 —— Volume マウント経由でMacのファイルにアクセス ────────────────────
 /**
@@ -281,6 +283,10 @@ const GIT_WRITE_PATTERNS = [
   /\bgit\s+force-push\b/,
   /--force\b.*git\b/,
   /\brm\s+-rf\s+\/\b/, // ルートレベル強制削除も禁止
+  // P1: /host_homeのセキュリティ保護 —— Macホームディレクトリフルアクセスをブロック
+  /\bcat\s+\/host_home\/.ssh\b/,
+  /\bcp\s+.*\/host_home\/.ssh\b/,
+  /\bcurl\b.*\/host_home/,
 ];
 
 function isGitWriteBlocked(cmd) {
@@ -977,12 +983,13 @@ function getNextTask(pendingTasks) {
 
 // ─── メインポーリングループ (Phase 9) ─────────────────────────────────────────
 async function mainLoop() {
-  log('🚀 Daemon Core starting... (Phase 9: Critical Fix + Playwright統合)');
+  log('🚀 Daemon Core starting... (Phase 10: Architecture Clean + coo CLI + Outbox Pattern)');
   log(`   ANTIGRAVITY_DIR : ${ANTIGRAVITY_DIR}`);
   log(`   HOST_HOME       : ${HOST_HOME}`);
   log(`   GEMINI          : ${GEMINI_API_KEY ? 'API key loaded' : 'NOT SET (mock mode)'}`);
   log(`   Playwright      : ${PLAYWRIGHT_AVAILABLE ? '✅ Available' : '⚠️ Not installed (curl fallback)'}`);
-  log('   Q1(Priority Queue) Q2(Cost Guard) Q3(Runaway) Q4(BrowserQA/Playwright) Q5(Vision) F2(Ghost) F3(Rotate)');
+  log('   Q1(Priority Queue) Q2(Cost Guard) Q3(Runaway) Q4(BrowserQA) Q5(Vision) Outbox(Ghost廃止) F3(Rotate) F4(Blacklist)');
+  log(`   git push/commit: [HARD BLOCKED] | /host_home sensitive paths: [BLOCKED]`);
 
   // 月次コスト状態を表示
   const initCost = loadCostTracker();

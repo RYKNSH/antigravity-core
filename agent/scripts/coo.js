@@ -138,12 +138,22 @@ function cmdStatus() {
 
   console.log(`\n${bold('Queue')}: ${yellow(pending.length + '件 pending')} | ${cyan(inprogress.length + '件 in_progress')} | ${green(doneCount + '件 done')} | ${red(failCount + '件 failed')}`);
 
-  // CoO reports
-  const reports = (state.coo_reports || []);
+  // CoO reports (.coo_reports.json 優先 / state.coo_reports フォールバック)
+  let reports = [];
+  try {
+    const cooFile = path.join(ANTIGRAVITY_DIR, '.coo_reports.json');
+    if (fs.existsSync(cooFile)) {
+      reports = JSON.parse(fs.readFileSync(cooFile, 'utf8'));
+    } else {
+      reports = state.coo_reports || [];
+    }
+  } catch { reports = state.coo_reports || []; }
   if (reports.length > 0) {
     console.log(`\n${bold(red('CoO Reports'))} (${reports.length}件):`);
     reports.slice(-3).forEach(r => {
-      console.log(`  ${red('!')} [${new Date(r.at || r.timestamp).toLocaleTimeString('ja-JP')}] ${r.reason || r.type}: ${gray((r.taskId || '').substring(0, 30))}`);
+      const ts = r.suspended_at || r.at || r.timestamp;
+      const timeStr = ts ? new Date(ts).toLocaleTimeString('ja-JP') : '?';
+      console.log(`  ${red('!')} [${timeStr}] ${r.reason || r.type}: ${gray((r.taskId || '').substring(0, 30))}`);
     });
   }
 
