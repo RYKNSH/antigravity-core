@@ -4,6 +4,7 @@ services:
     build: .
     container_name: daemon_core
     restart: always
+    tty: true
     volumes:
       # ~/.antigravity/ を Volume マウント — State Hydration の核心
       - $HOME/.antigravity:/antigravity
@@ -15,6 +16,7 @@ services:
       - ANTIGRAVITY_DIR=/antigravity
       - HOST_HOME=/host_home
       - MAC_HOST_IP=host.docker.internal
+      - NODE_ENV=production
     healthcheck:
       # action_ttl を超えたら死んでいると判定 → Docker が自動再起動
       test:

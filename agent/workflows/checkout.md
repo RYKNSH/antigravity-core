@@ -168,6 +168,20 @@ if [ -f "$DISCORD_HOOK" ]; then
   echo "📦 Discord session archived"
 fi
 
+# ─── 7. Task Bridge: 未完了タスクをDaemon Coreへ引き渡し ────
+TASK_BRIDGE="$ANTIGRAVITY_DIR/agent/scripts/task-bridge.js"
+if [ -f "$TASK_BRIDGE" ] && command -v docker >/dev/null && \
+   docker ps --filter "name=daemon_core" --filter "status=running" | grep -q daemon_core; then
+  echo "🌉 Task Bridge: 未完了タスクをDaemon Coreへ投入中..."
+  # プロジェクトのTASKS.mdがあれば合わせて投入
+  PROJECT_TASKS=""
+  [ -f "./TASKS.md" ] && PROJECT_TASKS="./TASKS.md"
+  ( timeout 10 node "$TASK_BRIDGE" "$ANTIGRAVITY_DIR/docs/TASKS.md" "$PROJECT_TASKS" 2>/dev/null ) || \
+    echo "⚠️ Task Bridge: タイムアウトまたはエラー（続行）"
+else
+  echo "⏩ Task Bridge: スキップ（Daemon Core未稼働 or bridge未作成）"
+fi
+
 echo "✅ Checkout complete!" && df -h . | tail -1
 ```
 
