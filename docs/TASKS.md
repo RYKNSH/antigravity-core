@@ -49,8 +49,9 @@
 
 ---
 
-## ⬜ MS 6.1: Headless LLM Agent Engine + Safety Mechanisms
-*(MS 5.1完了後に着手)*
+## ✅ MS 6.1: Headless LLM Agent Engine + Safety Mechanisms（2026-03-10 完了）
+
+> **完了実績**: agent-loop.js Phase 9実装済み。E2Eデモ完走（7/7 PASS）を確認（NEXT_SESSION.md参照）
 
 ### タスク 6.1.1: Gemini API クライアント組み込み
 - **工数**: 中 | **担当**: `docker-core/agent-loop.js`
@@ -95,8 +96,9 @@
 
 ---
 
-## ⬜ MS 7.1: Self-Reinforcing Learning Loops — L1〜L5 複利閉ループ
-*(MS 6.1完了後に着手)*
+## ✅ MS 7.1: Self-Reinforcing Learning Loops — L1〜L5 複利閉ループ（2026-03-10 完了）
+
+> **完了実績**: L1〜L5 全層実装済み。E2E 22/22 PASS（NEXT_SESSION.md参照）
 
 ### タスク 7.1.1: L1 免疫系 — 反復エラー自動 blacklist 追記
 - **工数**: 中 | **担当**: `docker-core/agent-loop.js`
