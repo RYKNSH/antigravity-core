@@ -10,6 +10,8 @@ services:
       - $HOME/.antigravity:/antigravity
       # SSH キー + Host home (Mac 側操作用)
       - $HOME:/host_home:ro
+      # agent-loop.js をホストから直接マウント — コンテナ再ビルド不要でPhase更新
+      - $HOME/.antigravity/docker-core/agent-loop.js:/app/agent-loop.js:ro
     env_file:
       - .env
     environment:
