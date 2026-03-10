@@ -496,7 +496,7 @@ ${hint ? `## ヒント（最優先で従え）\n${hint}` : ''}
 
     log(`[ReAct] Response (${llmResponse.length} chars): ${llmResponse.substring(0, 150)}…`);
 
-    // ── ACT ── JSON抽出（3段階フォールバック）
+    // ── ACT ── JSON抽出（4段階フォールバック + 制御文字 sanitize）
     let jsonStr = null;
     const codeBlockMatch = llmResponse.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (codeBlockMatch) jsonStr = codeBlockMatch[1].trim();
@@ -518,10 +518,50 @@ ${hint ? `## ヒント（最優先で従え）\n${hint}` : ''}
     }
 
     let action;
-    try { action = JSON.parse(jsonStr); } catch (e) {
-      log(`[ReAct] JSON parse error: ${e.message}`, 'WARN');
-      errorHistory.push({ type: 'parse_error', message: e.message });
-      continue;
+    // ── write_file の content に制御文字が含まれる場合の特別処理 ──
+    // JSON.parse が失敗する主因: LLMが content フィールドに生の改行/タブを含むため
+    // 戦略1: content フィールドを分離して parse する
+    function extractWriteFileAction(raw) {
+      const actionMatch = raw.match(/"action"\s*:\s*"write_file"/);
+      if (!actionMatch) return null;
+      const pathMatch = raw.match(/"path"\s*:\s*"([^"]+)"/);
+      if (!pathMatch) return null;
+      // content は "content": から始まり、 最後の } の直前まで
+      const contentStartIdx = raw.indexOf('"content"');
+      if (contentStartIdx === -1) return null;
+      // "content": " の後から最後の " } までを content とみなす
+      const afterKey = raw.slice(contentStartIdx + '"content"'.length);
+      const colonMatch = afterKey.match(/^\s*:\s*"/);
+      if (!colonMatch) return null;
+      const contentStart = contentStartIdx + '"content"'.length + colonMatch[0].length;
+      // 末尾の closing } を探してその直前の " までが content
+      const tail = raw.slice(contentStart);
+      // 末尾から } を見つけて、その前の閉じ引用符を探す
+      const lastBrace = tail.lastIndexOf('}');
+      const contentRaw = lastBrace > 0 ? tail.slice(0, lastBrace).replace(/"\s*$/, '') : tail;
+      return { action: 'write_file', path: pathMatch[1], content: contentRaw };
+    }
+
+    try {
+      action = JSON.parse(jsonStr);
+    } catch (e) {
+      // フォールバック1: write_file 特化パーサー
+      const wfAction = extractWriteFileAction(jsonStr);
+      if (wfAction) {
+        log(`[ReAct] JSON parse recovered via write_file extractor`, 'WARN');
+        action = wfAction;
+      } else {
+        // フォールバック2: 制御文字を除去してから再試行
+        const sanitized = jsonStr.replace(/[\x00-\x09\x0b\x0c\x0e-\x1f]/g, ' ');
+        try {
+          action = JSON.parse(sanitized);
+          log(`[ReAct] JSON parse recovered via sanitize`, 'WARN');
+        } catch (e2) {
+          log(`[ReAct] JSON parse error: ${e.message}`, 'WARN');
+          errorHistory.push({ type: 'parse_error', message: e.message });
+          continue;
+        }
+      }
     }
 
     log(`[ReAct] Action: ${action.action}`);
