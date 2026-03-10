@@ -207,3 +207,31 @@ graph LR
 | 8.3.4 | Sensor Layer実装（Signal Type 1〜3: CEO直接 / QES精度フィードバック / 内部トレンド）| 大 | 8.3.3 |
 | 8.3.5 | 3層サーキットブレーカー実装（急性 / 慢性 / カタストロフィック）| 中 | 8.3.2, 8.3.3 |
 | 8.3.6 | E2E Trinity完全自律テスト: IDE閉鎖状態でStagnation→COO Container介入→回復を確認 | 大 | 8.3.1〜8.3.5 |
+
+> ✅ **MS8.1〜8.3 全完了（2026-03-10）**
+> test-phase-a: 40/40 / test-phase-b: 38/38 / test-phase-c: 37/37 — 合計 115/115 PASS
+
+---
+
+## MS 9.1: Trinity 完全自律運転 — 実務タスク対応検証
+
+**完了条件**: IDEクローズ状態で実務プロジェクト（SECRETARY BUDDYまたはARTISTORY STUDIO）の
+バグ修正・機能追加タスクをDaemonが自律実行し、quality_gates を全てパスする
+
+```mermaid
+graph LR
+  A[実務タスク定義] --> B[Trinity起動]
+  B --> C[Daemon自律実装]
+  C --> D[COO Container監視]
+  D --> E[Quality Guardian確認]
+  E --> F[MS9.1完了]
+```
+
+| # | タスク | 工数 | 依存 |
+|---|--------|------|------|
+| 9.1.1 | 実務プロジェクト選定 + `/core-run` でSmart Contract Push | 小 | MS8.3完了 |
+| 9.1.2 | Trinity完全自律ループ（Daemon+COO Container+Guardian）の実稼働確認 | 大 | 9.1.1 |
+| 9.1.3 | Quality Guardianが実務品質ゲート（npm test全パス等）を自律制御できるか確認 | 中 | 9.1.2 |
+| 9.1.4 | cost_tracker で $5月次上限が正常動作するか確認 | 小 | 9.1.2 |
+| 9.1.5 | E2E: 30分以上Daemon自律稼働 → Human介入ゼロで品質ゲート通過 | 大 | 9.1.3, 9.1.4 |
+
