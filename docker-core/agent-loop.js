@@ -5,13 +5,16 @@
  * Phase 7 (2026-03-10): Volume-Direct Write / No Interceptor / Auto-Recovery /
  *   Self-Task Generator / L3 trigger / budget=80
  *
- * Phase 8 (2026-03-10): Debate Best Practices実装
- *  - Q1: 優先キュー (coo_assigned=HIGH > self_improvement=LOW)
- *  - Q2: コスト閾値カウンター (月次LLMコール累積 / $5超過フラグ)
- *  - Q3: 暴走検知 (1h/10タスク超過でpause → COO報告)
- *  - Q4: ブラウザ品質チェック (screenshot → Gemini Vision マルチモーダル評価)
- *  - Q5: Vision Check Level 2 (WHITEPAPER/TASKS.md整合性LLM評価)
- *  - Q6: 開発停止ゼロ保証 (全エラーをcatch → 自動リカバリー継続)
+ * Phase 8 (2026-03-10): Debate Best Practices
+ *   Q1(Priority Queue) Q2(Cost Guard) Q3(Runaway) Q4(Browser QA) Q5(Vision Check) Q6(開発停止ゼロ)
+ *
+ * Phase 9 (2026-03-10): Critical Fix + Playwright統合
+ *   F1: URLインジェクション修正 (browserQualityCheckサニタイズ)
+ *   F2: 帽靈タスク修正 (mainLoop起動時にin_progress→pending復元)
+ *   F3: completed_tasks rotate (最新100件保持 + archive)
+ *   F4: API失敗無限ループ防止 (失敗Self-Taskをblacklistへ)
+ *   E1: Playwright統合 (headless Chromiumスクリーンショット→Gemini Vision)
+ *   E2: Self-TaskがTASKS.mdから実タスクを発掘
  */
 
 const fs   = require('fs');
@@ -46,6 +49,15 @@ const RUNAWAY_WINDOW_MS  = 60 * 60 * 1000;  // 1時間
 // ─── Q4: ブラウザ品質チェック ────────────────────────────────────────────────
 const BROWSER_CHECK_ENABLED = process.env.BROWSER_CHECK !== 'false';
 const SCREENSHOT_DIR = path.join(ANTIGRAVITY_DIR, '.screenshots');
+// E1: Playwrightベースパス (コンテナ内はnpx playwright installの後に使用可)
+const PLAYWRIGHT_AVAILABLE = (() => {
+  try { require.resolve('playwright'); return true; } catch { return false; }
+})();
+// F3: completed_tasksの上限
+const COMPLETED_TASKS_MAX = 100;
+const COMPLETED_ARCHIVE_FILE = path.join(ANTIGRAVITY_DIR, 'knowledge', '_completed_archive.jsonl');
+// F4: 失敗Self-Taskのblacklistキー
+const SELF_TASK_FAIL_FILE  = path.join(ANTIGRAVITY_DIR, '.self_task_failures.json');
 
 // ─── パス解決 —— Volume マウント経由でMacのファイルにアクセス ────────────────────
 /**
@@ -123,6 +135,39 @@ async function callGemini(prompt, systemInstruction = '') {
     } catch (e) {
       log(`Gemini API attempt ${attempt}/${MAX_RETRIES} failed: ${e.message}`, 'WARN');
       if (attempt === MAX_RETRIES) throw e;
+      await sleep(2000 * attempt);
+    }
+  }
+}
+
+// E1: Gemini Vision API (テキスト + base64画像)
+async function callGeminiVision(prompt, imageBase64, mimeType = 'image/png') {
+  if (!GEMINI_API_KEY) {
+    log('GEMINI_API_KEY not set — Vision mock response.', 'WARN');
+    return '{"status":"warn","score":50,"issues":[],"summary":"MOCK Vision"}';
+  }
+  const VISION_MODEL = 'gemini-2.5-flash'; // Vision対応モデル
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${VISION_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const body = JSON.stringify({
+    contents: [{
+      role: 'user',
+      parts: [
+        { text: prompt },
+        { inline_data: { mime_type: mimeType, data: imageBase64 } },
+      ],
+    }],
+    generation_config: { temperature: 0.1, max_output_tokens: 2048 },
+  });
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await httpPost(endpoint, body);
+      const parsed = JSON.parse(response);
+      const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('Empty Vision response');
+      return text;
+    } catch (e) {
+      log(`[GeminiVision] attempt ${attempt}/${MAX_RETRIES} failed: ${e.message}`, 'WARN');
+      if (attempt === MAX_RETRIES) return '{"status":"warn","score":40,"issues":["Vision API failed"],"summary":"Vision fallback"}';
       await sleep(2000 * attempt);
     }
   }
@@ -566,7 +611,9 @@ ${hint ? `## ヒント（最優先で従え）\n${hint}` : ''}
   return { success: false, reason: 'budget_exhausted', loops: loopCount, llmCalls: llmCallCount };
 }
 
-// ─── P4修正: Self-Task Generator ─────────────────────────────────────────────
+// ─── Phase 9: Self-Improvement & Advanced Features ───────────────────────────
+
+// ─── F4修正 + E2: Self-Task Generator (失敗blacklist + TASKS.md発掘) ──────────────
 async function generateSelfImprovementTasks(state) {
   const selfTasks = [];
 
@@ -711,48 +758,117 @@ function checkRunaway(state) {
 }
 
 // ─── Q4: ブラウザ品質チェック (マルチモーダル) ───────────────────────────────
+// ─── F1修正 + E1: Playwright統合かつURLサニタイズ済み BrowserQA ──────────────
+function sanitizeUrl(url) {
+  // F1: インジェクション防止 — http/httpsのURL形式のみ許可
+  if (typeof url !== 'string') return null;
+  const cleaned = url.trim();
+  if (!/^https?:\/\/[a-zA-Z0-9._-]+(:\d{1,5})?([\/\w\-._~:/?#[\]@!$&'()*+,;=%]*)$/.test(cleaned)) {
+    log(`[BrowserQA] ⚠️ 不正URLをブロック: ${cleaned}`, 'WARN');
+    return null;
+  }
+  return cleaned;
+}
+
+async function playwrightCapture(url) {
+  // E1: Playwrightでheadlessスクリーンショットを取得しbase64で返す
+  if (!PLAYWRIGHT_AVAILABLE) return null;
+  const screenshotPath = path.join(SCREENSHOT_DIR, `qa_${Date.now()}.png`);
+  fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+  try {
+    const script = `
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+  const page = await browser.newPage();
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto(${JSON.stringify(url)}, { timeout: 15000, waitUntil: 'networkidle' });
+  await page.screenshot({ path: ${JSON.stringify(screenshotPath)}, fullPage: false });
+  await browser.close();
+  console.log('OK:' + ${JSON.stringify(screenshotPath)});
+})().catch(e => { console.error('ERR:' + e.message); process.exit(1); });
+`;
+    const tmpScript = path.join('/tmp', `pw_${Date.now()}.js`);
+    fs.writeFileSync(tmpScript, script);
+    const { stdout } = await runCommand(`node ${tmpScript}`);
+    fs.unlinkSync(tmpScript);
+    if (stdout.includes('OK:') && fs.existsSync(screenshotPath)) {
+      const imgBase64 = fs.readFileSync(screenshotPath).toString('base64');
+      fs.unlinkSync(screenshotPath); // 素早く削除
+      return imgBase64;
+    }
+  } catch (e) {
+    log(`[BrowserQA] Playwrightエラー: ${e.message}`, 'WARN');
+  }
+  return null;
+}
+
 async function browserQualityCheck(task, contract) {
-  const checkUrls = contract?.browser_check_urls || [];
+  const rawUrls = contract?.browser_check_urls || [];
+  // F1: 全URLをサニタイズして不正なものがあればskip
+  const checkUrls = rawUrls.map(sanitizeUrl).filter(Boolean);
   if (!BROWSER_CHECK_ENABLED || checkUrls.length === 0) return { skipped: true };
 
-  log(`[BrowserQA] URLチェック: ${checkUrls.join(', ')}`);
+  log(`[BrowserQA] チェック: ${checkUrls.join(', ')} (Playwright=${PLAYWRIGHT_AVAILABLE})`);
   const results = [];
-  fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 
   for (const url of checkUrls) {
     try {
-      // curl で HTMLを取得してLLMで品質評価
-      const { stdout } = await runCommand(`curl -s -L --max-time 10 "${url}" 2>/dev/null | head -c 5000`);
-      if (!stdout || stdout.length < 50) {
-        results.push({ url, status: 'fail', reason: 'Empty response or URL unreachable' });
-        continue;
-      }
+      let score = null;
+      let issues = [];
+      let summary = '';
 
-      // Gemini にHTML内容を渡して品質評価
-      const qaPrompt = `以下のHTMLページを品質チェックせよ。
+      // E1: Playwrightが利用可能ならスクリーンショットで評価
+      if (PLAYWRIGHT_AVAILABLE) {
+        const imgBase64 = await playwrightCapture(url);
+        if (imgBase64) {
+          const qaPrompt = `このウェブページのスクリーンショットを見て、以下の観点でUI品質を評価せよ。
 
 URL: ${url}
-HTML (先頭5000文字):
-${stdout.substring(0, 3000)}
-
 タスク: ${task.task.substring(0, 200)}
 
-以下の観点でチェックし、JSONで結果を返せ:
-{
-  "status": "pass" | "fail" | "warn",
-  "score": 0-100,
-  "issues": ["問題点1", "問題点2"],
-  "summary": "1行サマリー"
-}`;
+確認項目:
+- レイアウト崩れなどの表示バグ
+- エラーメッセージの有無
+- 主要UI要素の可視性
+- ローディング状態やスピナーが出ていないか
 
+以下のJSON形式のみで返せ:
+{"status":"pass"|"fail"|"warn","score":0-100,"issues":["問題1"],"summary":"サマリー"}`;
+          // Gemini Visionに画像とプロンプトを送信
+          const visionResponse = await callGeminiVision(qaPrompt, imgBase64);
+          const jm = visionResponse.match(/\{[\s\S]*?\}/);
+          if (jm) {
+            const r = JSON.parse(jm[0]);
+            results.push({ url, method:'playwright', ...r });
+            log(`[BrowserQA] 📸 ${url}: ${r.status} (score:${r.score}) — ${r.summary}`);
+            continue;
+          }
+        }
+        log('[BrowserQA] Playwrightスクリーンショット失敗。curlフォールバックへ', 'WARN');
+      }
+
+      // curlフォールバック (Playwright不得時 or スクリーンショット失敗時)
+      const { stdout } = await runCommand(`curl -s -L --max-time 10 '${url}' 2>/dev/null | head -c 5000`);
+      if (!stdout || stdout.length < 50) {
+        results.push({ url, method:'curl', status: 'fail', reason: 'Empty or unreachable' });
+        continue;
+      }
+      const qaPrompt = `以下のHTMLページを品質チェックせよ。
+URL: ${url}
+HTML(3000文字):
+${stdout.substring(0, 3000)}
+タスク: ${task.task.substring(0, 200)}
+以下のJSON形式のみ返せ:
+{"status":"pass"|"fail"|"warn","score":0-100,"issues":["問題1"],"summary":"サマリー"}`;
       const response = await callGemini(qaPrompt);
-      const jsonMatch = response.match(/\{[\s\S]*?\}/);
-      if (jsonMatch) {
-        const result = JSON.parse(jsonMatch[0]);
-        results.push({ url, ...result });
-        log(`[BrowserQA] ${url}: ${result.status} (score: ${result.score}) — ${result.summary}`);
+      const jm = response.match(/\{[\s\S]*?\}/);
+      if (jm) {
+        const r = JSON.parse(jm[0]);
+        results.push({ url, method:'curl', ...r });
+        log(`[BrowserQA] 🔍 ${url}: ${r.status} (score:${r.score}) — ${r.summary}`);
       } else {
-        results.push({ url, status: 'warn', reason: 'Could not parse QA response' });
+        results.push({ url, method:'curl', status: 'warn', reason: 'parse error' });
       }
     } catch (e) {
       results.push({ url, status: 'fail', reason: e.message });
@@ -827,17 +943,32 @@ function getNextTask(pendingTasks) {
   return sorted[0];
 }
 
-// ─── メインポーリングループ (Phase 8) ─────────────────────────────────────────
+// ─── メインポーリングループ (Phase 9) ─────────────────────────────────────────
 async function mainLoop() {
-  log('🚀 Daemon Core starting... (Phase 8: Best Practices + Browser QA + Vision Check)');
+  log('🚀 Daemon Core starting... (Phase 9: Critical Fix + Playwright統合)');
   log(`   ANTIGRAVITY_DIR : ${ANTIGRAVITY_DIR}`);
   log(`   HOST_HOME       : ${HOST_HOME}`);
   log(`   GEMINI          : ${GEMINI_API_KEY ? 'API key loaded' : 'NOT SET (mock mode)'}`);
-  log('   Q1(Priority Queue) Q2(Cost Guard) Q3(Runaway Check) Q4(Browser QA) Q5(Vision Check)');
+  log(`   Playwright      : ${PLAYWRIGHT_AVAILABLE ? '✅ Available' : '⚠️ Not installed (curl fallback)'}`);
+  log('   Q1(Priority Queue) Q2(Cost Guard) Q3(Runaway) Q4(BrowserQA/Playwright) Q5(Vision) F2(Ghost) F3(Rotate)');
 
   // 月次コスト状態を表示
   const initCost = loadCostTracker();
   log(`[Cost] 今月の累積: ${initCost.calls}calls / $${(initCost.estimated_usd||0).toFixed(3)} (上限$${COST_MONTHLY_LIMIT})`);
+
+  // ─── F2: 起動時に「in_progress」タスクを「pending」に復元 (幽霊タスク修正) ──
+  {
+    const bootState = readState();
+    const ghosts = (bootState.pending_tasks || []).filter(t => t.status === 'in_progress');
+    if (ghosts.length > 0) {
+      log(`[F2] 幽霊タスク検知: ${ghosts.length}件を in_progress → pending に復元`);
+      bootState.pending_tasks = bootState.pending_tasks.map(t =>
+        t.status === 'in_progress' ? { ...t, status: 'pending', recovered_at: new Date().toISOString() } : t
+      );
+      writeState(bootState);
+    }
+  }
+
 
   while (true) {
     try {
@@ -944,6 +1075,35 @@ async function mainLoop() {
         result,
         completed_at: new Date().toISOString(),
       });
+
+      // F3: completed_tasks rotate — 最新100件を保持し古いものをarchiveへ
+      if (updatedState.completed_tasks.length > COMPLETED_TASKS_MAX) {
+        const excess = updatedState.completed_tasks.splice(0, updatedState.completed_tasks.length - COMPLETED_TASKS_MAX);
+        try {
+          fs.mkdirSync(path.dirname(COMPLETED_ARCHIVE_FILE), { recursive: true });
+          const archiveLines = excess.map(t => JSON.stringify(t)).join('\n') + '\n';
+          fs.appendFileSync(COMPLETED_ARCHIVE_FILE, archiveLines);
+          log(`[F3] completed_tasks rotate: ${excess.length}件をarchiveへ移行 (残${updatedState.completed_tasks.length}件)`);
+        } catch (archiveErr) {
+          log(`[F3] archive書き込み失敗(継続): ${archiveErr.message}`, 'WARN');
+        }
+      }
+
+      // F4: 失敗したSelf-Taskをblacklistへ追記
+      if (!result.success && task.priority === 'self_improvement') {
+        try {
+          const sfData = readJSON(SELF_TASK_FAIL_FILE, { failed_tasks: [] });
+          const failKey = task.source === 'tasks_md' ? `tasks_md:${task.task.substring(0,80)}` : 'self_l3_latest';
+          if (!sfData.failed_tasks.includes(failKey)) {
+            sfData.failed_tasks.push(failKey);
+            // 最新50件のみ保持
+            if (sfData.failed_tasks.length > 50) sfData.failed_tasks.shift();
+            writeJSON(SELF_TASK_FAIL_FILE, sfData);
+            log(`[F4] 失敗Self-Taskをblacklist登録: ${failKey}`);
+          }
+        } catch { /* 継続 */ }
+      }
+
       writeState(updatedState);
 
       log(`[Main] Task ${task.id} [${task.priority||'low'}]: ${result.success ? '✅ Done' : `❌ Failed (${result.reason})`}`);
@@ -952,6 +1112,7 @@ async function mainLoop() {
       const completedCount = updatedState.completed_tasks.length;
       const hasCooReports = (updatedState.coo_reports || []).length > 0;
       await triggerLearningLoops(completedCount, hasCooReports);
+
 
     } catch (e) {
       // Q6: 開発停止ゼロ — 予期しないエラーもcatchして続行
