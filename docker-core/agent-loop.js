@@ -746,10 +746,13 @@ function checkRunaway(state) {
   const completed = state.completed_tasks || [];
   const now = Date.now();
   const windowStart = now - RUNAWAY_WINDOW_MS;
-  const recentCount = completed.filter(t => new Date(t.completed_at || 0).getTime() > windowStart).length;
+  // F4修正: failedタスクは除外し「成功完了」のみカウント（失敗ループでRunaway誤発動を防止）
+  const recentCount = completed.filter(t =>
+    t.status === 'done' && new Date(t.completed_at || 0).getTime() > windowStart
+  ).length;
 
   if (recentCount >= RUNAWAY_TASK_LIMIT) {
-    log(`[Runaway] ⚠️ ${recentCount}タスク/1h — 上限到達。COOへ報告してpause。`, 'WARN');
+    log(`[Runaway] ⚠️ ${recentCount}件(done)/1h — 上限到達。COOへ報告してpause。`, 'WARN');
     state.runaway_detected = { count: recentCount, detected_at: new Date().toISOString() };
     writeState(state);
     return true;
