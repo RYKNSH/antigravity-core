@@ -58,6 +58,9 @@ const COMPLETED_TASKS_MAX = 100;
 const COMPLETED_ARCHIVE_FILE = path.join(ANTIGRAVITY_DIR, 'knowledge', '_completed_archive.jsonl');
 // F4: 失敗Self-Taskのblacklistキー
 const SELF_TASK_FAIL_FILE  = path.join(ANTIGRAVITY_DIR, '.self_task_failures.json');
+// Outbox Pattern: タスク実行中の証拠ファイル置き場
+const OUTBOX_DIR = path.join(ANTIGRAVITY_DIR, 'outbox');
+if (!fs.existsSync(OUTBOX_DIR)) fs.mkdirSync(OUTBOX_DIR, { recursive: true });
 
 // ─── パス解決 —— Volume マウント経由でMacのファイルにアクセス ────────────────────
 /**
@@ -985,16 +988,42 @@ async function mainLoop() {
   const initCost = loadCostTracker();
   log(`[Cost] 今月の累積: ${initCost.calls}calls / $${(initCost.estimated_usd||0).toFixed(3)} (上限$${COST_MONTHLY_LIMIT})`);
 
-  // ─── F2: 起動時に「in_progress」タスクを「pending」に復元 (幽霊タスク修正) ──
+  // ─── Outbox Pattern: 起動時にoutbox/残骸をスキャンしてpendingに戻す (F2置換) ──
+  // outbox/task_XYZ.json が存在 = 実行中の証拠。残骸は前回クラッシュを意味する。
   {
     const bootState = readState();
-    const ghosts = (bootState.pending_tasks || []).filter(t => t.status === 'in_progress');
-    if (ghosts.length > 0) {
-      log(`[F2] 幽霊タスク検知: ${ghosts.length}件を in_progress → pending に復元`);
+    let outboxRecovered = 0;
+    try {
+      const outboxFiles = fs.readdirSync(OUTBOX_DIR).filter(f => f.endsWith('.json'));
+      for (const fname of outboxFiles) {
+        try {
+          const outboxPath = path.join(OUTBOX_DIR, fname);
+          const ob = JSON.parse(fs.readFileSync(outboxPath, 'utf8'));
+          // outboxに残っている = 完了していない → pendingに復元して再試行
+          const alreadyPending = (bootState.pending_tasks || []).some(t => t.id === ob.id);
+          if (!alreadyPending) {
+            bootState.pending_tasks = bootState.pending_tasks || [];
+            bootState.pending_tasks.unshift({ ...ob, status: 'pending', recovered_from_outbox: true, recovered_at: new Date().toISOString() });
+            outboxRecovered++;
+          }
+          fs.unlinkSync(outboxPath); // outboxから削除（pendingに戻した）
+        } catch { /* 壊れたoutboxファイルはスキップ */ }
+      }
+      if (outboxRecovered > 0) {
+        log(`[Outbox] 前回クラッシュを検知: ${outboxRecovered}件 pendingに復元`);
+        writeState(bootState);
+      }
+    } catch (e) {
+      log(`[Outbox] スキャン失敗: ${e.message}`, 'WARN');
+    }
+    // 後方互換: 古いin_progress残骸も念のためpendingに戻す
+    const legacyGhosts = (bootState.pending_tasks || []).filter(t => t.status === 'in_progress');
+    if (legacyGhosts.length > 0) {
       bootState.pending_tasks = bootState.pending_tasks.map(t =>
         t.status === 'in_progress' ? { ...t, status: 'pending', recovered_at: new Date().toISOString() } : t
       );
       writeState(bootState);
+      log(`[Outbox] legacy in_progress ${legacyGhosts.length}件をpendingに復元`);
     }
   }
 
@@ -1060,6 +1089,15 @@ async function mainLoop() {
       };
       writeState(state);
 
+      // Outbox Pattern: タスク実行開始の証拠を書き出す（クラッシュ時に残骸として検出される）
+      const outboxTaskFile = path.join(OUTBOX_DIR, `task_${task.id}.json`);
+      try {
+        fs.writeFileSync(outboxTaskFile, JSON.stringify({ ...task, outbox_at: new Date().toISOString() }, null, 2));
+      } catch (e) {
+        log(`[Outbox] write failed: ${e.message}`, 'WARN');
+      }
+
+
       // ReAct ループ実行
       const result = await reactLoop(task, task.contract || {});
 
@@ -1093,8 +1131,12 @@ async function mainLoop() {
         }
       }
 
+      // Outbox Pattern Phase 2: 完了・失敗時にoutboxから証拠を削除（正常完了）
+      try { fs.unlinkSync(outboxTaskFile); } catch { /* すでに削除済みなら無視 */ }
+
       // 完了後の State 更新
       const updatedState = readState();
+
       updatedState.pending_tasks = (updatedState.pending_tasks || []).filter(t => t.id !== task.id);
       updatedState.current = {};
       updatedState.completed_tasks = updatedState.completed_tasks || [];
