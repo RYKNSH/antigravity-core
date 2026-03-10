@@ -12,6 +12,7 @@
 |--------|------|---------|---------|---------|---------|
 | **Core-A** | `~/.antigravity/` | ✅ git管理（remote: GitHub） | AI OSワークフロー・スキル・ルール・スクリプト | ✅ push可 | ❌ 置かない |
 | **Core-B** | `~/.gemini/antigravity/` | ❌ git管理外 | AIの作業ログ・brain・artifacts（セッション固有） | ⛔ push禁止 | ❌ 置かない |
+| **Core-C** | `~/.antigravity/docker-core/` | ✅ git管理（Core-Aの一部） | Daemon自律エンジン層（agent-loop.js等の実装コード） | ✅ push可（実装コードのみ） | ❌ 置かない |
 | **Projects** | `~/Desktop/AntigravityWork/[Project]/` | ✅ 各プロジェクトgit管理 | プロダクトコード | ✅ 各repo内でpush可 | ⚠️ `.env`のみ（gitignore必須）|
 | **Private** | `~/.antigravity-private/` | ❌ git管理外 | APIキー・`.env`・個人認証情報 | ⛔ push禁止 | ✅ ここだけ |
 

@@ -8,6 +8,23 @@
 # === Node ===
 # === PERSONAL CONTENT (LOCAL ONLY) ===
 # === Personal directory ===
+# === DAEMON RUNTIME ARTIFACTS (コンテナが生成するファイル — push不要) ===
+.coo_insights.json
+.coo_reports.json
+.cost_tracker.json
+.system_alerts.json
+.self_task_failures.json
+.skill_upgrade_log.json
+.daemon-autostart.log
+.daemon-launchagent.log
+.daemon-launchagent-err.log
+.fatal_blacklist.json
+.write_staging/
+outbox/
+quality/
+secretary_state/
+e2e-demo/
+
 # === RUNTIME STATE (LOCAL ONLY) ===
 # === SECRETS & PERSONAL DATA (NEVER PUSH) ===
 # Blog drafts and published articles - personal content
@@ -51,3 +68,6 @@ projects.json
 queue/
 worktrees/
 agent/scripts/checkpoint/package-lock.json
+
+# Failed knowledge entries (Daemonが生成した失敗記録 — 低品質)
+knowledge/2026-*___.md
