@@ -536,3 +536,48 @@ fi
 4. **フォーマット**: Markdown（AIが自然に読み書き可能）
 5. **場所**: プロジェクトルート（.gitignore に追加）
 6. **Execution Summary**: WF完了時に1行で成果を追記。`/checkout` 時に state/NEXT_SESSION.md にコピーされ、次セッションでのコンテキスト復元に活用
+
+---
+
+## Daemon Core 委譲コントラクト（Phase 8 / debate deep 2026-03-10 確定）
+
+### 呼称定義
+
+| ユーザーの発言 | 正式名 | 役割 |
+|---|---|---|
+| 「コア」 | **Antigravity Core** | 設計・判断・Git管理・シークレット管理 |
+| 「デーモン」 | **Daemon Core** | コード実装・テスト実行・自己強化学習 |
+| CEO | ユーザー | ビジョン定義 + 費用承認のみ |
+
+### 委譲パイプライン
+
+```
+/gen-dev → TASKS.md生成 → [Task Bridge] → Daemon Core pending_tasks (priority=coo_assigned)
+/checkout → [Task Bridge] → Daemon Core pending_tasks (未完了タスクを引き渡し)
+```
+
+### ユーザー介入ポイント（最小化・確定版）
+
+| トリガー | アクション | 必須 |
+|---|---|---|
+| プロジェクト開始 | `/gen-dev` でビジョン定義 | ✅ |
+| 外部SaaS費用発生 | `session_state.cost_alert` → 通知 → 承認 | ✅ |
+| LLMコスト月$5超過 | `session_state.cost_alert` → 次回checkin通知 | ✅ |
+| ビジョン変更 | `/gen-dev` 再実行 | ✅ |
+| 進捗確認 | Notionで随時（任意） | 任意 |
+
+### Daemon Core 安全弁
+
+| 機能 | 実装ファイル | 挙動 |
+|---|---|---|
+| 優先キュー | `agent-loop.js: getNextTask()` | coo_assigned > self_improvement |
+| コスト閾値 | `agent-loop.js: trackLLMCost()` | $5超過→cost_alertフラグ |
+| 暴走検知 | `agent-loop.js: checkRunaway()` | 1h/10タスク→30分pause |
+| Browser QA | `agent-loop.js: browserQualityCheck()` | HTML→Gemini Vision評価 |
+| Vision Check | `agent-loop.js: visionCheck()` | WHITEPAPER整合性LLM評価 |
+| 開発停止ゼロ | `agent-loop.js: mainLoop() catch` | 全エラーcatch→継続 |
+
+### シークレット管理
+
+- **現在**: `.env` 静的ファイル（Antigravity Core が `op inject` で管理）
+- **将来**: op service account → Daemon Core が動的取得（費用承認後実施）

@@ -145,11 +145,40 @@ write_to_file ツールの引数:
 
 ---
 
+## Step 5: Task Bridge — Daemon Core へ自動投入 🌉
+
+> [!IMPORTANT]
+> **TASKS.md が生成された瞬間に、Daemon Core へタスクを自動投入する。**
+> これが `/gen-dev` 完了 = Daemon Core 自律実行開始のトリガーだ。
+
+**⚡ アクション: 以下を実行する。**
+
+```bash
+TASK_BRIDGE="$HOME/.antigravity/agent/scripts/task-bridge.js"
+TASKS_MD="{{PROJECT_ROOT}}/docs/TASKS.md"
+
+# Daemon Core が稼働中かチェック
+if docker ps --filter "name=daemon_core" --filter "status=running" | grep -q daemon_core; then
+  echo "🌉 Task Bridge: TASKS.md → Daemon Core へ自動投入中..."
+  node "$TASK_BRIDGE" "$HOME/.antigravity/docs/TASKS.md" "$TASKS_MD"
+  echo "✅ Daemon Core がタスクを受け取りました。自律実行を開始します。"
+else
+  echo "⚠️ Daemon Core が未稼働です。以下で起動してください:"
+  echo "  cd ~/.antigravity/docker-core && docker-compose up -d"
+  echo "  その後: node $TASK_BRIDGE $TASKS_MD"
+fi
+```
+
+**投入されるタスクの優先度**: `coo_assigned`（最優先）
+
+---
+
 ## 完了条件
 
 | 成果物 | 状態 |
 |--------|------|
 | `/xx-dev` ワークフローファイル | **`write_to_file` でファイルが実際に作成されている** |
+| Task Bridge 実行 | TASKS.md → Daemon Core pending_tasks へ投入済み |
 | ユーザーへの通知 | 完了 |
 
 ## エラー時
