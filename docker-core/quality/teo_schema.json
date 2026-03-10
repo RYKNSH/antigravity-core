@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "teo_schema.json",
+  "title": "Task Evaluation Object (TEO)",
+  "description": "Daemon Coreがタスク完了後に生成する4軸品質評価オブジェクト。~/.antigravity/docker-core/.quality/teo_{task_id}.json として保存される。",
+  "type": "object",
+  "required": ["task_id", "completed_at", "scores", "qes_delta", "stagnation_count", "coo_calls"],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "タスクの一意識別子（例: task_20260310_001）"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "タスク完了時刻（ISO 8601）"
+    },
+    "scores": {
+      "type": "object",
+      "description": "4軸品質スコア",
+      "required": ["quality", "efficiency", "speed", "lightness"],
+      "properties": {
+        "quality": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "npm test pass率（0.0〜1.0）"
+        },
+        "efficiency": {
+          "type": "number",
+          "minimum": 0,
+          "description": "LLMコスト（USD）。小さいほど良い。"
+        },
+        "speed": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Lighthouse Performance スコア（0〜100）。10タスクごとに計測。"
+        },
+        "lightness": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "bundle サイズ（KB）。小さいほど良い。10タスクごとに計測。"
+        }
+      }
+    },
+    "qes_delta": {
+      "type": "number",
+      "description": "このタスクのQES（Quality Equivalent Score）変化量。正=改善、負=悪化。"
+    },
+    "stagnation_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "連続してスコア改善なしだったループ回数"
+    },
+    "coo_calls": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "このタスクでCOO-Liteを呼び出した回数（上限: max_coo_calls_per_task=3）"
+    },
+    "coo_hints": {
+      "type": "array",
+      "description": "COO-Liteが生成したヒントの履歴",
+      "items": {
+        "type": "object",
+        "properties": {
+          "called_at": { "type": "string", "format": "date-time" },
+          "hint": { "type": "string" },
+          "model_used": { "type": "string" }
+        }
+      }
+    },
+    "worker_measurements": {
+      "type": "object",
+      "description": "worker_threadsで非同期計測した生データ（Lighthouse, bundle-analyzer等）",
+      "additionalProperties": true
+    },
+    "environment_check": {
+      "type": "object",
+      "description": "COO-Lite呼び出し前のEnvironment Check結果",
+      "properties": {
+        "volume_mount": { "type": "boolean" },
+        "env_variables": { "type": "boolean" },
+        "file_permissions": { "type": "boolean" },
+        "api_reachability": { "type": "boolean" }
+      }
+    },
+    "error": {
+      "type": ["string", "null"],
+      "description": "タスク中に発生した致命的エラーのメッセージ（正常完了時はnull）"
+    }
+  },
+  "_example": {
+    "task_id": "task_20260310_001",
+    "completed_at": "2026-03-10T20:00:00.000Z",
+    "scores": { "quality": 0.95, "efficiency": 0.0042, "speed": 87, "lightness": 320 },
+    "qes_delta": 3.2,
+    "stagnation_count": 2,
+    "coo_calls": 1,
+    "coo_hints": [
+      {
+        "called_at": "2026-03-10T19:55:00.000Z",
+        "hint": "テストインポートパスを相対パスに変更することで解決できます。",
+        "model_used": "gemini-2.5-pro"
+      }
+    ],
+    "worker_measurements": { "lighthouse_ran": false, "bundle_scan_ran": false },
+    "environment_check": {
+      "volume_mount": true,
+      "env_variables": true,
+      "file_permissions": true,
+      "api_reachability": true
+    },
+    "error": null
+  }
+}

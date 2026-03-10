@@ -1,0 +1,22 @@
+{
+  "name": "antigravity-daemon-core",
+  "version": "0.8.1",
+  "description": "Daemon Core — Antigravity Phase 8: Four-Loop Quality Governance",
+  "main": "agent-loop.js",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node agent-loop.js",
+    "test:e2e": "node test-phase-a-e2e.js",
+    "env-check": "node environment-check.js",
+    "bootstrap": "node ../agent/scripts/bootstrap-goals.js"
+  },
+  "dependencies": {
+    "proper-lockfile": "^4.1.2"
+  },
+  "optionalDependencies": {
+    "@google/generative-ai": "^0.21.0"
+  }
+}

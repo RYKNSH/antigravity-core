@@ -1,0 +1,34 @@
+{
+  "_comment": "QES (Quality Equivalent Score) グローバル重みファイル。全プロジェクト共通の基準値。",
+  "_version": "1.0.0",
+  "_mode": "cold_start",
+  "_cold_start_until": 20,
+  "_last_calibrated": null,
+  "_calibration_count": 0,
+
+  "anchors": {
+    "_comment": "公理アンカー — 最小二乗法の帰納更新対象外。絶対値として固定。",
+    "test_added": 2.0,
+    "test_deleted": -10.0
+  },
+
+  "learned_weights": {
+    "_comment": "帰納更新対象。各タスク後の軸スコア変化とQES変化の最小二乗相関で自動校正される。",
+    "lightness_kb": -0.1,
+    "speed_latency_ms": -0.08,
+    "efficiency_cost_usd": -300.0
+  },
+
+  "thresholds": {
+    "_comment": "Saturation Mode 移行条件。この値をすべての軸が7日連続で超えたらROI最大化モードへ移行。",
+    "quality_pass_rate": 0.98,
+    "lightness_improvement_kb": 10,
+    "speed_improvement_lighthouse": 2,
+    "efficiency_improvement_pct": 0.05
+  },
+
+  "circuit_breaker": {
+    "_comment": "週次モニタリング。QES が下記を下回ったら CEOレポートを生成する。",
+    "weekly_min_qes_delta": -5.0
+  }
+}
