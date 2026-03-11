@@ -8,13 +8,14 @@
  * Phase 8 (2026-03-10): Debate Best Practices
  *   Q1(Priority Queue) Q2(Cost Guard) Q3(Runaway) Q4(Browser QA) Q5(Vision Check) Q6(開発停止ゼロ)
  *
- * Phase 9 (2026-03-10): Critical Fix + Playwright統合
+ * Phase 9 (2026-03-10): Critical Fix + Playwright統合 + Trinity完全自律運転
  *   F1: URLインジェクション修正 (browserQualityCheckサニタイズ)
- *   F2: 帽靈タスク修正 (mainLoop起動時にin_progress→pending復元)
+ *   F2: 幽霊タスク修正 (mainLoop起動時にin_progress→pending復元)
  *   F3: completed_tasks rotate (最新100件保持 + archive)
  *   F4: API失敗無限ループ防止 (失敗Self-Taskをblacklistへ)
  *   E1: Playwright統合 (headless Chromiumスクリーンショット→Gemini Vision)
  *   E2: Self-TaskがTASKS.mdから実タスクを発掘
+ *   T1: trinity-quality-controller.js統合 (10タスクごとにtrinityHealth呼び出し)
  */
 
 const fs   = require('fs');
@@ -1040,19 +1041,59 @@ function getNextTask(pendingTasks) {
   return sorted[0];
 }
 
-// ─── メインポーリングループ (Phase 9) ─────────────────────────────────────────
+// ─── T1: trinity-quality-controller 統合 (Phase 9) ──────────────────────────
+const TRINITY_CONTROLLER_PATH = path.join(__dirname, 'trinity-quality-controller.js');
+let trinityController = null;
+try {
+  if (fs.existsSync(TRINITY_CONTROLLER_PATH)) {
+    trinityController = require(TRINITY_CONTROLLER_PATH);
+    log('[Trinity] trinity-quality-controller.js ロード成功');
+  }
+} catch (e) {
+  log(`[Trinity] ロード失敗 (継続): ${e.message}`, 'WARN');
+}
+
+/**
+ * checkTrinityHealth() — 10タスクごとにTrinity統合ヘルスを評価して状態に記録
+ */
+function checkTrinityHealth(completedCount) {
+  if (!trinityController) return;
+  // 10タスクごと or 初回(0タスク)のみ実行
+  if (completedCount % 10 !== 0 && completedCount !== 0) return;
+  try {
+    const health = trinityController.trinityHealth();
+    log(`[Trinity] Health check: healthy=${health.healthy}, ceo.gaps=${health.ceo?.gaps || 0}, daemon.avg_delta=${health.daemon?.avg_delta}`);
+    // criticalアラートがあれば状態に記録
+    if (!health.healthy && health.ceo?.critical > 0) {
+      const st = readState();
+      st.trinity_alerts = st.trinity_alerts || [];
+      st.trinity_alerts.push({ ...health, recorded_at: new Date().toISOString() });
+      // 最新20件のみ保持
+      if (st.trinity_alerts.length > 20) st.trinity_alerts = st.trinity_alerts.slice(-20);
+      writeState(st);
+      log(`[Trinity] ⚠️ Critical gap detected. 状態に記録。`, 'WARN');
+    }
+  } catch (e) {
+    log(`[Trinity] trinityHealth() エラー (継続): ${e.message}`, 'WARN');
+  }
+}
+
+// ─── メインポーリングループ (Phase 9: Trinity完全自律運転) ───────────────────
 async function mainLoop() {
-  log('🚀 Daemon Core starting... (Phase 10: Architecture Clean + coo CLI + Outbox Pattern)');
+  log('🚀 Daemon Core starting... (Phase 9: Trinity完全自律運転 + Outbox Pattern)');
   log(`   ANTIGRAVITY_DIR : ${ANTIGRAVITY_DIR}`);
   log(`   HOST_HOME       : ${HOST_HOME}`);
   log(`   GEMINI          : ${GEMINI_API_KEY ? 'API key loaded' : 'NOT SET (mock mode)'}`);
   log(`   Playwright      : ${PLAYWRIGHT_AVAILABLE ? '✅ Available' : '⚠️ Not installed (curl fallback)'}`);
-  log('   Q1(Priority Queue) Q2(Cost Guard) Q3(Runaway) Q4(BrowserQA) Q5(Vision) Outbox(Ghost廃止) F3(Rotate) F4(Blacklist)');
+  log('   Q1(Priority Queue) Q2(Cost Guard) Q3(Runaway) Q4(BrowserQA) Q5(Vision) T1(Trinity) Outbox F3(Rotate) F4(Blacklist)');
   log(`   git push/commit: [HARD BLOCKED] | /host_home sensitive paths: [BLOCKED]`);
 
   // 月次コスト状態を表示
   const initCost = loadCostTracker();
   log(`[Cost] 今月の累積: ${initCost.calls}calls / $${(initCost.estimated_usd||0).toFixed(3)} (上限$${COST_MONTHLY_LIMIT})`);
+
+  // T1: 起動時Trinity初回ヘルスチェック
+  checkTrinityHealth(0);
 
   // ─── Outbox Pattern: 起動時にoutbox/残骸をスキャンしてpendingに戻す (F2置換) ──
   // outbox/task_XYZ.json が存在 = 実行中の証拠。残骸は前回クラッシュを意味する。
@@ -1249,6 +1290,9 @@ async function mainLoop() {
       const completedCount = updatedState.completed_tasks.length;
       const hasCooReports = (updatedState.coo_reports || []).length > 0;
       await triggerLearningLoops(completedCount, hasCooReports);
+
+      // T1: 10タスクごとにTrinityヘルスチェック
+      checkTrinityHealth(completedCount);
 
 
     } catch (e) {
