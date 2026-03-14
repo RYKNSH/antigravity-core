@@ -1,0 +1,30 @@
+{
+  "dataset_name": "Art Director Visual Principles",
+  "version": "1.0",
+  "principles": [
+    {
+      "id": "AD-01",
+      "category": "Typography",
+      "title": "Jump Rate & Hierarchy (ジャンプ率と階層)",
+      "description": "見出しと本文のフォントサイズ比率（ジャンプ率）を極端につけることで、シネマティックな視線誘導を作る。",
+      "rule": "HeadlineとSub-textのサイズ比は最低でも「3:1」以上にする。中途半端な「1.5:1」などは素人臭くなるため禁止。",
+      "example": "Headline: 120px, Sub-text: 36px"
+    },
+    {
+      "id": "AD-02",
+      "category": "Composition",
+      "title": "Negative Space (余白の黄金比)",
+      "description": "何もない空間（余白）こそが高級感を生む。",
+      "rule": "画面端から最低でも「10%」のセーフティマージンをとる（画面外ギリギリに文字を配置しない）。文字間（Tracking）も詰めすぎない。",
+      "example": "padding: '10%'"
+    },
+    {
+      "id": "AD-03",
+      "category": "Compositing",
+      "title": "Vignette & Contrast Edge",
+      "description": "背景動画の上に白文字を置く際、動画の明度によって文字が黒潰れするのを防ぐ必須処理。",
+      "rule": "単なる文字のDrop Shadowだけでなく、画面全体または文字背景に『Vignette (周辺減光)』や『Linear Gradient Overlay』を敷くこと。",
+      "example": "boxShadow: 'inset 0 0 150px rgba(0,0,0,0.8)'"
+    }
+  ]
+}

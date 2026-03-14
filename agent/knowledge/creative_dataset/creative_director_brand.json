@@ -1,0 +1,25 @@
+{
+  "dataset_name": "Creative Director Brand Integrity",
+  "version": "1.0",
+  "brand_pillars": [
+    {
+      "id": "CD-01",
+      "name": "The Core Philosophy",
+      "description": "ブランドの存在意義（Why）からすべてのクリエイティブが出発しているかの評価軸。",
+      "rule": "単なる『便利さ』や『機能』を押し出していないか。『時間を取り戻す』『無駄な作業から人間を解放する』といった本質的価値（Philosophy）が根底にあるか確認する。",
+      "example": "機能推しのNG:『このAIはLPと広告とLINEが作れます。』 / 世界観推しのOK:『全部やってくれるAIエージェント、つくりました。』"
+    },
+    {
+      "id": "CD-02",
+      "name": "Brand Tonality & Voice",
+      "description": "トーン＆マナー（世界観）の遵守。",
+      "rule": "チープなバラエティ番組のような効果音、安っぽい派手なテロップ、無機質すぎるシステム音声を禁止する。トーンは常に『プロフェッショナル・シネマティック・洗練』であること。"
+    },
+    {
+      "id": "CD-03",
+      "name": "The Final Quality Gate",
+      "description": "妥協のない最終審美眼。",
+      "rule": "他の全ペルソナ（AD, Marketer, Screenwriter）が『部分最適』としてOKを出したものであっても、完成形として『ブランドの格』を落とすと判断した場合は一刀両断にBlockする権限を行使する。"
+    }
+  ]
+}

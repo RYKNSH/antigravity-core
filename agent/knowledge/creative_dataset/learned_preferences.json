@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "version": "1.0",
+    "description": "GUI編集からの自動学習ログ"
+  },
+  "sessions": [
+    {
+      "timestamp": "2026-03-11T08:22:29.855Z",
+      "source": "LpAd.tsx",
+      "findings_count": 1,
+      "findings": [
+        {
+          "category": "color",
+          "key": "color_preference",
+          "insight": "新しいカラー #080810, #FFFFFF, #C8A96A を採用",
+          "value": [
+            "#080810",
+            "#FFFFFF",
+            "#C8A96A"
+          ],
+          "confidence": "HIGH"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-03-11T08:19:43.484Z",
+      "source": "LpAd.tsx",
+      "findings_count": 1,
+      "findings": [
+        {
+          "category": "color",
+          "key": "color_preference",
+          "insight": "新しいカラー #080810, #FFFFFF, #C8A96A を採用",
+          "value": [
+            "#080810",
+            "#FFFFFF",
+            "#C8A96A"
+          ],
+          "confidence": "HIGH"
+        }
+      ]
+    }
+  ]
+}

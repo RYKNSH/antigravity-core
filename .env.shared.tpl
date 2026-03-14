@@ -8,8 +8,15 @@
 # ╚══════════════════════════════════════════════════════════════╝
 
 # --- OpenAI & Gemini ---
-OPENAI_API_KEY={{ op://Antigravity/openai/api-key }}
-GEMINI_API_KEY={{ op://Antigravity/gemini/api-key }}
+OPENAI_API_KEY={{ op://Automation/OpenAI/api-key }}
+GEMINI_API_KEY={{ op://Automation/57qolbjkiznw5qcymidhj5yfii/credential }}
+
+# --- AI APIs (Editor / Code / Media) ---
+ANTHROPIC_API_KEY={{ op://Automation/anthropic/api-key }}
+ELEVENLABS_API_KEY={{ op://Automation/elevenlabs/api-key }}
+RUNWAY_API_KEY={{ op://Automation/runway/api-key }}
+KLING_ACCESS_KEY={{ op://Automation/kling/access-key }}
+KLING_SECRET_KEY={{ op://Automation/kling/secret-key }}
 
 # --- Notion ---
 NOTION_API_KEY={{ op://Antigravity/notion/api-key }}

@@ -133,12 +133,14 @@ const newTask = {
   status:   'pending',
   priority: priority,
   ttl:      ttl,
+  cwd:      process.cwd(),
   created_at: new Date().toISOString(),
   contract:   contract || {
     budget: { max_llm_calls: 30, stagnation_threshold: 5 },
     quality_gates: [],
   },
 };
+
 
 const state = readState();
 if (!state.pending_tasks) state.pending_tasks = [];

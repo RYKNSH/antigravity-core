@@ -1,0 +1,178 @@
+{
+  "meta": {
+    "version": "1.0",
+    "created": "2026-03-11",
+    "source_of_truth": true,
+    "description": "LpAd動画広告のタイムライン定義。このJSONがSOTでありTSX実装はここから自動導出される。",
+    "fps": 30
+  },
+  "formats": {
+    "30s": {
+      "total_frames": 900,
+      "total_duration_s": 30,
+      "scenes": [
+        {
+          "id": "hook",
+          "label": "Hook（共感）",
+          "emotion": "empathy",
+          "start_frame": 0,
+          "end_frame": 90,
+          "duration_s": 3,
+          "narration": true,
+          "narration_file": "lp_hook.mp3",
+          "must_contain": [
+            "ターゲットの具体的な悩みを列挙する問いかけ",
+            "視聴者が「自分のことだ」と思う共감要素"
+          ],
+          "forbidden": [
+            "ロゴ",
+            "商品名",
+            "ブランド名先出し",
+            "AI/DX/LLM等の専門用語",
+            "3行以上のテキスト"
+          ],
+          "visual_requirements": {
+            "text_lines_max": 2,
+            "font_weight_min": 700,
+            "animation": "fade_in_up"
+          }
+        },
+        {
+          "id": "break",
+          "label": "Break（FOMO + 沈黙）",
+          "emotion": "fomo",
+          "start_frame": 90,
+          "end_frame": 360,
+          "duration_s": 9,
+          "narration": true,
+          "narration_file": "lp_break.mp3",
+          "silence_start_frame": 210,
+          "silence_end_frame": 360,
+          "silence_duration_s": 5,
+          "must_contain": [
+            "数字演出（0時間。スタイル）",
+            "現状維持の代償を示唆する言葉"
+          ],
+          "forbidden": [
+            "解決策の先出し",
+            "希望要素（まだ出さない）"
+          ],
+          "visual_requirements": {
+            "key_text": "0時間。",
+            "key_text_size_px_min": 120,
+            "key_text_weight": 900,
+            "background": "dark",
+            "silence_text_lines_max": 1
+          }
+        },
+        {
+          "id": "agitation",
+          "label": "Agitation（FOMO強化）",
+          "emotion": "fomo_peak",
+          "start_frame": 360,
+          "end_frame": 510,
+          "duration_s": 5,
+          "narration": true,
+          "narration_file": "lp_agitation.mp3",
+          "must_contain": [
+            "放置した場合の機会損失",
+            "競合との差が広がるイメージ"
+          ],
+          "forbidden": [
+            "解決策の提示",
+            "CTAの先出し"
+          ],
+          "visual_requirements": {
+            "text_lines_max": 3,
+            "animation": "pulse_or_shake_subtle"
+          }
+        },
+        {
+          "id": "solution",
+          "label": "Solution（希望）",
+          "emotion": "hope",
+          "start_frame": 510,
+          "end_frame": 780,
+          "duration_s": 9,
+          "narration": true,
+          "narration_file": "lp_solution.mp3",
+          "must_contain": [
+            "SOLOPROで何ができるか（難しさゼロで提示）",
+            "具体的なBenefit（時間が生まれる / 苦手なことが消える）"
+          ],
+          "forbidden": [
+            "機能一覧・スペック表",
+            "専門用語（AI/DX等）",
+            "難しそうな印象を与えるビジュアル"
+          ],
+          "visual_requirements": {
+            "text_lines_max": 3,
+            "animation": "fade_in_gentle",
+            "font_weight_min": 600
+          }
+        },
+        {
+          "id": "cta",
+          "label": "CTA（解放感）",
+          "emotion": "liberation",
+          "start_frame": 780,
+          "end_frame": 900,
+          "duration_s": 4,
+          "narration": true,
+          "narration_file": "lp_cta.mp3",
+          "must_contain": [
+            "行動した後のBenefitを動詞で提示",
+            "明確なNext Action（無料〇〇を受け取る等）"
+          ],
+          "forbidden": [
+            "「今すぐ！限定！残りわずか！」等の山奔り表現",
+            "価格・条件の複雑な説明"
+          ],
+          "visual_requirements": {
+            "cta_button": true,
+            "animation": "scale_in_emphasis",
+            "font_weight_min": 700
+          }
+        }
+      ]
+    },
+    "15s": {
+      "total_frames": 450,
+      "total_duration_s": 15,
+      "scenes": [
+        {
+          "id": "hook",
+          "emotion": "empathy",
+          "start_frame": 0,
+          "end_frame": 90,
+          "duration_s": 3,
+          "narration_file": "lp_hook.mp3"
+        },
+        {
+          "id": "break",
+          "emotion": "fomo",
+          "start_frame": 90,
+          "end_frame": 240,
+          "duration_s": 5,
+          "narration_file": "lp_break.mp3"
+        },
+        {
+          "id": "solution",
+          "emotion": "hope",
+          "start_frame": 240,
+          "end_frame": 360,
+          "duration_s": 4,
+          "narration_file": "lp_solution.mp3"
+        },
+        {
+          "id": "cta",
+          "emotion": "liberation",
+          "start_frame": 360,
+          "end_frame": 450,
+          "duration_s": 3,
+          "narration_file": "lp_cta.mp3"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ad Studio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+
+:root {
+  --bg: #0d0d14;
+  --surface: #16161f;
+  --surface2: #1e1e2e;
+  --surface3: #252538;
+  --border: rgba(255,255,255,0.06);
+  --border-hi: rgba(255,255,255,0.14);
+  --text: #e8e8f8;
+  --muted: rgba(232,232,248,0.38);
+  --accent: #7b68ee;
+  --accent2: rgba(123,104,238,0.18);
+  --green: #4be08a;
+  --red: #f06060;
+  --gold: #d4a85a;
+
+  /* emotion colors */
+  --c-empathy: #60a8ff;
+  --c-fomo: #ff8c50;
+  --c-fomo_peak: #ff4040;
+  --c-hope: #4be08a;
+  --c-liberation: #d4a85a;
+
+  --header-h: 48px;
+  --canvas-h: calc(100vh - 48px - 160px);
+  --tl-h: 160px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Inter', 'Hiragino Sans', sans-serif; font-size: 13px; }
+
+/* ═══ HEADER ═══════════════════════════════════════ */
+header {
+  height: var(--header-h);
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-hi);
+  flex-shrink: 0;
+  z-index: 100;
+}
+.logo { font-size: 17px; }
+.appname { font-size: 13px; font-weight: 700; }
+.hdiv { width: 1px; height: 18px; background: var(--border-hi); }
+.hright { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 13px; border-radius: 7px; border: none;
+  cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit;
+  transition: all 0.13s; white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 0 16px rgba(123,104,238,0.3); }
+.btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.btn-ghost { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border-hi); }
+.btn-ghost:hover { background: rgba(255,255,255,0.1); }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.saved-msg { font-size: 11px; color: var(--green); opacity: 0; transition: opacity 0.3s; }
+.saved-msg.show { opacity: 1; }
+
+/* ═══ MAIN LAYOUT ════════════════════════════════════ */
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-h));
+}
+
+/* ═══ CANVAS + PROPS ROW ════════════════════════════ */
+.canvas-row {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ─── CANVAS (Remotion iframe) ─────────────── */
+.canvas-wrap {
+  flex: 1;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.canvas-wrap iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  transform-origin: center;
+}
+.canvas-overlay {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+/* When no scene selected — dim overlay hint */
+.canvas-hint {
+  position: absolute; bottom: 10px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  color: rgba(255,255,255,0.45);
+  font-size: 11px; padding: 4px 12px; border-radius: 20px;
+  backdrop-filter: blur(6px);
+}
+
+/* ─── PROPS PANEL ──────────────────────────── */
+.props {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border-hi);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.props-head {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.em-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.props-name { font-weight: 700; font-size: 13px; flex: 1; }
+.props-empty {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 12px; padding: 20px; text-align: center; line-height: 1.7;
+}
+.props-body { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+.flabel { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.finput, .fselect, .ftextarea {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 7px; color: var(--text); padding: 8px 11px;
+  font-size: 12px; width: 100%; outline: none;
+  transition: border-color 0.13s; font-family: inherit;
+  resize: none;
+}
+.finput:focus, .fselect:focus, .ftextarea:focus { border-color: var(--accent); }
+.fselect option { background: #1e1e2e; }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.frange-wrap { display: flex; align-items: center; gap: 8px; }
+.frange-wrap input[type=range] { flex: 1; accent-color: var(--accent); }
+.frange-val { font-size: 12px; font-weight: 700; min-width: 38px; text-align: right; color: var(--gold); }
+
+/* emotion pills */
+.em-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.em-pill {
+  padding: 4px 10px; border-radius: 20px;
+  border: 1.5px solid transparent; font-size: 10px; font-weight: 700;
+  cursor: pointer; transition: all 0.12s;
+}
+.ep-empathy    { background: rgba(96,168,255,0.1); color: var(--c-empathy); }
+.ep-fomo       { background: rgba(255,140,80,0.12); color: var(--c-fomo); }
+.ep-fomo_peak  { background: rgba(255,64,64,0.12); color: var(--c-fomo_peak); }
+.ep-hope       { background: rgba(75,224,138,0.1); color: var(--c-hope); }
+.ep-liberation { background: rgba(212,168,90,0.12); color: var(--c-liberation); }
+.ep-empathy.active    { border-color: var(--c-empathy); }
+.ep-fomo.active       { border-color: var(--c-fomo); }
+.ep-fomo_peak.active  { border-color: var(--c-fomo_peak); }
+.ep-hope.active       { border-color: var(--c-hope); }
+.ep-liberation.active { border-color: var(--c-liberation); }
+
+/* audio options */
+.audio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.audio-opt {
+  padding: 7px 9px; border-radius: 7px; border: 1px solid var(--border);
+  background: var(--surface2); cursor: pointer; transition: all 0.12s;
+  font-size: 10px; display: flex; flex-direction: column; gap: 1px;
+}
+.audio-opt:hover { border-color: var(--accent); }
+.audio-opt.active { border-color: var(--green); background: rgba(75,224,138,0.07); }
+.audio-fname { font-weight: 600; word-break: break-all; color: var(--text); }
+.audio-fsize { color: var(--muted); }
+
+/* section divider */
+.sdiv { height: 1px; background: var(--border); }
+
+/* del btn */
+.del-btn {
+  padding: 7px; border-radius: 7px; border: 1px solid rgba(240,96,96,0.2);
+  background: rgba(240,96,96,0.08); color: var(--red); cursor: pointer;
+  font-size: 12px; font-weight: 600; width: 100%; transition: all 0.13s;
+}
+.del-btn:hover { background: rgba(240,96,96,0.2); }
+
+/* ═══ TIMELINE ═══════════════════════════════════════ */
+.timeline {
+  height: var(--tl-h);
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.45);
+  border-top: 1px solid var(--border-hi);
+  display: flex;
+  flex-direction: column;
+}
+.tl-bar {
+  height: 26px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+.tl-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.tl-total { font-size: 11px; font-weight: 700; color: var(--gold); margin-left: auto; }
+.tl-hint { font-size: 10px; color: var(--muted); }
+.tl-add {
+  width: 22px; height: 22px; border-radius: 6px;
+  border: 1.5px dashed rgba(255,255,255,0.15);
+  background: transparent; color: var(--muted); cursor: pointer; font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.13s;
+}
+.tl-add:hover { border-color: var(--accent); color: var(--accent); background: var(--accent2); }
+
+.tl-canvas {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 4px;
+  overflow-x: auto;
+  position: relative;
+}
+
+/* scene clip */
+.clip {
+  height: 80px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  display: flex; flex-direction: column;
+  justify-content: flex-end; align-items: flex-start;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: border-color 0.13s, transform 0.1s, box-shadow 0.13s;
+  position: relative; min-width: 55px; overflow: hidden; flex-shrink: 0;
+  user-select: none;
+}
+.clip::before { content:''; position:absolute; inset:0; background: inherit; filter: brightness(0.35); z-index:0; }
+.clip > * { position: relative; z-index: 1; }
+.clip:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.5); }
+.clip.selected { border-color: #fff !important; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.6); }
+.clip.dragging { opacity: 0.25; transform: scale(0.93); }
+.clip.drop-target { border-color: var(--gold) !important; border-style: dashed !important; }
+
+.clip-bg-empathy    { background: var(--c-empathy); }
+.clip-bg-fomo       { background: var(--c-fomo); }
+.clip-bg-fomo_peak  { background: var(--c-fomo_peak); }
+.clip-bg-hope       { background: var(--c-hope); }
+.clip-bg-liberation { background: var(--c-liberation); }
+
+.clip-id { font-size: 10px; font-weight: 900; letter-spacing: 0.07em; text-transform: uppercase; }
+.clip-dur { font-size: 10px; opacity: 0.65; font-weight: 500; margin-top: 1px; }
+
+.clip-del {
+  position: absolute; top: 4px; right: 4px;
+  width: 17px; height: 17px; border-radius: 50%;
+  background: rgba(0,0,0,0.55); border: none;
+  cursor: pointer; display: none; align-items: center; justify-content: center;
+  color: #fff; font-size: 11px; z-index: 3;
+}
+.clip:hover .clip-del { display: flex; }
+.clip-del:hover { background: var(--red); }
+
+/* resize handle — right edge */
+.clip-resize {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 9px; cursor: ew-resize; z-index: 4;
+  background: transparent; border-radius: 0 9px 9px 0;
+  transition: background 0.13s;
+}
+.clip-resize:hover, .clip.resizing .clip-resize { background: rgba(255,255,255,0.22); }
+
+/* playhead (decorative) */
+.playhead {
+  position: absolute; top: 0; bottom: 0; left: 14px;
+  width: 2px; background: #ff3b3b;
+  pointer-events: none; z-index: 10;
+  box-shadow: 0 0 6px #ff3b3b;
+  transition: left 0.05s linear;
+}
+.playhead::before {
+  content: ''; position: absolute; top: 0; left: -3px;
+  width: 8px; height: 8px;
+  background: #ff3b3b; border-radius: 2px;
+  transform: rotate(45deg) translateY(-4px);
+}
+
+/* ═══ MODALS ═══════════════════════════════════════ */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(5px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+}
+.modal {
+  background: var(--surface); border: 1px solid var(--border-hi);
+  border-radius: 14px; padding: 22px; width: 360px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.modal h3 { font-size: 14px; font-weight: 700; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+
+/* ═══ TOAST ═══════════════════════════════════════ */
+#toast {
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(8px);
+  background: var(--surface2); border: 1px solid var(--border-hi);
+  border-radius: 10px; padding: 10px 18px; font-size: 12px; font-weight: 500;
+  z-index: 999; pointer-events: none; opacity: 0; transition: all 0.22s;
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.ok { border-color: rgba(75,224,138,0.3); color: var(--green); }
+#toast.err { border-color: rgba(240,96,96,0.3); color: var(--red); }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <span class="logo">🎬</span>
+  <span class="appname">Ad Studio</span>
+  <div class="hdiv"></div>
+  <button class="btn btn-ghost btn-sm" onclick="loadAll()">↺ リロード</button>
+  <button class="btn btn-ghost btn-sm" onclick="showAdd()">＋ シーン</button>
+  <div class="hright">
+    <span class="saved-msg" id="savedMsg">✓ 保存済み</span>
+    <a href="http://localhost:3001/lp-ad" target="_blank" class="btn btn-ghost btn-sm">▶ フル Studio</a>
+    <button class="btn btn-primary" onclick="saveAll()">💾 保存 <kbd style="opacity:.55;font-size:10px;">⌘S</kbd></button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- CANVAS ROW -->
+  <div class="canvas-row">
+    <!-- CANVAS: Remotion Studio embedded -->
+    <div class="canvas-wrap">
+      <iframe id="remotionFrame" src="http://localhost:3001/lp-ad" allowfullscreen></iframe>
+      <div class="canvas-hint">↓ タイムラインのクリップを選択 → 右のパネルで編集</div>
+    </div>
+
+    <!-- PROPS PANEL -->
+    <div class="props" id="propsPanel">
+      <div class="props-head">
+        <div class="em-dot" id="emDot"></div>
+        <div class="props-name" id="propsName">シーン</div>
+        <button class="btn btn-ghost btn-sm" onclick="deselect()">✕</button>
+      </div>
+      <div class="props-empty" id="propsEmpty">
+        タイムラインのクリップを<br>クリックして編集
+      </div>
+      <div class="props-body hidden" id="propsBody"></div>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="timeline">
+    <div class="tl-bar">
+      <span class="tl-label">🎞 Timeline</span>
+      <span class="tl-hint">ドラッグ: 並び替え ／ 右端: 尺変更</span>
+      <span class="tl-total" id="tlTotal"></span>
+      <button class="tl-add" onclick="showAdd()" title="シーン追加">＋</button>
+    </div>
+    <div class="tl-canvas" id="tlCanvas">
+      <div class="playhead" id="playhead"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SCENE MODAL -->
+<div class="modal-bg hidden" id="addModal">
+  <div class="modal">
+    <h3>＋ シーンを追加</h3>
+    <div class="field">
+      <label class="flabel">ID</label>
+      <input class="finput" id="newId" placeholder="scene-id">
+    </div>
+    <div class="field">
+      <label class="flabel">ラベル</label>
+      <input class="finput" id="newLabel" placeholder="シーン名">
+    </div>
+    <div class="field">
+      <label class="flabel">感情</label>
+      <div class="em-pills" id="newEmPills">
+        <button class="em-pill ep-empathy active" data-em="empathy" onclick="pickEm(this)">empathy</button>
+        <button class="em-pill ep-fomo" data-em="fomo" onclick="pickEm(this)">fomo</button>
+        <button class="em-pill ep-fomo_peak" data-em="fomo_peak" onclick="pickEm(this)">fomo peak</button>
+        <button class="em-pill ep-hope" data-em="hope" onclick="pickEm(this)">hope</button>
+        <button class="em-pill ep-liberation" data-em="liberation" onclick="pickEm(this)">liberation</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="flabel">尺（秒）</label>
+      <input class="finput" id="newDurS" type="number" value="5" min="1" max="60" step="0.5">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="hideModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="addScene()">追加</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+const API = 'http://localhost:3002';
+let data = null, scenes = [], assets = [];
+let selIdx = null;
+let newEm = 'empathy';
+let dragIdx = null;
+let resizing = null;
+let phX = 14;
+
+const EM_COLOR = {
+  empathy:   'var(--c-empathy)',
+  fomo:      'var(--c-fomo)',
+  fomo_peak: 'var(--c-fomo_peak)',
+  hope:      'var(--c-hope)',
+  liberation:'var(--c-liberation)',
+};
+
+// ─── LOAD ────────────────────────────────────
+async function loadAll() {
+  try {
+    const [sRes, aRes] = await Promise.all([
+      fetch(`${API}/api/scenes`).then(r => r.json()),
+      fetch(`${API}/api/assets`).then(r => r.json()).catch(() => []),
+    ]);
+    data = sRes;
+    scenes = data.formats['30s'].scenes;
+    assets = aRes.filter(a => a.name.endsWith('.mp3'));
+    renderTl();
+    if (selIdx !== null) renderProps(selIdx);
+  } catch(e) { toast('❌ ロード失敗', 'err'); }
+}
+
+// ─── TIMELINE ────────────────────────────────
+function renderTl() {
+  const canvas = document.getElementById('tlCanvas');
+  const ph = document.getElementById('playhead');
+  canvas.innerHTML = '';
+  canvas.appendChild(ph);
+
+  const total = scenes.reduce((a,s) => a + durs(s), 0);
+  document.getElementById('tlTotal').textContent = `合計 ${total.toFixed(1)}s`;
+  const pxPerS = 600 / Math.max(total, 1);
+
+  scenes.forEach((s, i) => {
+    const w = Math.max(55, durs(s) * pxPerS);
+    const el = document.createElement('div');
+    el.className = `clip clip-bg-${s.emotion} ${selIdx === i ? 'selected' : ''}`;
+    el.style.width = w + 'px';
+    el.draggable = true;
+    el.innerHTML = `
+      <button class="clip-del" onclick="delScene(event,${i})">✕</button>
+      <div class="clip-resize" data-i="${i}"></div>
+      <div class="clip-id">${s.id}</div>
+      <div class="clip-dur">${durs(s)}s</div>
+    `;
+    el.addEventListener('click', () => selectScene(i));
+    el.addEventListener('dragstart', e => { dragIdx = i; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+    el.addEventListener('dragend', () => { el.classList.remove('dragging'); document.querySelectorAll('.drop-target').forEach(e => e.classList.remove('drop-target')); dragIdx=null; });
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drop-target'); });
+    el.addEventListener('dragleave', () => el.classList.remove('drop-target'));
+    el.addEventListener('drop', e => {
+      e.preventDefault(); el.classList.remove('drop-target');
+      if (dragIdx !== null && dragIdx !== i) {
+        const [mv] = scenes.splice(dragIdx, 1);
+        scenes.splice(i, 0, mv);
+        if (selIdx === dragIdx) selIdx = i;
+        renderTl();
+        if (selIdx !== null) renderProps(selIdx);
+      }
+    });
+    canvas.appendChild(el);
+  });
+
+  // resize handles
+  canvas.querySelectorAll('.clip-resize').forEach(h => {
+    h.addEventListener('mousedown', e => {
+      e.stopPropagation();
+      const i = parseInt(h.dataset.i);
+      resizing = { i, startX: e.clientX, startDur: durs(scenes[i]) };
+      h.parentElement.classList.add('resizing');
+    });
+  });
+}
+
+function durs(s) { return s.duration_s || ((s.end_frame - s.start_frame) / 30) || 5; }
+function setDur(i, v) { scenes[i].duration_s = Math.max(0.5, Math.round(v * 2) / 2); }
+
+document.addEventListener('mousemove', e => {
+  if (!resizing) return;
+  const total = scenes.reduce((a,s) => a+durs(s), 0);
+  const pxPerS = 600 / Math.max(total, 1);
+  const dx = e.clientX - resizing.startX;
+  setDur(resizing.i, resizing.startDur + dx / pxPerS);
+  renderTl();
+  // update slider in props if visible
+  const rng = document.getElementById('durRange');
+  if (rng && selIdx === resizing.i) {
+    rng.value = durs(scenes[selIdx]);
+    document.getElementById('durVal').textContent = durs(scenes[selIdx]);
+  }
+});
+document.addEventListener('mouseup', () => {
+  if (resizing) {
+    document.querySelectorAll('.resizing').forEach(e => e.classList.remove('resizing'));
+    resizing = null;
+  }
+});
+
+// ─── SCENE SELECTION ─────────────────────────
+function selectScene(i) {
+  selIdx = i;
+  renderTl();
+  renderProps(i);
+}
+function deselect() {
+  selIdx = null;
+  renderTl();
+  document.getElementById('propsEmpty').classList.remove('hidden');
+  document.getElementById('propsBody').classList.add('hidden');
+  document.getElementById('emDot').style.background = 'transparent';
+  document.getElementById('propsName').textContent = 'シーン';
+}
+
+// ─── PROPS ───────────────────────────────────
+const EM_DOT_CSS = { empathy:'#60a8ff', fomo:'#ff8c50', fomo_peak:'#ff4040', hope:'#4be08a', liberation:'#d4a85a' };
+function renderProps(i) {
+  const s = scenes[i];
+  if (!s) return;
+  document.getElementById('propsEmpty').classList.add('hidden');
+  document.getElementById('propsBody').classList.remove('hidden');
+  document.getElementById('emDot').style.background = EM_DOT_CSS[s.emotion] || '#888';
+  document.getElementById('propsName').textContent = s.label || s.id;
+
+  const dur = durs(s);
+  const body = document.getElementById('propsBody');
+  body.innerHTML = `
+    <div class="frow">
+      <div class="field">
+        <label class="flabel">ラベル</label>
+        <input class="finput" value="${escH(s.label||'')}" oninput="scenes[${i}].label=this.value;document.getElementById('propsName').textContent=this.value||scenes[${i}].id;">
+      </div>
+      <div class="field">
+        <label class="flabel">ID</label>
+        <input class="finput" value="${escH(s.id||'')}" oninput="scenes[${i}].id=this.value;">
+      </div>
+    </div>
+    <div class="field">
+      <label class="flabel">感情</label>
+      <div class="em-pills">
+        ${['empathy','fomo','fomo_peak','hope','liberation'].map(em => `
+          <button class="em-pill ep-${em} ${s.emotion===em?'active':''}"
+            onclick="scenes[${i}].emotion='${em}';renderTl();renderProps(${i});">${em.replace('_',' ')}</button>
+        `).join('')}
+      </div>
+    </div>
+    <div class="field">
+      <label class="flabel">尺（秒）&nbsp;<span style="color:var(--gold);font-weight:700;" id="durVal">${dur}</span>s</label>
+      <div class="frange-wrap">
+        <input type="range" id="durRange" min="1" max="30" step="0.5" value="${dur}"
+          oninput="setDur(${i},parseFloat(this.value));document.getElementById('durVal').textContent=durs(scenes[${i}]);renderTl();">
+      </div>
+    </div>
+    <div class="field">
+      <label class="flabel">メインテキスト</label>
+      <textarea class="ftextarea" rows="3" oninput="if(!scenes[${i}].narration)scenes[${i}].narration={};scenes[${i}]._text=this.value;">${escH((s._text||s.narration_text||''))}</textarea>
+    </div>
+    <div class="sdiv"></div>
+    <div class="field">
+      <label class="flabel">ナレーション (mp3)</label>
+      <div class="audio-grid">
+        ${assets.map(a => `
+          <div class="audio-opt ${s.narration_file===a.name?'active':''}"
+            onclick="scenes[${i}].narration_file='${a.name}';renderProps(${i});renderTl();">
+            <div class="audio-fname">${a.name}</div>
+            <div class="audio-fsize">${(a.size/1024).toFixed(1)}KB</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="sdiv"></div>
+    <button class="del-btn" onclick="delScene(event,${i})">このシーンを削除</button>
+  `;
+}
+
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+// ─── SCENE OPS ───────────────────────────────
+function delScene(e, i) {
+  e.stopPropagation();
+  if (scenes.length <= 1) { toast('最低1シーン必要です','err'); return; }
+  scenes.splice(i, 1);
+  if (selIdx === i) deselect();
+  else if (selIdx > i) selIdx--;
+  renderTl();
+  toast('シーンを削除しました','ok');
+}
+
+let newEmGlobal = 'empathy';
+function showAdd() { document.getElementById('addModal').classList.remove('hidden'); }
+function hideModal() { document.getElementById('addModal').classList.add('hidden'); }
+function pickEm(btn) {
+  newEmGlobal = btn.dataset.em;
+  document.querySelectorAll('#newEmPills .em-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function addScene() {
+  const id = document.getElementById('newId').value.trim() || `scene-${Date.now()}`;
+  const label = document.getElementById('newLabel').value.trim() || id;
+  const dur = parseFloat(document.getElementById('newDurS').value) || 5;
+  scenes.push({ id, label, emotion: newEmGlobal, duration_s: dur, must_contain:[], forbidden:[] });
+  hideModal();
+  selIdx = scenes.length - 1;
+  renderTl();
+  renderProps(selIdx);
+  toast(`✅ 「${label}」を追加`,'ok');
+}
+
+// ─── SAVE ────────────────────────────────────
+async function saveAll() {
+  if (!data) return;
+  const fps = data.meta?.fps || 30;
+  let cur = 0;
+  scenes.forEach(s => {
+    s.start_frame = cur;
+    s.end_frame = cur + Math.round(durs(s) * fps);
+    cur = s.end_frame;
+  });
+  data.formats['30s'].scenes = scenes;
+  data.formats['30s'].total_frames = cur;
+  data.formats['30s'].total_duration_s = cur / fps;
+  try {
+    const r = await fetch(`${API}/api/scenes`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    if ((await r.json()).ok) {
+      toast('💾 保存 — Remotionに反映されます','ok');
+      const m = document.getElementById('savedMsg');
+      m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2500);
+      // reload remotion iframe to pick up changes
+      setTimeout(() => {
+        const f = document.getElementById('remotionFrame');
+        f.src = f.src;
+      }, 600);
+    }
+  } catch(e) { toast('❌ 保存エラー','err'); }
+}
+
+// ─── TOAST ───────────────────────────────────
+let _tt = null;
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = `show ${type}`;
+  clearTimeout(_tt); _tt = setTimeout(() => el.className='', 2400);
+}
+
+// ─── KEYBOARD ────────────────────────────────
+document.addEventListener('keydown', e => {
+  if ((e.metaKey||e.ctrlKey) && e.key==='s') { e.preventDefault(); saveAll(); }
+  if (e.key==='Escape') { deselect(); hideModal(); }
+});
+
+// ─── PLAYHEAD ANIMATION (decorative) ────────
+let phFrame = 0;
+function animPlayhead() {
+  const canvas = document.getElementById('tlCanvas');
+  const w = canvas.offsetWidth - 14;
+  phX = 14 + (phFrame / 1000) * w;
+  if (phX > w + 14) { phX = 14; phFrame = 0; }
+  document.getElementById('playhead').style.left = phX + 'px';
+  phFrame++;
+  // slower when not "playing"
+}
+
+// BOOT
+loadAll();
+</script>
+</body>
+</html>

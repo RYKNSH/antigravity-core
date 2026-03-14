@@ -1,0 +1,87 @@
+{
+  "meta": {
+    "version": "1.0",
+    "created": "2026-03-11",
+    "context": "SOLOPRO Campaign — ひとり事業者向けAIエージェント広告",
+    "purpose": "広告クリエイティブがターゲットに与えるべき感情の精密定義。Creative Boardの全判断基準となる。"
+  },
+  "target_segment": {
+    "id": "solo_entrepreneur_japan",
+    "label": "ひとり事業者（日本）",
+    "pain_point_core": "得意な本業に使える時間が、苦手な集客・事務作業に侵食されている",
+    "ai_perception": "AIは強力だが、使いこなすのは専門家だけという先入観がある"
+  },
+  "primary_emotions": [
+    {
+      "id": "liberation",
+      "label": "解放感",
+      "jp_label": "解放感",
+      "trigger": "苦手な作業から解放され、得意なことだけに集中できるビジョン",
+      "visual_cue": "開けた景色、手を広げた人物、シンプルで余白の多い画面",
+      "copy_cue": "「やらなくていい」「全部やってもらえる」「本来の仕事だけ」",
+      "ad_moment": "Solution・CTAシーン"
+    },
+    {
+      "id": "fomo",
+      "label": "FOMO（機会損失への不安）",
+      "jp_label": "焦り",
+      "trigger": "AI活用が当たり前の世界で、このまま手動作業を続けると取り残される恐怖",
+      "visual_cue": "時計、カウントダウン、暗転、「0時間」のような数値の衝撃提示",
+      "copy_cue": "「このまま続けると」「気づいたら」「みんなはもう」",
+      "ad_moment": "Break・Agitationシーン",
+      "warning": "押しつけがましくなると拒絶反応。示唆にとどめること"
+    },
+    {
+      "id": "empathy",
+      "label": "共感",
+      "jp_label": "共感",
+      "trigger": "「この広告は自分のことをわかってくれている」という認識の発生",
+      "visual_cue": "同じような業種の人物、リアルな作業シーン（PCを前に悩む）",
+      "copy_cue": "「LP、広告、LINE配信——まだ全部ひとりで？」のような具体的な列挙",
+      "ad_moment": "Hookシーン（最初3秒）",
+      "importance": "★★★★★最重要。共感なしのFOMOは拒絶される"
+    },
+    {
+      "id": "hope",
+      "label": "希望",
+      "jp_label": "希望",
+      "trigger": "「自分にもできる」「手が届く」という可能性の認識",
+      "visual_cue": "上昇する曲線、光の漏れ、笑顔の人物（ただし作り笑いNG）",
+      "copy_cue": "「無料で受け取れる」「今日から」「90分で」",
+      "ad_moment": "Solutionシーン後半・CTA"
+    }
+  ],
+  "anti_emotions": [
+    {
+      "id": "overwhelm",
+      "label": "圧倒感・難しさ",
+      "jp_label": "複雑感",
+      "trigger": "「AIは自分には無理」という諦め感の発生",
+      "avoid_signals": ["専門用語（LLM、API、プロンプトetc.）の多用", "機能一覧の羅列", "価格・条件の複雑な説明"],
+      "consequence": "視聴者が「自分向けじゃない」と判断してスキップ"
+    },
+    {
+      "id": "sales_pressure",
+      "label": "営業圧力感",
+      "jp_label": "押しつけ感",
+      "trigger": "「売りつけられる」という拒絶反応",
+      "avoid_signals": ["今すぐ！限定！", "ロゴ・商品名を冒頭に持ってくる", "CTAを繰り返す"],
+      "consequence": "0〜3秒でのSkip率急上昇"
+    }
+  ],
+  "optimal_emotional_arc": {
+    "15s": [
+      { "time": "0-3s",  "emotion": "empathy",     "intensity": "medium",  "technique": "ターゲットの具体的な悩みを列挙（問いかけ形式）" },
+      { "time": "3-8s",  "emotion": "fomo",        "intensity": "high",    "technique": "現状を放置した場合の損失を示唆（控えめに）" },
+      { "time": "8-13s", "emotion": "hope",        "intensity": "rising",  "technique": "解決策の存在を提示。難しさは感じさせない" },
+      { "time": "13-15s","emotion": "liberation",  "intensity": "peak",    "technique": "CTAで解放への扉を開く" }
+    ],
+    "30s": [
+      { "time": "0-3s",  "emotion": "empathy",     "intensity": "strong",  "technique": "具体的な悩みの鏡張り" },
+      { "time": "3-7s",  "emotion": "fomo",        "intensity": "medium",  "technique": "現状維持のコスト（時間・機会損失）" },
+      { "time": "7-12s", "emotion": "silence",     "intensity": "reset",   "technique": "7秒の沈黙——思考の余白を作る" },
+      { "time": "12-22s","emotion": "hope",        "intensity": "building","technique": "解決策の解説（できるだけビジュアルで）" },
+      { "time": "22-30s","emotion": "liberation",  "intensity": "peak",    "technique": "CTA + 解放感の体験" }
+    ]
+  }
+}

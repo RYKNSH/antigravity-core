@@ -1,0 +1,61 @@
+{
+  "dataset_name": "Direct Response Marketing Frameworks",
+  "version": "1.0",
+  "frameworks": [
+    {
+      "id": "MKT-01",
+      "name": "The 3-Second Hook",
+      "description": "動画を開いた瞬間の最初の3秒で、視聴者に『自分のことだ』と思わせる技術。",
+      "rule": "『こんにちは』などの無駄な挨拶は禁止。いきなり最大のPain（悩み）を突くか、常識を覆す事実を突きつける。",
+      "example_good": "LP、広告、LINE配信...まだ全部ひとりで抱え込んでませんか？",
+      "example_bad": "今日は新しいAIツールのご紹介です。"
+    },
+    {
+      "id": "MKT-02",
+      "name": "PAS Formula",
+      "description": "Problem (問題) -> Agitation (扇動) -> Solution (解決) の順で語る最強のフレームワーク。",
+      "rule": "15秒動画の場合: 0-3s(P), 3-8s(A), 8-15s(S+CTA)。解決策を出す前に、必ず『なぜそれが問題なのか（放置するとどうなるか）』を煽る。",
+      "example": "P: 毎日終電まで作業。 A: 結局自分の首を絞めて、事業拡大の時間が作れていない。 S: だから、全部AIに投げろ。"
+    },
+    {
+      "id": "MKT-03",
+      "name": "Action-Driven CTA",
+      "description": "行動を強制するCall To Actionの設計。",
+      "rule": "『クリックしてね』は不可。ユーザーがクリックした後に得られる未来（Benefit）を動詞で提示する。",
+      "example": "「今すぐ自分の時間を無料で取り戻す」"
+    },
+    {
+      "id": "MKT-04",
+      "name": "Death Patterns (YouTube Skip Analysis)",
+      "description": "動画広告を0〜3秒でスキップされる死の共通パターン。YouTube Skipデータより導出。",
+      "anti_patterns": [
+        { "id": "D-01", "pattern": "最初の1秒にロコゃ商品名",         "reason": "ブランド押し付け感で即座に拒絶反応発動" },
+        { "id": "D-02", "pattern": "モノトーン進行（3秒以上感情変化なし）",  "reason": "視聴者は陽湌に庅ってスキップを押す" },
+        { "id": "D-03", "pattern": "テキスト量過多（3秒で行以上）",     "reason": "認知負荷オーバーで眼を閉じる" },
+        { "id": "D-04", "pattern": "「AI」「DX」「LLM」等の専門用語一番乗り",  "reason": "自分向けじゃないと判断されスキップ" },
+        { "id": "D-05", "pattern": "CTAがない / 次のアクション不明確",        "reason": "山を登りたいメッセージは伝わっても道の説明がないと動かない" }
+      ]
+    },
+    {
+      "id": "MKT-05",
+      "name": "SOLOPRO Emotion Arc",
+      "description": "SOLOPRO高換算に専門設計された感情曲線テンプレート。solopro_emotion_map.jsonの感情定義に基づく。",
+      "rule": "感情の順序は必ず empathy → fomo → hope → liberation 。逆順禁止。山奋さのあまりない感情遞移は視聴者に「操作されている」と感じさせる。",
+      "arcs": {
+        "15s": [
+          { "time": "0-3s",  "emotion": "empathy",    "technique": "悩みの具体的列挙（問いかけ形式）" },
+          { "time": "3-8s",  "emotion": "fomo",       "technique": "現状維持のコストを示唆（控えめに）" },
+          { "time": "8-13s", "emotion": "hope",       "technique": "解決策提示。難しさは感じさせない" },
+          { "time": "13-15s","emotion": "liberation", "technique": "CTAで解放の扉を開く" }
+        ],
+        "30s": [
+          { "time": "0-3s",  "emotion": "empathy",    "technique": "具体的な悩みの鏡張り" },
+          { "time": "3-7s",  "emotion": "fomo",       "technique": "現状維持の機会損失「0時間。」表現常契化メソッドが有効" },
+          { "time": "7-12s", "emotion": "silence",    "technique": "7秒の沈黙——思考の予白を作る（Screenwriter専門）" },
+          { "time": "12-22s","emotion": "hope",       "technique": "解決策の説明（できるだけビジュアルで）" },
+          { "time": "22-30s","emotion": "liberation", "technique": "CTA + 解放感の体験" }
+        ]
+      }
+    }
+  ]
+}

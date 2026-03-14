@@ -51,6 +51,7 @@ function parseTasks(mdPath) {
       status: 'pending',
       priority,
       source: path.basename(mdPath),
+      cwd: path.dirname(mdPath),
       ttl: 600,
       contract: {
         budget: { max_llm_calls: 80, stagnation_threshold: 5 },

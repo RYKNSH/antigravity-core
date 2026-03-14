@@ -114,6 +114,94 @@ function writeJSON(filePath, data) {
 function readState()        { return readJSON(STATE_FILE, {}); }
 function writeState(state)  { writeJSON(STATE_FILE, state); }
 
+function writeDaemonMarkdownLog(task, result) {
+  try {
+    const cwd = task.cwd ? resolveContainerPath(task.cwd) : resolveContainerPath('~/.antigravity');
+    const mdFile = path.join(cwd, 'DAEMON_LOG.md');
+    const isNew = !fs.existsSync(mdFile);
+    let md = '';
+    if (isNew) {
+      md += '# 🤖 Daemon Core 実行ログ (非エンジニア向け)\\n\\n';
+      md += 'このファイルはバックグラウンドのAIエージェント（Daemon）が自律的に実行したタスクの記録です。\\n\\n---\\n\\n';
+    }
+    const statusIcon = result.success ? '✅ 成功' : '❌ 失敗';
+    const timeStr = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+    const shortTask = task.task.substring(0, 100).replace(/\\n/g, ' ');
+    
+    md += `## ${statusIcon}: ${shortTask} (${timeStr})\\n\\n`;
+    md += `**結果サマリー:**\\n${result.summary || '実行完了（詳細なし）'}\\n\\n`;
+    
+    if (result.diff_files && result.diff_files.length > 0) {
+      md += `**変更されたファイル:**\\n`;
+      result.diff_files.forEach(f => md += `- \`${f}\`\\n`);
+      md += '\\n';
+    }
+    if (!result.success && result.reason) {
+      md += `**エラー詳細:**\\n\`\`\`text\\n${result.reason}\\n\`\`\`\\n\\n`;
+    }
+    md += '---\\n\\n';
+    fs.appendFileSync(mdFile, md);
+  } catch (e) {
+    log(`[Markdown Logger] Failed to write MD log: ${e.message}`, 'WARN');
+  }
+}
+
+function updateProjectTasksMd(task, result) {
+  try {
+    if (task.source !== 'TASKS.md') return;
+    const cwd = task.cwd ? resolveContainerPath(task.cwd) : resolveContainerPath('~/.antigravity/docs');
+    const mdFile = task.cwd ? path.join(cwd, 'TASKS.md') : cwd; // if not cwd, fallback to ~/.antigravity/docs/TASKS.md
+    if (!fs.existsSync(mdFile)) return;
+    
+    let content = fs.readFileSync(mdFile, 'utf8');
+    const lines = content.split('\n');
+    let updated = false;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes(task.task)) {
+        if (result.success) {
+          lines[i] = lines[i].replace(/\[\s\]|\[\/\]/, '[x]');
+        } else {
+          lines[i] = lines[i].replace(/\[\/\]/, '[ ]'); // 失敗時は未完了に戻す
+        }
+        updated = true;
+        break;
+      }
+    }
+    if (updated) {
+      fs.writeFileSync(mdFile, lines.join('\n'));
+      log(`[TasksMd] Updated TASKS.md for task: ${task.task.substring(0, 30)}`);
+    }
+  } catch (e) {
+    log(`[TasksMd] Failed to update TASKS.md: ${e.message}`, 'WARN');
+  }
+}
+
+function markTaskInProgressMd(task) {
+  try {
+    if (task.source !== 'TASKS.md') return;
+    const cwd = task.cwd ? resolveContainerPath(task.cwd) : resolveContainerPath('~/.antigravity/docs');
+    const mdFile = task.cwd ? path.join(cwd, 'TASKS.md') : cwd;
+    if (!fs.existsSync(mdFile)) return;
+    
+    let content = fs.readFileSync(mdFile, 'utf8');
+    const lines = content.split('\n');
+    let updated = false;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes(task.task) && lines[i].match(/\[\s\]/)) {
+        lines[i] = lines[i].replace(/\[\s\]/, '[/]');
+        updated = true;
+        break;
+      }
+    }
+    if (updated) {
+      fs.writeFileSync(mdFile, lines.join('\n'));
+      log(`[TasksMd] Marked [/] in TASKS.md for: ${task.task.substring(0, 30)}`);
+    }
+  } catch (e) {
+    log(`[TasksMd] Failed to mark Task in progress: ${e.message}`, 'WARN');
+  }
+}
+
 // ─── Gemini API ───────────────────────────────────────────────────────────────
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
@@ -458,7 +546,8 @@ async function reactLoop(task, contract) {
 3. **ls, pwd など探索コマンドを繰り返してはならない**。1回で十分。
 4. **修正内容が明確なら最初のアクションで write_file を実行せよ**。
 5. write_file 後はテストコマンドを run_command で実行してパスを確認せよ。
-6. テストが全パスしたら {"action": "done", "summary": "完了"} を出力せよ。
+6. タスク完了時は、必ずプロジェクトディレクトリ（または docs/ 配下）の ROADMAP.md, MILESTONES.md, TASKS.md を現状の進捗に合わせて更新（write_file）せよ。
+7. ドキュメント更新とテストが全て完了したら {"action": "done", "summary": "完了"} を出力せよ。
 
 ## メタルール
 ${metaRules || '品質最優先。テストが全てパスするまでループする。止まるな。'}
@@ -1195,6 +1284,7 @@ async function mainLoop() {
         priority: task.priority || 'low',
       };
       writeState(state);
+      markTaskInProgressMd(task);
 
       // Outbox Pattern: タスク実行開始の証拠を書き出す（クラッシュ時に残骸として検出される）
       const outboxTaskFile = path.join(OUTBOX_DIR, `task_${task.id}.json`);
@@ -1253,6 +1343,10 @@ async function mainLoop() {
         result,
         completed_at: new Date().toISOString(),
       });
+      
+      // Markdown Log Write
+      writeDaemonMarkdownLog(task, result);
+      updateProjectTasksMd(task, result);
 
       // F3: completed_tasks rotate — 最新100件を保持し古いものをarchiveへ
       if (updatedState.completed_tasks.length > COMPLETED_TASKS_MAX) {
