@@ -50,11 +50,35 @@ ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
 node "$ANTIGRAVITY_DIR/agent/scripts/setup.js"
 ```
 
+### Step 5: LaunchAgent デプロイ（memory_guardian + heartbeat）
+
+> [!IMPORTANT]
+> コードを書いただけでは動かない。launchdへの登録を必ず実行すること。
+> 過去にこのステップ漏れでmemory_guardianが未稼働 → D-stateハングを検知できなかった。
+
+```bash
+ANTIGRAVITY_DIR="${ANTIGRAVITY_DIR:-$HOME/.antigravity}"
+
+# plistをLaunchAgentsにコピー
+for plist in "$ANTIGRAVITY_DIR"/heartbeat/com.antigravity.*.plist; do
+  [ -f "$plist" ] && cp "$plist" ~/Library/LaunchAgents/
+done
+
+# 登録（既に登録済みなら一度unload）
+for plist in ~/Library/LaunchAgents/com.antigravity.*.plist; do
+  [ -f "$plist" ] && launchctl unload "$plist" 2>/dev/null
+  [ -f "$plist" ] && launchctl load "$plist"
+done
+
+# 確認
+launchctl list | grep antigravity
+```
+
 ---
 
 ## Toolchain
 
-**Scripts**: `setup.js`
+**Scripts**: `setup.js`, `memory_guardian.sh`, `memory_guardian_lib.sh`
 **Skills**: `homebrew-autonomous-ops`, `mcp-best-practices`, `workspace-config-audit`
 **Knowledge**: `antigravity_portable_dev_ecosystem`, `ai_coding_assistant_best_practices`, `mcp_server_directory`, `remote_mac_mini_vibe_coding`
 
