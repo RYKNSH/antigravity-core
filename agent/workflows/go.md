@@ -289,7 +289,12 @@ git commit -m "${COMMIT_TYPE}: [タスク名]
 - 変更: [主要ファイル]
 - 理由: [why]
 - テスト: [追加/修正テスト概要]"
-git push origin HEAD
+# gh CLI優先（raw git pushはネットワークI/Oハングの最大原因）
+if command -v gh &>/dev/null; then
+  timeout 30 gh repo sync --force 2>/dev/null || timeout 30 git push origin HEAD 2>/dev/null
+else
+  git push origin HEAD
+fi
 ```
 
 > [!CAUTION]

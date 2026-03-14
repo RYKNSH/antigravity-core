@@ -54,7 +54,12 @@ if [ -d ".git" ]; then
   # main/masterにいる場合のみSync Protocolを発動
   if [ "$CURRENT" = "main" ] || [ "$CURRENT" = "master" ]; then
     echo "🔄 State Sync Check for $CURRENT..."
-    GIT_TERMINAL_PROMPT=0 timeout 10 git fetch --all 2>/dev/null || true
+    # gh CLI優先（git fetch --allはネットワークI/Oハングの原因）
+    if command -v gh &>/dev/null; then
+      timeout 10 gh repo sync 2>/dev/null || true
+    else
+      GIT_TERMINAL_PROMPT=0 timeout 10 git fetch --all 2>/dev/null || true
+    fi
     BEHIND=$(timeout 3 git rev-list HEAD..origin/"$CURRENT" --count 2>/dev/null || echo 0)
     
     if [ -n "$BEHIND" ] && [ "$BEHIND" -gt 0 ] 2>/dev/null; then
