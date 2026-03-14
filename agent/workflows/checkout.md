@@ -95,7 +95,13 @@ if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   }
   _smart_run 20 0 "auto-commit" _do_commit
 
-  _smart_run 30 1 "git-push" git -C "$ANTIGRAVITY_DIR" push origin main --no-verify &
+  # gh CLI でpush（raw git pushはネットワークI/Oハングの最大原因）
+  if command -v gh &>/dev/null; then
+    ( cd "$ANTIGRAVITY_DIR" && timeout 30 gh repo sync --force 2>/dev/null || \
+      timeout 30 git -C "$ANTIGRAVITY_DIR" push origin main --no-verify 2>/dev/null ) &
+  else
+    _smart_run 30 1 "git-push" git -C "$ANTIGRAVITY_DIR" push origin main --no-verify &
+  fi
   PUSH_PID=$!
 
   if git -C "$ANTIGRAVITY_DIR" remote get-url private &>/dev/null; then
@@ -108,9 +114,10 @@ if [ -d "$ANTIGRAVITY_DIR/.git" ]; then
   fi
 fi
 
-# ─── 3. Cleanup (fire-and-forget) ─────────────────────
-rm -rf ~/.gemini/antigravity/browser_recordings/* ~/.gemini/antigravity/implicit/* \
-  ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null &
+# ─── 3. Cleanup (fire-and-forget — zsh rm_star確認プロンプト回避) ────
+bash -c 'rm -rf ~/.gemini/antigravity/browser_recordings ~/.gemini/antigravity/implicit \
+  ~/.npm/_npx ~/.npm/_logs ~/.npm/_prebuilds ~/.npm/_cacache 2>/dev/null
+  mkdir -p ~/.gemini/antigravity/browser_recordings ~/.gemini/antigravity/implicit 2>/dev/null' &
 find ~/.Trash -mindepth 1 -mtime +2 -delete 2>/dev/null &
 
 # ─── 3.5. スクリプト存在チェック（P-01 Hallucinated API 対策） ─────
