@@ -131,6 +131,13 @@ echo "   ✅ スクリプト: $(ls "$GEMINI_DIR/.agent/scripts/"*.js 2>/dev/null
 rsync -a --update "$ANTIGRAVITY_DIR/agent/skills/" "$GEMINI_DIR/.agent/skills/"
 echo "   ✅ スキル: $(ls -d "$GEMINI_DIR/.agent/skills/"*/ 2>/dev/null | wc -l | tr -d ' ') 個"
 
+# Claude Code commands → Gemini
+if [ -d "$ANTIGRAVITY_DIR/agent/commands" ]; then
+  mkdir -p "$GEMINI_DIR/.agent/commands"
+  rsync -a --update "$ANTIGRAVITY_DIR/agent/commands/" "$GEMINI_DIR/.agent/commands/"
+  echo "   ✅ コマンド: $(ls "$GEMINI_DIR/.agent/commands/"*.md 2>/dev/null | wc -l | tr -d ' ') 個"
+fi
+
 rsync -a --update "$ANTIGRAVITY_DIR/agent/rules/" "$GEMINI_DIR/.agent/rules/"
 echo "   ✅ ルール: $(ls "$GEMINI_DIR/.agent/rules/"*.md 2>/dev/null | wc -l | tr -d ' ') 個"
 
@@ -201,9 +208,12 @@ if [ -d "$PRIVATE_DIR" ]; then
 fi
 echo "📂 $GEMINI_DIR (Gemini Code Assist)"
 echo ""
+CMD_COUNT=$(ls "$ANTIGRAVITY_DIR/agent/commands/"*.md 2>/dev/null | wc -l | tr -d ' ')
+
 echo "   workflows:  $WF_COUNT"
 echo "   scripts:    $SC_COUNT"
 echo "   skills:     $SK_COUNT"
+echo "   commands:   $CMD_COUNT"
 echo "   knowledge:  $KN_COUNT"
 echo ""
 echo "🎯 次のステップ: Gemini Code Assist で /go を実行"
